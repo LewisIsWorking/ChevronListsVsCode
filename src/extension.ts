@@ -19,15 +19,44 @@ import { showTipOfDay, onShowTipOfDay }                              from './tip
 import { clearJumpHistory }                                  from './jumpHistory';
 import { getConfig }                                         from './config';
 import { openOnFirstInstall }                                from './settingsPanel';
+import { getChevronDiagCollection }                           from './diagnosticProvider';
+import { getExpiryDiagCollection }                            from './expiryDiagnostics';
+import { clearAllDiagnostics }                                from './diagnosticCleanup';
+
+/** Debounce window for the full decoration/diagnostic refresh, in ms */
+const REFRESH_DEBOUNCE_MS = 150;
 
 export function activate(context: vscode.ExtensionContext): void {
     const statusBar    = createStatusBar();
     const overdueBar   = createOverdueStatusBar();
     const dueDateDiags = vscode.languages.createDiagnosticCollection('chevron-lists-dates');
     const wordGoalDiags = getWordGoalDiagCollection();
+    // These two are created at module scope in their own files; register them
+    // here so they are disposed with the extension rather than outliving it.
+    const chevronDiags = getChevronDiagCollection();
+    const expiryDiags  = getExpiryDiagCollection();
+
+    // `refreshEditor` runs 21 full-document passes. Firing it on every
+    // keystroke allocated thousands of short-lived objects per character on
+    // large files. Collapse keystroke bursts into a single pass once typing
+    // pauses. Editor switches stay immediate -- only text edits are debounced.
+    let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+    const scheduleRefresh = (): void => {
+        if (refreshTimer) { clearTimeout(refreshTimer); }
+        refreshTimer = setTimeout(() => {
+            refreshTimer = undefined;
+            const active = vscode.window.activeTextEditor;
+            if (active) { refreshEditor(active, { dueDateDiags }); }
+        }, REFRESH_DEBOUNCE_MS);
+    };
 
     context.subscriptions.push(
-        statusBar, overdueBar, dueDateDiags, wordGoalDiags,
+        statusBar, overdueBar, dueDateDiags, wordGoalDiags, chevronDiags, expiryDiags,
+
+        // Make sure a pending refresh can never outlive the extension
+        new vscode.Disposable(() => {
+            if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = undefined; }
+        }),
 
         // ── Command groups ───────────────────────────────────────────────────
         ...registerCoreCommands(context),
@@ -60,11 +89,16 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.workspace.onDidChangeTextDocument(event => {
             const editor = vscode.window.activeTextEditor;
             if (editor && event.document === editor.document) {
-                refreshEditor(editor, { dueDateDiags });
+                scheduleRefresh();
             }
         }),
-        // Release per-file jump-history entries when their document is closed
-        vscode.workspace.onDidCloseTextDocument(doc => clearJumpHistory(doc.uri)),
+        // Release per-file state when a document is closed. Diagnostic
+        // collections are strong URI-keyed maps -- without the delete, every
+        // markdown file opened this session stays retained.
+        vscode.workspace.onDidCloseTextDocument(doc => {
+            clearJumpHistory(doc.uri);
+            clearAllDiagnostics(doc.uri, dueDateDiags);
+        }),
     );
 
     registerAutoFixNumbering(context);

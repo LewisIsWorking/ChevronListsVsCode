@@ -1,5 +1,17 @@
 # Changelog
 
+## [26.6.0] - 2026-09-06
+### Fixed
+- **Diagnostics were retained for every markdown file opened in a session.** All four `DiagnosticCollection`s (`chevron-lists`, `chevron-lists-dates`, `chevron-lists-wordgoals`, `chevron-lists-expiry`) called `.set(uri, ...)` on each refresh but never released the entry when the document closed — `onDidCloseTextDocument` only cleared jump history. A `DiagnosticCollection` is a strong URI-keyed map owned by the extension host, so each file kept four `Diagnostic[]` arrays alive until the window was reloaded. Closing a document now clears all four via the new `diagnosticCleanup` / `diagnosticSinks` pair. This is the leak the 26.4.2 audit missed.
+- **Two diagnostic collections were never disposed.** The collections in `diagnosticProvider.ts` and `expiryDiagnostics.ts` are created at module scope and were never added to `context.subscriptions`, so they outlived the extension across reloads. Both are now registered in `activate`.
+- **`onDidCloseTextDocument` was registered twice** — once in `extension.ts` and again in `commandRegistrationsB.ts` — so every document close ran the jump-history cleanup twice. The duplicate registration is removed.
+
+### Performance
+- **The full decoration/diagnostic refresh is now debounced by 150ms.** `refreshEditor` runs 21 separate full-document passes (17 decoration updates, 4 diagnostic updates), each with its own `for (i = 0; i < lineCount; i++)` loop. It was wired directly to `onDidChangeTextDocument`, so a single keystroke in a 500-line file allocated ~10,500 line objects plus the Range arrays for every pass. Keystroke bursts now collapse into one pass after typing pauses. Switching editors still refreshes immediately; only text edits are debounced. A pending refresh is cancelled on deactivate.
+
+### Notes
+- The 812-test suite covers pure logic only — no tested module imports `vscode`, and `bunfig.toml`'s `[test.moduleNameMapper]` is a Jest key that Bun does not honour, so the mock has never actually resolved. This is why every leak above lives in the untested VS Code integration layer. The new cleanup logic is split into a pure `diagnosticSinks.ts` core (5 new tests) following the same pure-core / thin-bridge split as `patterns.ts`.
+
 ## [26.5.0] - 2026-05-21
 ### Fixed
 - **`autoFixNumbering` listener could die silently**. If `applyEdit` threw mid-fix (e.g. file closed during the async operation), the internal `isApplyingFix` flag stayed `true` forever, disabling auto-fix until VS Code restart. The fix is now wrapped in `try/finally` so the flag always resets, plus a `console.warn` for diagnostics.

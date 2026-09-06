@@ -6,6 +6,14 @@ import { isHeader } from './patterns';
 
 const collection = vscode.languages.createDiagnosticCollection('chevron-lists');
 
+/**
+ * Exposes the core diagnostic collection so `activate` can register it for
+ * disposal and so `diagnosticCleanup` can drop entries for closed documents.
+ */
+export function getChevronDiagCollection(): vscode.DiagnosticCollection {
+    return collection;
+}
+
 /** Refreshes diagnostics for the given document */
 export function updateDiagnostics(document: vscode.TextDocument): void {
     if (document.languageId !== 'markdown') { collection.delete(document.uri); return; }

@@ -36,7 +36,7 @@ import { onFocusSection, onUnfocusSection }                  from './focusMode';
 import { onAddBookmark, onJumpToBookmark,
          onRemoveBookmark }                                  from './bookmarkCommands';
 import { onShowSectionSummary, onCountItemsByTag }          from './counterCommands';
-import { onJumpBack, clearJumpHistory }                      from './jumpHistory';
+import { onJumpBack }                                         from './jumpHistory';
 import { onPromoteItemToHeader, onDemoteHeaderToItem }      from './promoteDemote';
 import { onExportAsMarkdownDoc }                            from './markdownExportCommands';
 import { onToggleStar, onFilterStarredItems }               from './starCommands';
@@ -122,7 +122,6 @@ export function registerSearchItemProviderCommands(
         r('chevron-lists.suggestItems',             onSuggestItems),
         r('chevron-lists.summariseSection',         onSummariseSection),
         r('chevron-lists.expandItem',               onExpandItem),
-        vscode.workspace.onDidCloseTextDocument(doc => clearJumpHistory(doc.uri)),
         vscode.languages.registerHoverProvider({ language: 'markdown' }, new ChevronFileLinkHoverProvider()),
         vscode.languages.registerHoverProvider({ language: 'markdown' }, new ChevronLinkHoverProvider()),
         vscode.languages.registerDefinitionProvider({ language: 'markdown' }, new ChevronLinkDefinitionProvider()),
