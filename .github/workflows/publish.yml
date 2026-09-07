@@ -1,0 +1,95 @@
+# Publishes the extension to the Visual Studio Marketplace.
+#
+# Trigger: push a version tag (v26.6.0), or run manually from the Actions tab.
+# The manual run defaults to a DRY RUN -- it builds and packages the .vsix and
+# uploads it as an artifact without publishing, so the pipeline can be exercised
+# safely. A marketplace publish cannot be undone, and a deleted extension name
+# can never be reused, so the dry run is the default on purpose.
+#
+# Required secret: VSCE_PAT -- an Azure DevOps Personal Access Token with the
+# Marketplace (Manage) scope, for the publisher "lewisisworking".
+#   gh secret set VSCE_PAT --repo LewisIsWorking/ChevronListsVsCode
+#
+# NOTE: Microsoft retires global Azure DevOps PATs on 2026-12-01. After that this
+# workflow must move to Entra ID (`vsce publish --azure-credential` with workload
+# identity federation). Until then a PAT is the supported path for a solo
+# publisher. See docs/publishing.md.
+name: Publish
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Package only, do not publish'
+        type: boolean
+        default: true
+
+jobs:
+  publish:
+    name: Package & Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # The marketplace build must clear the same bar as CI. A broken publish is
+      # far more expensive than a broken commit.
+      - name: Run tests
+        run: bun test src/__tests__
+
+      - name: Type-check
+        run: bun run compile
+
+      - name: Bundle (production)
+        run: bun run bundle:prod
+
+      # A tag that disagrees with package.json would publish a version nobody
+      # expects, under a tag pointing at different code. Refuse instead.
+      - name: Verify tag matches package.json version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          echo "tag=$TAG package.json=$PKG"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Tag v$TAG does not match package.json version $PKG"
+            exit 1
+          fi
+
+      - name: Package .vsix
+        run: bunx @vscode/vsce package
+
+      - name: Upload .vsix artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix
+          path: '*.vsix'
+
+      # Publishes only for a real tag push, or a manual run with dry_run unticked.
+      - name: Publish to Marketplace
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.dry_run == 'false'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "::error::VSCE_PAT secret is not set. See docs/publishing.md."
+            exit 1
+          fi
+          bunx @vscode/vsce publish --packagePath *.vsix --pat "$VSCE_PAT"
+
+      - name: Summary
+        run: |
+          echo "### Chevron Lists $(node -p "require('./package.json').version")" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.dry_run == 'false' }}" = "true" ]; then
+            echo "Published to the Visual Studio Marketplace." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Dry run - .vsix built and attached as an artifact, nothing published." >> $GITHUB_STEP_SUMMARY
+          fi

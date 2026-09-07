@@ -13,3 +13,8 @@ esbuild.mjs
 dist/*.map
 icon_preview.png
 make_icon.py
+.github/
+release.ps1
+ARCHITECTURE.md
+ROADMAP.md
+docs/publishing.md
