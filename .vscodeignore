@@ -18,3 +18,7 @@ release.ps1
 ARCHITECTURE.md
 ROADMAP.md
 docs/publishing.md
+test-shims/
+scripts/
+coverage/
+coverage-policy.json

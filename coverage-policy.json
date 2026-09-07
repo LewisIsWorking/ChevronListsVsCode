@@ -1,0 +1,29 @@
+{
+  "_comment": [
+    "Repository coverage policy: 100% with no exclusions.",
+    "'floor' is the enforced ratchet - CI fails below it. Raise it as tests land;",
+    "never lower it. 'target' is the policy itself and does not move.",
+    "",
+    "Baseline recorded 2026-09-07, the first honest measurement of this repo.",
+    "Before the test-shims/vscode package existed, only 41 of 265 source files were",
+    "reachable from tests and Bun reported 99.64% - an average over 15% of the",
+    "codebase, with the entire VS Code integration layer invisible rather than",
+    "counted as zero.",
+    "",
+    "These figures are WEIGHTED (hit lines / total lines), not the unweighted mean",
+    "of per-file percentages that Bun's text reporter prints. Bun's mean reads ~19",
+    "points higher here because the repo has many small fully-covered parsers and a",
+    "few large uncovered command files. Weighted is the number that cannot be gamed",
+    "by adding another tiny well-tested file."
+  ],
+  "floor": {
+    "line": 24.0,
+    "function": 31.0
+  },
+  "target": {
+    "line": 100.0,
+    "function": 100.0
+  },
+  "slackWarning": 3.0,
+  "branchNote": "Bun's lcov reporter emits no BRDA/BRF/BRH records, so branch coverage is not measurable under bun test. Reaching the branch half of the policy needs a runner change (vitest + istanbul)."
+}

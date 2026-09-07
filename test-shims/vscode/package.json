@@ -1,0 +1,7 @@
+{
+  "name": "vscode",
+  "version": "0.0.0-mock",
+  "private": true,
+  "description": "Test-only stand-in for the vscode runtime module, so a bare `import 'vscode'` resolves under `bun test`. Deliberately ships NO type declarations: TypeScript then falls through to @types/vscode for types, while Bun resolves the runtime value to the mock. Never shipped - esbuild marks 'vscode' external and .vscodeignore excludes this folder.",
+  "main": "./index.js"
+}
