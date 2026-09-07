@@ -7,11 +7,19 @@
  * coverage-policy.json, so the number can only ever go up. Raise the floor as
  * tests land; never lower it.
  *
- * Why a custom gate rather than Bun's own `coverageThreshold`:
- *   * Bun's threshold is applied PER FILE, so with any file at 0% the only
- *     value that passes is 0 -- it cannot express a global floor.
- *   * The inline-table form (`{ line = ..., function = ... }`) is silently
- *     IGNORED by Bun 1.3.x. It fails open, which is worse than no gate.
+ * Why a custom gate rather than Bun's own `coverageThreshold`: Bun applies its
+ * threshold PER FILE. With any file at 0% the only value that passes is 0, so it
+ * cannot express a global floor while the codebase is mid-ratchet. Verified: a
+ * threshold of `{ lines = 0.10 }` still fails at 24.61% global coverage.
+ *
+ * Once every file reaches 100%, Bun's native per-file check becomes the simpler
+ * enforcement and this script can be retired for:
+ *     coverageThreshold = { lines = 1.0, functions = 1.0 }
+ *
+ * NOTE the plural keys. Bun accepts `lines`/`functions`; the singular
+ * `line`/`function` are accepted by the TOML parser and then silently ignored,
+ * which fails open. If you edit that config, verify it still fails by raising it
+ * above actual coverage -- do not assume it is wired up.
  *
  * Run: node scripts/coverage-gate.mjs
  * (expects `bun test --coverage --coverage-reporter=lcov` to have run first)

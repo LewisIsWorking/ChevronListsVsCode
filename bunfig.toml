@@ -4,6 +4,13 @@ coverage = true
 # figure badly (they are nearly all 100% by construction).
 coverageSkipTestFiles = true
 
+# Enforcement lives in scripts/coverage-gate.mjs, not here: Bun's
+# coverageThreshold is applied PER FILE, so it cannot express a global ratchet
+# floor while files sit at 0%. When every file reaches 100% this becomes:
+#     coverageThreshold = { lines = 1.0, functions = 1.0 }
+# Note the PLURAL keys -- singular `line`/`function` parse fine and are then
+# silently ignored, so a threshold written that way fails open.
+#
 # COVERAGE GATE -- a ratchet, not a target.
 #
 # Policy is 100% line AND branch coverage with no exclusions. These numbers are
