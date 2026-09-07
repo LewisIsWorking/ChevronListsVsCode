@@ -2,131 +2,144 @@
 /**
  * coverage-gate.mjs -- enforces the repository coverage policy.
  *
- * Policy is 100% coverage with no exclusions. This gate is a RATCHET towards
- * that: it fails when coverage drops below the recorded floor in
- * coverage-policy.json, so the number can only ever go up. Raise the floor as
- * tests land; never lower it.
+ * Policy is 100% coverage, no exclusions, on all four metrics: statements,
+ * branches, functions and lines. This gate is a RATCHET towards that: it fails
+ * when any metric drops below the floor recorded in coverage-policy.json, so
+ * the numbers can only go up. Raise the floors as tests land; never lower them.
  *
- * Why a custom gate rather than Bun's own `coverageThreshold`: Bun applies its
- * threshold PER FILE. With any file at 0% the only value that passes is 0, so it
- * cannot express a global floor while the codebase is mid-ratchet. Verified: a
- * threshold of `{ lines = 0.10 }` still fails at 24.61% global coverage.
+ * Reads coverage/coverage-final.json -- the standard istanbul coverage map,
+ * written by scripts/istanbul-preload.ts during `bun test`.
  *
- * Once every file reaches 100%, Bun's native per-file check becomes the simpler
- * enforcement and this script can be retired for:
- *     coverageThreshold = { lines = 1.0, functions = 1.0 }
+ * Why not Bun's built-in coverage:
+ *   * Its lcov output carries no BRDA/BRF/BRH records, so BRANCH coverage is
+ *     absent entirely (oven-sh/bun#7100). Branch is half the policy.
+ *   * Its `coverageThreshold` is applied PER FILE, so with any file at 0% the
+ *     only value that passes is 0 -- it cannot express a global floor while the
+ *     codebase is mid-ratchet.
+ *   * Its headline percentage is an unweighted MEAN of per-file percentages,
+ *     which on this repo reads ~19 points higher than the weighted truth.
  *
- * NOTE the plural keys. Bun accepts `lines`/`functions`; the singular
- * `line`/`function` are accepted by the TOML parser and then silently ignored,
- * which fails open. If you edit that config, verify it still fails by raising it
- * above actual coverage -- do not assume it is wired up.
+ * Bun is still the test runner; only the measurement is istanbul's.
  *
- * Run: node scripts/coverage-gate.mjs
- * (expects `bun test --coverage --coverage-reporter=lcov` to have run first)
+ * Run: node scripts/coverage-gate.mjs   (after `bun test`)
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const LCOV   = resolve('coverage/lcov.info');
+const MAP    = resolve('coverage/coverage-final.json');
 const POLICY = resolve('coverage-policy.json');
 
-if (!existsSync(LCOV)) {
-  console.error('coverage/lcov.info not found. Run: bun run test:coverage');
+if (!existsSync(MAP)) {
+  console.error('coverage/coverage-final.json not found. Run: bun test src/__tests__');
+  console.error('(scripts/istanbul-preload.ts writes it via an afterAll hook.)');
   process.exit(1);
 }
 
 const policy = JSON.parse(readFileSync(POLICY, 'utf8'));
+const map    = JSON.parse(readFileSync(MAP, 'utf8'));
 
 /**
- * Files that are not production code. This is NOT a policy exclusion -- these
- * are test infrastructure, the same category as the test files Bun already
- * skips. Every file that ships to a user is measured.
+ * Test infrastructure is not production code. This is NOT a policy exclusion --
+ * the instrumenter already skips __tests__ and __mocks__; this is belt and
+ * braces. Every file that ships to a user is measured.
  */
-const isTestInfra = (f) =>
-  f.includes('__mocks__') || f.includes('__tests__') || f.includes('test-shims');
+const isTestInfra = (f) => {
+  const p = f.replace(/\\/g, '/');
+  return p.includes('/__tests__/') || p.includes('/__mocks__/') || p.includes('/test-shims/');
+};
 
-// ------------------------------------------------------------- parse lcov
-// Bun emits FNF/FNH (functions) and DA (lines). It emits NO BRDA/BRF/BRH,
-// so branch coverage is not measurable with this runner -- see README.
-const files = [];
-let cur = null;
-for (const raw of readFileSync(LCOV, 'utf8').split(/\r?\n/)) {
-  const line = raw.trim();
-  if (line.startsWith('SF:')) {
-    cur = { file: line.slice(3).replace(/\\/g, '/'), fnf: 0, fnh: 0, lines: 0, hit: 0 };
-  } else if (!cur) {
-    continue;
-  } else if (line.startsWith('FNF:')) {
-    cur.fnf = Number(line.slice(4));
-  } else if (line.startsWith('FNH:')) {
-    cur.fnh = Number(line.slice(4));
-  } else if (line.startsWith('DA:')) {
-    const [, count] = line.slice(3).split(',');
-    cur.lines += 1;
-    if (Number(count) > 0) cur.hit += 1;
-  } else if (line === 'end_of_record') {
-    if (!isTestInfra(cur.file)) files.push(cur);
-    cur = null;
+// ------------------------------------------------------------------ tally
+const totals = { statements: [0, 0], branches: [0, 0], functions: [0, 0], lines: [0, 0] };
+const perFile = [];
+
+for (const [file, cov] of Object.entries(map)) {
+  if (isTestInfra(file)) continue;
+
+  const s = Object.values(cov.s ?? {});
+  const f = Object.values(cov.f ?? {});
+  // Each entry in `b` is an array with one counter per path of that branch,
+  // so an if/else contributes two paths and both must be taken for 100%.
+  const b = Object.values(cov.b ?? {}).flat();
+
+  // Lines are derived from statement counters grouped by their start line:
+  // a line counts as covered when any statement on it ran.
+  const byLine = new Map();
+  for (const [id, meta] of Object.entries(cov.statementMap ?? {})) {
+    const line = meta.start.line;
+    byLine.set(line, (byLine.get(line) ?? 0) + (cov.s?.[id] ?? 0));
   }
+  const lineHits = [...byLine.values()];
+
+  const pairs = {
+    statements: [s.filter((n) => n > 0).length, s.length],
+    branches:   [b.filter((n) => n > 0).length, b.length],
+    functions:  [f.filter((n) => n > 0).length, f.length],
+    lines:      [lineHits.filter((n) => n > 0).length, lineHits.length],
+  };
+
+  for (const k of Object.keys(totals)) {
+    totals[k][0] += pairs[k][0];
+    totals[k][1] += pairs[k][1];
+  }
+
+  perFile.push({ file: file.replace(/\\/g, '/').replace(/^.*\/src\//, 'src/'), pairs });
 }
 
-if (files.length === 0) {
-  console.error('No production files found in lcov.info -- refusing to pass a gate on nothing.');
+if (perFile.length === 0) {
+  console.error('No production files in the coverage map -- refusing to pass a gate on nothing.');
   process.exit(1);
 }
 
-// ------------------------------------------------------------- totals
-const sum = (k) => files.reduce((a, f) => a + f[k], 0);
-const pct = (h, t) => (t === 0 ? 100 : (h / t) * 100);
-
-const lineePct = pct(sum('hit'), sum('lines'));
-const funcPct  = pct(sum('fnh'), sum('fnf'));
-
-const belowTarget = files
-  .filter((f) => pct(f.hit, f.lines) < 100)
-  .sort((a, b) => pct(a.hit, a.lines) - pct(b.hit, b.lines));
-
-// ------------------------------------------------------------- report
+const pct = ([hit, tot]) => (tot === 0 ? 100 : (hit / tot) * 100);
 const fmt = (n) => n.toFixed(2).padStart(6);
+
+// ----------------------------------------------------------------- report
+const METRICS = ['statements', 'branches', 'functions', 'lines'];
+const actual = Object.fromEntries(METRICS.map((m) => [m, pct(totals[m])]));
+
 console.log('');
 console.log('Coverage gate');
 console.log('-------------');
-console.log(`  files measured : ${files.length}`);
-console.log(`  lines          : ${fmt(lineePct)}%   floor ${fmt(policy.floor.line)}%   target ${fmt(policy.target.line)}%`);
-console.log(`  functions      : ${fmt(funcPct)}%   floor ${fmt(policy.floor.function)}%   target ${fmt(policy.target.function)}%`);
-console.log(`  branches       :    n/a    -- ${policy.branchNote}`);
-console.log(`  files at 100%  : ${files.length - belowTarget.length} / ${files.length}`);
+console.log(`  files measured : ${perFile.length}`);
+for (const m of METRICS) {
+  console.log(
+    `  ${m.padEnd(11)}: ${fmt(actual[m])}%   floor ${fmt(policy.floor[m])}%   ` +
+    `target ${fmt(policy.target[m])}%   (${totals[m][0]}/${totals[m][1]})`
+  );
+}
+
+const incomplete = perFile
+  .filter((f) => METRICS.some((m) => pct(f.pairs[m]) < 100))
+  .sort((a, b) => pct(a.pairs.lines) - pct(b.pairs.lines));
+
+console.log(`  files at 100%  : ${perFile.length - incomplete.length} / ${perFile.length}`);
 console.log('');
 
-if (belowTarget.length > 0) {
-  console.log(`  ${belowTarget.length} file(s) below the 100% target. Lowest 15:`);
-  for (const f of belowTarget.slice(0, 15)) {
-    console.log(`    ${fmt(pct(f.hit, f.lines))}%  ${f.file}`);
+if (incomplete.length > 0) {
+  console.log(`  ${incomplete.length} file(s) short of 100%. Lowest 15 by line coverage:`);
+  for (const f of incomplete.slice(0, 15)) {
+    console.log(
+      `    lines ${fmt(pct(f.pairs.lines))}%  branches ${fmt(pct(f.pairs.branches))}%  ${f.file}`
+    );
   }
   console.log('');
 }
 
-// ------------------------------------------------------------- verdict
-const failures = [];
-if (lineePct + 1e-9 < policy.floor.line) {
-  failures.push(`line coverage ${lineePct.toFixed(2)}% is below the floor of ${policy.floor.line}%`);
-}
-if (funcPct + 1e-9 < policy.floor.function) {
-  failures.push(`function coverage ${funcPct.toFixed(2)}% is below the floor of ${policy.floor.function}%`);
-}
+// ---------------------------------------------------------------- verdict
+const failures = METRICS
+  .filter((m) => actual[m] + 1e-9 < policy.floor[m])
+  .map((m) => `${m} coverage ${actual[m].toFixed(2)}% is below the floor of ${policy.floor[m]}%`);
 
 if (failures.length > 0) {
   for (const f of failures) console.error(`FAIL: ${f}`);
   console.error('');
-  console.error('Coverage regressed. Add tests, or justify the change -- do not lower the floor.');
+  console.error('Coverage regressed. Add tests -- do not lower the floor.');
   process.exit(1);
 }
 
-// Nudge the floor upwards when real coverage has moved well past it, so the
-// ratchet does not silently go slack after a batch of tests lands.
-const slack = Math.min(lineePct - policy.floor.line, funcPct - policy.floor.function);
+const slack = Math.min(...METRICS.map((m) => actual[m] - policy.floor[m]));
 if (slack > policy.slackWarning) {
-  console.log(`NOTE: coverage is ${slack.toFixed(2)} points above the floor.`);
+  console.log(`NOTE: every metric is at least ${slack.toFixed(2)} points above its floor.`);
   console.log('      Raise "floor" in coverage-policy.json to lock the gain in.');
   console.log('');
 }

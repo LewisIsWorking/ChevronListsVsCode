@@ -1,5 +1,6 @@
 [test]
-coverage = true
+preload = ["./scripts/istanbul-preload.ts"]
+coverage = false
 # Test files themselves are not production code; counting them inflated the old
 # figure badly (they are nearly all 100% by construction).
 coverageSkipTestFiles = true
