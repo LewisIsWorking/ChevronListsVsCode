@@ -1,0 +1,39 @@
+{
+  "_comment": [
+    "Repository coverage policy: 100% on all four metrics, no exclusions.",
+    "'floor' is the enforced ratchet - CI fails below it. Raise it as tests land;",
+    "never lower it. 'target' is the policy itself and does not move.",
+    "",
+    "Measured by istanbul (scripts/istanbul-preload.ts instruments source on load",
+    "during `bun test`), NOT by Bun's built-in coverage. Bun remains the runner;",
+    "only the measurement changed. Bun's own reporter emits no branch data at all",
+    "and its headline figure is an unweighted mean of per-file percentages, which",
+    "reads ~19 points high on this repo.",
+    "",
+    "Baseline recorded 2026-09-07, the first honest measurement. Before the",
+    "test-shims/vscode package existed only 41 of 265 source files were reachable",
+    "from tests, and Bun reported 99.64% as an average over that 15% while the",
+    "whole VS Code integration layer was invisible rather than counted as zero.",
+    "",
+    "All figures are WEIGHTED (hit/total across the repo), so they cannot be",
+    "nudged up by adding another tiny well-covered file.",
+    "",
+    "Note these read LOWER than Bun's own figures (istanbul lines 14.23% vs Bun",
+    "24.61%). Istanbul counts every statement, including those inside functions",
+    "that are never called; Bun's line records are coarser. Istanbul's is the",
+    "stricter and more honest number, and it is the one gated."
+  ],
+  "floor": {
+    "statements": 13.0,
+    "branches": 11.0,
+    "functions": 17.0,
+    "lines": 14.0
+  },
+  "target": {
+    "statements": 100.0,
+    "branches": 100.0,
+    "functions": 100.0,
+    "lines": 100.0
+  },
+  "slackWarning": 3.0
+}

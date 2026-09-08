@@ -21,8 +21,15 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Run tests with coverage
-        run: bun test src/__tests__ --coverage
+      - name: Run tests (istanbul-instrumented)
+        run: bun test src/__tests__
+
+      # Enforces the 100%-coverage policy (statements, branches, functions,
+      # lines) as a ratchet: fails if any metric drops below the floor in
+      # coverage-policy.json. Measured by istanbul via scripts/istanbul-preload.ts,
+      # because Bun's own reporter emits no branch data at all.
+      - name: Coverage gate
+        run: node scripts/coverage-gate.mjs
 
       - name: Compile TypeScript
         run: bun run compile

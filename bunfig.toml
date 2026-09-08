@@ -1,4 +1,28 @@
 [test]
+preload = ["./scripts/istanbul-preload.ts"]
+coverage = false
+# Test files themselves are not production code; counting them inflated the old
+# figure badly (they are nearly all 100% by construction).
+coverageSkipTestFiles = true
 
-[test.moduleNameMapper]
-"vscode" = "./src/__mocks__/vscode.ts"
+# Enforcement lives in scripts/coverage-gate.mjs, not here: Bun's
+# coverageThreshold is applied PER FILE, so it cannot express a global ratchet
+# floor while files sit at 0%. When every file reaches 100% this becomes:
+#     coverageThreshold = { lines = 1.0, functions = 1.0 }
+# Note the PLURAL keys -- singular `line`/`function` parse fine and are then
+# silently ignored, so a threshold written that way fails open.
+#
+# COVERAGE GATE -- a ratchet, not a target.
+#
+# Policy is 100% line AND branch coverage with no exclusions. These numbers are
+# the CURRENT measured floor: raise them as tests land, never lower them. CI
+# fails if coverage drops below, so the number can only go up.
+#
+# Baseline recorded 2026-09-07 after the `vscode` test shim made all 265 source
+# files importable for the first time. Before that shim only 41 files were
+# reachable from tests and Bun reported 99.64% -- an average over 15% of the
+# codebase, with the entire VS Code integration layer invisible rather than
+# counted as zero.
+#
+# TARGET: line = 1.0, function = 1.0
+coverageThreshold = 0

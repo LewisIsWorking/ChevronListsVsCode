@@ -1390,7 +1390,10 @@
         "bundle": "node esbuild.mjs",
         "bundle:prod": "node esbuild.mjs --production",
         "watch": "tsc -watch -p ./ --noEmit",
-        "test": "bun test src/__tests__ --coverage"
+        "test": "bun test src/__tests__",
+        "test:coverage": "bun test src/__tests__",
+        "coverage:gate": "bun test src/__tests__ && node scripts/coverage-gate.mjs",
+        "coverage:report": "bun test src/__tests__ && node scripts/coverage-report.mjs"
     },
     "license": "CC-BY-NC-ND-4.0",
     "devDependencies": {
@@ -1399,6 +1402,11 @@
         "@types/vscode": "^1.85.0",
         "@vscode/vsce": "^3.9.2",
         "esbuild": "^0.27.4",
-        "typescript": "^5.0.0"
+        "istanbul-lib-coverage": "^3.2.2",
+        "istanbul-lib-instrument": "^6.0.3",
+        "istanbul-lib-report": "^3.0.1",
+        "istanbul-reports": "^3.2.0",
+        "typescript": "^5.0.0",
+        "vscode": "file:./test-shims/vscode"
     }
 }
