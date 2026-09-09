@@ -21,19 +21,24 @@
     "Note these read LOWER than Bun's own figures (istanbul lines 14.23% vs Bun",
     "24.61%). Istanbul counts every statement, including those inside functions",
     "that are never called; Bun's line records are coarser. Istanbul's is the",
-    "stricter and more honest number, and it is the one gated."
+    "stricter and more honest number, and it is the one gated.",
+    "",
+    "2026-09-09: floors raised after editorHarness landed and sortCommands.ts",
+    "went 0% -> 100%. The harness fakes TextDocument/TextEditor with a real",
+    "edit() that applies its edits, which unlocks the ~200 command files that",
+    "all share that shape."
   ],
   "floor": {
-    "statements": 13.0,
-    "branches": 11.0,
-    "functions": 17.0,
-    "lines": 14.0
+    "statements": 15,
+    "branches": 12.9,
+    "functions": 18.6,
+    "lines": 15.3
   },
   "target": {
-    "statements": 100.0,
-    "branches": 100.0,
-    "functions": 100.0,
-    "lines": 100.0
+    "statements": 100,
+    "branches": 100,
+    "functions": 100,
+    "lines": 100
   },
-  "slackWarning": 3.0
+  "slackWarning": 3
 }

@@ -1,106 +1,224 @@
-import { describe, it, expect } from 'bun:test';
+/**
+ * Covers src/sortCommands.ts end to end -- the largest previously-uncovered
+ * file (114 statements, 0%).
+ *
+ * These are the first tests to drive a real command handler rather than a pure
+ * parser, using the editorHarness fake. `editor.edit()` genuinely applies its
+ * edits, so the assertions read as behaviour ("the section came out sorted")
+ * instead of implementation ("replace was called with this range").
+ */
+import { describe, it, expect, beforeEach } from 'bun:test';
+import * as vscode from 'vscode';
+import { openEditor, deactivate } from './helpers/editorHarness';
+import {
+    onSortItemsAZ,
+    onSortItemsZA,
+    onRenumberItems,
+    onConvertBulletsToNumbered,
+    onConvertNumberedToBullets,
+    renumber,
+} from '../sortCommands';
 
-// ── Pure sorting helpers (mirrored from sortCommands.ts for testing) ──────────
+const mock = vscode as unknown as {
+    __reset(): void;
+    recorded: { info: string[] };
+};
 
-interface ItemLine { lineIndex: number; text: string; sortKey: string; }
+beforeEach(() => {
+    mock.__reset();
+    deactivate();
+});
 
-function parseBulletContent(text: string, prefix: string): string | null {
-    const re    = new RegExp(`^(>{2,}) ${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} (.*)$`);
-    const match = text.match(re);
-    return match ? match[2] : null;
-}
-
-function collectItems(lines: string[], prefix: string): ItemLine[] {
-    return lines.map((text, i) => {
-        const content = parseBulletContent(text, prefix);
-        return content !== null ? { lineIndex: i, text, sortKey: content.toLowerCase() } : null;
-    }).filter(Boolean) as ItemLine[];
-}
-
-function sortAZ(items: ItemLine[]): ItemLine[] {
-    return [...items].sort((a, b) => a.sortKey.localeCompare(b.sortKey));
-}
-
-function sortZA(items: ItemLine[]): ItemLine[] {
-    return [...items].sort((a, b) => b.sortKey.localeCompare(a.sortKey));
-}
-
-function renumber(lines: string[]): string[] {
-    const re       = /^(>{2,}) (\d+)\. (.*)$/;
-    const counters = new Map<string, number>();
-    return lines.map(line => {
-        const match = line.match(re);
-        if (!match) { return line; }
-        const chevrons = match[1];
-        const content  = match[3];
-        const next     = (counters.get(chevrons) ?? 0) + 1;
-        counters.set(chevrons, next);
-        return `${chevrons} ${next}. ${content}`;
+describe('onSortItemsAZ', () => {
+    it('sorts the bullets in the cursor section A to Z', async () => {
+        const h = openEditor(['> Tasks', '>> - cherry', '>> - apple', '>> - banana'], { cursor: 1 });
+        await onSortItemsAZ();
+        expect(h.lines()).toEqual(['> Tasks', '>> - apple', '>> - banana', '>> - cherry']);
     });
-}
 
-// ── Tests ─────────────────────────────────────────────────────────────────────
+    it('sorts case-insensitively', async () => {
+        const h = openEditor(['> Tasks', '>> - Zebra', '>> - apple'], { cursor: 1 });
+        await onSortItemsAZ();
+        expect(h.lines()).toEqual(['> Tasks', '>> - apple', '>> - Zebra']);
+    });
 
-describe('sortAZ', () => {
-    it('sorts items alphabetically ascending', () => {
-        const items = collectItems(['>> - Zebra', '>> - Apple', '>> - Mango'], '-');
-        const sorted = sortAZ(items).map(i => i.text);
-        expect(sorted).toEqual(['>> - Apple', '>> - Mango', '>> - Zebra']);
+    it('leaves a single item alone', async () => {
+        const h = openEditor(['> Tasks', '>> - only'], { cursor: 1 });
+        await onSortItemsAZ();
+        expect(h.edits).toHaveLength(0);
+        expect(h.lines()).toEqual(['> Tasks', '>> - only']);
     });
-    it('is case-insensitive', () => {
-        const items = collectItems(['>> - banana', '>> - Apple', '>> - cherry'], '-');
-        const sorted = sortAZ(items).map(i => i.text);
-        expect(sorted).toEqual(['>> - Apple', '>> - banana', '>> - cherry']);
+
+    it('does nothing when no editor is open', async () => {
+        await onSortItemsAZ();   // deactivate() ran in beforeEach
+        expect(true).toBe(true); // reaching here without throwing is the assertion
     });
-    it('does not mutate the original array', () => {
-        const items  = collectItems(['>> - Zebra', '>> - Apple'], '-');
-        const sorted = sortAZ(items);
-        expect(items[0].text).toBe('>> - Zebra');
-        expect(sorted[0].text).toBe('>> - Apple');
+
+    it('does nothing when the cursor is above any header', async () => {
+        const h = openEditor(['just prose', 'more prose'], { cursor: 0 });
+        await onSortItemsAZ();
+        expect(h.edits).toHaveLength(0);
     });
-    it('handles a single item without error', () => {
-        const items  = collectItems(['>> - Only'], '-');
-        const sorted = sortAZ(items);
-        expect(sorted).toHaveLength(1);
+
+    it('only touches the cursor section, not the one below', async () => {
+        const h = openEditor(
+            ['> One', '>> - b', '>> - a', '> Two', '>> - z', '>> - y'],
+            { cursor: 1 }
+        );
+        await onSortItemsAZ();
+        expect(h.lines()).toEqual(['> One', '>> - a', '>> - b', '> Two', '>> - z', '>> - y']);
     });
-    it('works with a custom prefix', () => {
-        const items  = collectItems(['>> * Zebra', '>> * Apple'], '*');
-        const sorted = sortAZ(items).map(i => i.text);
-        expect(sorted).toEqual(['>> * Apple', '>> * Zebra']);
+
+    it('skips non-bullet lines inside the section when collecting', async () => {
+        const h = openEditor(
+            ['> Tasks', '>> - cherry', 'a prose line', '>> 2. numbered', '>> - apple'],
+            { cursor: 1 }
+        );
+        await onSortItemsAZ();
+        // Only the two bullets move; the prose and numbered lines stay put.
+        expect(h.lines()).toEqual(
+            ['> Tasks', '>> - apple', 'a prose line', '>> 2. numbered', '>> - cherry']
+        );
     });
 });
 
-describe('sortZA', () => {
-    it('sorts items alphabetically descending', () => {
-        const items  = collectItems(['>> - Apple', '>> - Mango', '>> - Zebra'], '-');
-        const sorted = sortZA(items).map(i => i.text);
-        expect(sorted).toEqual(['>> - Zebra', '>> - Mango', '>> - Apple']);
+describe('onSortItemsZA', () => {
+    it('sorts the bullets Z to A', async () => {
+        const h = openEditor(['> Tasks', '>> - apple', '>> - cherry', '>> - banana'], { cursor: 1 });
+        await onSortItemsZA();
+        expect(h.lines()).toEqual(['> Tasks', '>> - cherry', '>> - banana', '>> - apple']);
     });
-    it('is case-insensitive', () => {
-        const items  = collectItems(['>> - apple', '>> - Banana', '>> - Cherry'], '-');
-        const sorted = sortZA(items).map(i => i.text);
-        expect(sorted).toEqual(['>> - Cherry', '>> - Banana', '>> - apple']);
+
+    it('leaves a single item alone', async () => {
+        const h = openEditor(['> Tasks', '>> - only'], { cursor: 1 });
+        await onSortItemsZA();
+        expect(h.edits).toHaveLength(0);
+    });
+
+    it('does nothing without an editor', async () => {
+        await onSortItemsZA();
+        expect(true).toBe(true);
+    });
+
+    it('does nothing without a header', async () => {
+        const h = openEditor(['prose'], { cursor: 0 });
+        await onSortItemsZA();
+        expect(h.edits).toHaveLength(0);
+    });
+});
+
+describe('onRenumberItems', () => {
+    it('resets a broken sequence to 1..n', async () => {
+        const h = openEditor(['> Tasks', '>> 1. a', '>> 5. b', '>> 5. c'], { cursor: 1 });
+        await onRenumberItems();
+        expect(h.lines()).toEqual(['> Tasks', '>> 1. a', '>> 2. b', '>> 3. c']);
+    });
+
+    it('numbers each chevron depth independently', async () => {
+        const h = openEditor(
+            ['> Tasks', '>> 3. top', '>>> 7. nested', '>>> 9. nested two', '>> 1. top two'],
+            { cursor: 1 }
+        );
+        await onRenumberItems();
+        expect(h.lines()).toEqual(
+            ['> Tasks', '>> 1. top', '>>> 1. nested', '>>> 2. nested two', '>> 2. top two']
+        );
+    });
+
+    it('leaves non-numbered lines untouched', async () => {
+        const h = openEditor(['> Tasks', '>> 4. a', '>> - bullet', 'prose'], { cursor: 1 });
+        await onRenumberItems();
+        expect(h.lines()).toEqual(['> Tasks', '>> 1. a', '>> - bullet', 'prose']);
+    });
+
+    it('does nothing without an editor', async () => {
+        await onRenumberItems();
+        expect(true).toBe(true);
+    });
+
+    it('does nothing without a header', async () => {
+        const h = openEditor(['prose'], { cursor: 0 });
+        await onRenumberItems();
+        expect(h.edits).toHaveLength(0);
+    });
+});
+
+describe('onConvertBulletsToNumbered', () => {
+    it('converts bullets and keeps their order', async () => {
+        const h = openEditor(['> Tasks', '>> - first', '>> - second'], { cursor: 1 });
+        await onConvertBulletsToNumbered();
+        expect(h.lines()).toEqual(['> Tasks', '>> 1. first', '>> 2. second']);
+    });
+
+    it('continues from the highest existing number at that depth', async () => {
+        const h = openEditor(['> Tasks', '>> 4. existing', '>> - new one'], { cursor: 1 });
+        await onConvertBulletsToNumbered();
+        expect(h.lines()).toEqual(['> Tasks', '>> 4. existing', '>> 5. new one']);
+    });
+
+    it('tells the user when there is nothing to convert', async () => {
+        openEditor(['> Tasks', '>> 1. already numbered'], { cursor: 1 });
+        await onConvertBulletsToNumbered();
+        expect(mock.recorded.info).toContain('CL: No bullet items found to convert');
+    });
+
+    it('tells the user when the cursor is not in a section', async () => {
+        openEditor(['prose only'], { cursor: 0 });
+        await onConvertBulletsToNumbered();
+        expect(mock.recorded.info).toContain('CL: No section found at cursor');
+    });
+
+    it('ignores non-markdown documents', async () => {
+        const h = openEditor(['> Tasks', '>> - a'], { cursor: 1, languageId: 'plaintext' });
+        await onConvertBulletsToNumbered();
+        expect(h.edits).toHaveLength(0);
+    });
+
+    it('does nothing without an editor', async () => {
+        await onConvertBulletsToNumbered();
+        expect(mock.recorded.info).toHaveLength(0);
+    });
+});
+
+describe('onConvertNumberedToBullets', () => {
+    it('converts numbered items to bullets', async () => {
+        const h = openEditor(['> Tasks', '>> 1. first', '>> 2. second'], { cursor: 1 });
+        await onConvertNumberedToBullets();
+        expect(h.lines()).toEqual(['> Tasks', '>> - first', '>> - second']);
+    });
+
+    it('tells the user when there is nothing to convert', async () => {
+        openEditor(['> Tasks', '>> - already a bullet'], { cursor: 1 });
+        await onConvertNumberedToBullets();
+        expect(mock.recorded.info).toContain('CL: No numbered items found to convert');
+    });
+
+    it('tells the user when the cursor is not in a section', async () => {
+        openEditor(['prose only'], { cursor: 0 });
+        await onConvertNumberedToBullets();
+        expect(mock.recorded.info).toContain('CL: No section found at cursor');
+    });
+
+    it('ignores non-markdown documents', async () => {
+        const h = openEditor(['> Tasks', '>> 1. a'], { cursor: 1, languageId: 'plaintext' });
+        await onConvertNumberedToBullets();
+        expect(h.edits).toHaveLength(0);
+    });
+
+    it('does nothing without an editor', async () => {
+        await onConvertNumberedToBullets();
+        expect(mock.recorded.info).toHaveLength(0);
     });
 });
 
 describe('renumber', () => {
-    it('resets numbers from 1', () => {
-        const result = renumber(['>> 5. first', '>> 6. second', '>> 7. third']);
-        expect(result).toEqual(['>> 1. first', '>> 2. second', '>> 3. third']);
+    it('renumbers per depth and passes other lines through', () => {
+        expect(renumber(['>> 3. a', '>>> 9. n', '>> 7. b', 'prose'])).toEqual(
+            ['>> 1. a', '>>> 1. n', '>> 2. b', 'prose']
+        );
     });
-    it('tracks depth independently', () => {
-        const result = renumber(['>> 3. top', '>>> 5. nested', '>>> 6. nested2', '>> 4. top2']);
-        expect(result).toEqual(['>> 1. top', '>>> 1. nested', '>>> 2. nested2', '>> 2. top2']);
-    });
-    it('leaves non-numbered lines untouched', () => {
-        const result = renumber(['>> - bullet', '>> 3. numbered', '>> - bullet2']);
-        expect(result).toEqual(['>> - bullet', '>> 1. numbered', '>> - bullet2']);
-    });
-    it('handles already correct numbering', () => {
-        const result = renumber(['>> 1. first', '>> 2. second']);
-        expect(result).toEqual(['>> 1. first', '>> 2. second']);
-    });
-    it('handles empty input', () => {
+
+    it('returns an empty list unchanged', () => {
         expect(renumber([])).toEqual([]);
     });
 });
