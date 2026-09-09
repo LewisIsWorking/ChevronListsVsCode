@@ -26,13 +26,18 @@
     "2026-09-09: floors raised after editorHarness landed and sortCommands.ts",
     "went 0% -> 100%. The harness fakes TextDocument/TextEditor with a real",
     "edit() that applies its edits, which unlocks the ~200 command files that",
-    "all share that shape."
+    "all share that shape.",
+    "",
+    "2026-09-09 (2): the five modules whose tests MIRRORED their logic rather",
+    "than importing it are now all at 100% - sortCommands, outlineProvider,",
+    "searchCommands, exportCommands, semanticProvider. Six more test files still",
+    "mirror; see the PR for the list."
   ],
   "floor": {
-    "statements": 15,
-    "branches": 12.9,
-    "functions": 18.6,
-    "lines": 15.3
+    "statements": 17.4,
+    "branches": 14.6,
+    "functions": 20.4,
+    "lines": 17.8
   },
   "target": {
     "statements": 100,

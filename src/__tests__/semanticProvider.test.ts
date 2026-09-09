@@ -1,163 +1,146 @@
-import { describe, it, expect } from 'bun:test';
-import { isHeader, parseBullet, parseNumbered, extractLabels, LABEL_RE } from '../patterns';
+/**
+ * Covers src/semanticProvider.ts.
+ *
+ * The previous version of this file rebuilt the tokenising logic locally and
+ * tested that copy, leaving the real provider at 6%. These tests run the actual
+ * provider and decode what it emitted.
+ *
+ * The mock's SemanticTokensBuilder stores what was pushed rather than the
+ * relative-delta encoding real VS Code uses, so the decoded values below are
+ * absolute (line, char) -- which is what the assertions want anyway.
+ */
+import { describe, it, expect, beforeEach } from 'bun:test';
+import * as vscode from 'vscode';
+import { makeEditor } from './helpers/editorHarness';
+import { ChevronSemanticTokensProvider, buildLegend } from '../semanticProvider';
 
-// ── Pure token-range logic mirrored from semanticProvider.ts ─────────────────
+const mock = vscode as unknown as { __reset(): void };
 
-interface TokenRange { line: number; startChar: number; length: number; type: string; }
+const TYPES = ['chevronHeader', 'chevronPrefix', 'chevronNumber', 'chevronContent', 'chevronLabel'];
 
-/** Mirrors the segmented pushContentWithLabels logic from semanticProvider.ts */
-function pushContentWithLabels(line: number, contentStart: number, content: string, out: TokenRange[]): void {
-    let cursor = 0;
-    for (const match of content.matchAll(LABEL_RE)) {
-        const labelStart = match.index!;
-        if (labelStart > cursor) {
-            out.push({ line, startChar: contentStart + cursor, length: labelStart - cursor, type: 'chevronContent' });
-        }
-        out.push({ line, startChar: contentStart + labelStart, length: match[0].length, type: 'chevronLabel' });
-        cursor = labelStart + match[0].length;
+interface Token { line: number; char: number; len: number; type: string; }
+
+/** Runs the real provider and decodes its token stream. */
+function tokens(lines: string[]): Token[] {
+    const { document } = makeEditor(lines);
+    const built = new ChevronSemanticTokensProvider(buildLegend())
+        .provideDocumentSemanticTokens(document as never);
+    const data = (built as unknown as { data: Uint32Array }).data;
+    const out: Token[] = [];
+    for (let i = 0; i < data.length; i += 5) {
+        out.push({ line: data[i], char: data[i + 1], len: data[i + 2], type: TYPES[data[i + 3]] });
     }
-    if (cursor < content.length) {
-        out.push({ line, startChar: contentStart + cursor, length: content.length - cursor, type: 'chevronContent' });
-    }
+    return out;
 }
 
-function tokeniseLine(lineIndex: number, text: string, prefix: string): TokenRange[] {
-    const tokens: TokenRange[] = [];
+const typesOn = (lines: string[]) => tokens(lines).map((t) => t.type);
 
-    if (isHeader(text)) {
-        tokens.push({ line: lineIndex, startChar: 0, length: 2, type: 'chevronPrefix' });
-        if (text.length > 2) {
-            tokens.push({ line: lineIndex, startChar: 2, length: text.length - 2, type: 'chevronHeader' });
-        }
-        return tokens;
-    }
+beforeEach(() => mock.__reset());
 
-    const bullet = parseBullet(text, prefix);
-    if (bullet) {
-        const prefixLen = bullet.chevrons.length + 1 + prefix.length + 1;
-        tokens.push({ line: lineIndex, startChar: 0, length: prefixLen, type: 'chevronPrefix' });
-        if (bullet.content.length > 0) { pushContentWithLabels(lineIndex, prefixLen, bullet.content, tokens); }
-        return tokens;
-    }
-
-    const numbered = parseNumbered(text);
-    if (numbered) {
-        const chevronLen   = numbered.chevrons.length + 1;
-        const numStr       = String(numbered.num);
-        const dotAndSpace  = 2;
-        const contentStart = chevronLen + numStr.length + dotAndSpace;
-        tokens.push({ line: lineIndex, startChar: 0, length: chevronLen, type: 'chevronPrefix' });
-        tokens.push({ line: lineIndex, startChar: chevronLen, length: numStr.length, type: 'chevronNumber' });
-        tokens.push({ line: lineIndex, startChar: chevronLen + numStr.length, length: dotAndSpace, type: 'chevronPrefix' });
-        if (numbered.content.length > 0) { pushContentWithLabels(lineIndex, contentStart, numbered.content, tokens); }
-        return tokens;
-    }
-
-    return tokens;
-}
-
-// ── Tests ─────────────────────────────────────────────────────────────────────
-
-describe('tokeniseLine — header', () => {
-    it('produces prefix and header tokens', () => {
-        const tokens = tokeniseLine(0, '> My Header', '-');
-        expect(tokens).toHaveLength(2);
-        expect(tokens[0]).toMatchObject({ startChar: 0, length: 2, type: 'chevronPrefix' });
-        expect(tokens[1]).toMatchObject({ startChar: 2, length: 9, type: 'chevronHeader' });
+describe('buildLegend', () => {
+    it('lists the five contributed token types in order', () => {
+        expect(buildLegend().tokenTypes).toEqual(TYPES);
     });
-    it('returns no tokens for a bare "> " with no content', () => {
-        // "> " alone doesn't match HEADER_RE (requires a non-> char after "> ")
-        const tokens = tokeniseLine(0, '> ', '-');
-        expect(tokens).toHaveLength(0);
+
+    it('contributes no modifiers', () => {
+        expect(buildLegend().tokenModifiers).toEqual([]);
     });
 });
 
-describe('tokeniseLine — bullet item', () => {
-    it('produces prefix and content tokens', () => {
-        const tokens = tokeniseLine(1, '>> - hello', '-');
-        expect(tokens).toHaveLength(2);
-        expect(tokens[0]).toMatchObject({ startChar: 0, length: 5, type: 'chevronPrefix' }); // ">> - "
-        expect(tokens[1]).toMatchObject({ startChar: 5, length: 5, type: 'chevronContent' }); // "hello"
+describe('ChevronSemanticTokensProvider', () => {
+    it('emits nothing for a document with no chevron lines', () => {
+        expect(tokens(['just prose', ''])).toHaveLength(0);
     });
-    it('produces only prefix token for empty bullet', () => {
-        const tokens = tokeniseLine(0, '>> - ', '-');
-        expect(tokens).toHaveLength(1);
-        expect(tokens[0].type).toBe('chevronPrefix');
-    });
-    it('handles deeper nesting correctly', () => {
-        const tokens = tokeniseLine(0, '>>> - deep', '-');
-        expect(tokens[0].length).toBe(6); // ">>> - "
-        expect(tokens[1].startChar).toBe(6);
-    });
-    it('works with custom prefix', () => {
-        const tokens = tokeniseLine(0, '>> * item', '*');
-        expect(tokens[0].length).toBe(5); // ">> * "
-    });
-});
 
-describe('tokeniseLine — numbered item', () => {
-    it('produces prefix, number, separator and content tokens', () => {
-        const tokens = tokeniseLine(0, '>> 1. first', '-');
-        expect(tokens).toHaveLength(4);
-        expect(tokens[0]).toMatchObject({ startChar: 0, length: 3, type: 'chevronPrefix' }); // ">> "
-        expect(tokens[1]).toMatchObject({ startChar: 3, length: 1, type: 'chevronNumber' }); // "1"
-        expect(tokens[2]).toMatchObject({ startChar: 4, length: 2, type: 'chevronPrefix' }); // ". "
-        expect(tokens[3]).toMatchObject({ startChar: 6, length: 5, type: 'chevronContent' }); // "first"
+    it('splits a header into marker and text', () => {
+        const t = tokens(['> Tasks']);
+        expect(t).toEqual([
+            { line: 0, char: 0, len: 2, type: 'chevronPrefix' },
+            { line: 0, char: 2, len: 5, type: 'chevronHeader' },
+        ]);
     });
-    it('handles multi-digit numbers correctly', () => {
-        const tokens = tokeniseLine(0, '>> 42. item', '-');
-        expect(tokens[1]).toMatchObject({ startChar: 3, length: 2, type: 'chevronNumber' }); // "42"
-        expect(tokens[2]).toMatchObject({ startChar: 5, length: 2, type: 'chevronPrefix' }); // ". "
-        expect(tokens[3].startChar).toBe(7);
-    });
-    it('returns no content token for empty numbered item', () => {
-        const tokens = tokeniseLine(0, '>> 1. ', '-');
-        expect(tokens.find(t => t.type === 'chevronContent')).toBeUndefined();
-    });
-});
 
-describe('tokeniseLine — non-chevron lines', () => {
-    it('returns no tokens for plain text', () => {
-        expect(tokeniseLine(0, 'just text', '-')).toHaveLength(0);
+    it('splits a bullet into chevrons, marker and content', () => {
+        const t = tokens(['>> - milk']);
+        expect(t).toEqual([
+            { line: 0, char: 0, len: 3, type: 'chevronPrefix' },   // ">> "
+            { line: 0, char: 3, len: 2, type: 'chevronNumber' },   // "- "
+            { line: 0, char: 5, len: 4, type: 'chevronContent' },  // "milk"
+        ]);
     });
-    it('returns no tokens for an empty line', () => {
-        expect(tokeniseLine(0, '', '-')).toHaveLength(0);
-    });
-    it('returns no tokens for a markdown heading', () => {
-        expect(tokeniseLine(0, '# Heading', '-')).toHaveLength(0);
-    });
-});
 
-describe('tokeniseLine — chevronLabel tokens', () => {
-    it('produces a chevronLabel token for [LABEL] in a bullet item', () => {
-        const tokens = tokeniseLine(0, '>> - [ACTION] do thing', '-');
-        expect(tokens.some(t => t.type === 'chevronLabel')).toBe(true);
+    it('accounts for depth in a nested bullet', () => {
+        const t = tokens(['>>> - milk']);
+        expect(t[0]).toEqual({ line: 0, char: 0, len: 4, type: 'chevronPrefix' });
+        expect(t[2]).toEqual({ line: 0, char: 6, len: 4, type: 'chevronContent' });
     });
-    it('produces a chevronLabel token for [LABEL] in a numbered item', () => {
-        const tokens = tokeniseLine(0, '>> 1. [NOTE] check this', '-');
-        expect(tokens.some(t => t.type === 'chevronLabel')).toBe(true);
+
+    it('emits no content token for an empty bullet', () => {
+        expect(typesOn(['>> - '])).toEqual(['chevronPrefix', 'chevronNumber']);
     });
-    it('does not produce chevronLabel for items with no brackets', () => {
-        const tokens = tokeniseLine(0, '>> - plain item', '-');
-        expect(tokens.some(t => t.type === 'chevronLabel')).toBe(false);
+
+    it('splits a numbered item into chevrons, number, dot and content', () => {
+        const t = tokens(['>> 7. milk']);
+        expect(t).toEqual([
+            { line: 0, char: 0, len: 3, type: 'chevronPrefix' },   // ">> "
+            { line: 0, char: 3, len: 1, type: 'chevronNumber' },   // "7"
+            { line: 0, char: 4, len: 2, type: 'chevronPrefix' },   // ". "
+            { line: 0, char: 6, len: 4, type: 'chevronContent' },  // "milk"
+        ]);
     });
-    it('splits content around the label — no overlapping tokens', () => {
-        // ">> - [ACTION] do thing" → prefix | [ACTION] (label) | " do thing" (content)
-        const tokens = tokeniseLine(0, '>> - [ACTION] do thing', '-');
-        const label   = tokens.find(t => t.type === 'chevronLabel')!;
-        const content = tokens.filter(t => t.type === 'chevronContent');
-        // No content token should overlap with the label token
-        for (const c of content) {
-            const cEnd = c.startChar + c.length;
-            const lEnd = label.startChar + label.length;
-            expect(cEnd <= label.startChar || c.startChar >= lEnd).toBe(true);
-        }
+
+    it('handles a multi-digit number', () => {
+        const t = tokens(['>> 12. milk']);
+        expect(t[1]).toEqual({ line: 0, char: 3, len: 2, type: 'chevronNumber' });
+        expect(t[3]).toEqual({ line: 0, char: 7, len: 4, type: 'chevronContent' });
     });
-    it('emits correct character positions for a label', () => {
-        // ">> - [ACT] done" — prefix is 5 chars (">> - "), label starts at 5
-        const tokens = tokeniseLine(0, '>> - [ACT] done', '-');
-        const label  = tokens.find(t => t.type === 'chevronLabel')!;
-        expect(label.startChar).toBe(5);   // right after ">> - "
-        expect(label.length).toBe(5);      // "[ACT]"
+
+    it('emits no content token for an empty numbered item', () => {
+        expect(typesOn(['>> 1. '])).toEqual(['chevronPrefix', 'chevronNumber', 'chevronPrefix']);
+    });
+
+    it('carves a label out of the surrounding content', () => {
+        // "before [LABEL] after" -> content, label, content
+        expect(typesOn(['>> - before [LABEL] after']).slice(2)).toEqual(
+            ['chevronContent', 'chevronLabel', 'chevronContent']
+        );
+    });
+
+    it('emits no leading content token when the label starts the content', () => {
+        expect(typesOn(['>> - [LABEL] after']).slice(2)).toEqual(
+            ['chevronLabel', 'chevronContent']
+        );
+    });
+
+    it('emits no trailing content token when the label ends the content', () => {
+        expect(typesOn(['>> - before [LABEL]']).slice(2)).toEqual(
+            ['chevronContent', 'chevronLabel']
+        );
+    });
+
+    it('handles a content region that is only a label', () => {
+        expect(typesOn(['>> - [LABEL]']).slice(2)).toEqual(['chevronLabel']);
+    });
+
+    it('handles two labels in one item', () => {
+        expect(typesOn(['>> - a [ONE] b [TWO] c']).slice(2)).toEqual(
+            ['chevronContent', 'chevronLabel', 'chevronContent', 'chevronLabel', 'chevronContent']
+        );
+    });
+
+    it('tokenises every line of a mixed document', () => {
+        const t = tokens(['> Tasks', '>> - milk', 'prose', '>> 2. eggs']);
+        expect(t.map((x) => x.line)).toEqual([0, 0, 1, 1, 1, 3, 3, 3, 3]);
+    });
+
+    it('skips a zero-length token rather than emitting it', () => {
+        // `push` guards on length > 0. Nothing reachable through a document can
+        // produce a zero-length span, so drive the guard directly.
+        const provider = new ChevronSemanticTokensProvider(buildLegend());
+        const builder = new vscode.SemanticTokensBuilder(buildLegend());
+        (provider as unknown as {
+            push(b: unknown, l: number, s: number, n: number, t: string): void;
+        }).push(builder, 0, 0, 0, 'chevronContent');
+        expect((builder.build() as unknown as { data: Uint32Array }).data).toHaveLength(0);
     });
 });
