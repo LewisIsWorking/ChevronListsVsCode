@@ -31,13 +31,20 @@
     "2026-09-09 (2): the five modules whose tests MIRRORED their logic rather",
     "than importing it are now all at 100% - sortCommands, outlineProvider,",
     "searchCommands, exportCommands, semanticProvider. Six more test files still",
-    "mirror; see the PR for the list."
+    "mirror; see the PR for the list.",
+    "",
+    "2026-09-10: tabHandler.ts 0.9% -> 100% statements / 94.5% branches.",
+    "Its three uncovered branches are TYPE-NARROWING guards whose false path is",
+    "unreachable at runtime: getChevronLines only returns lines that already",
+    "parsed as bullet or numbered, so if(bullet) and if(chevrons) can never be",
+    "false - but TypeScript needs them to narrow string|undefined. First real",
+    "instance of literal-100% meeting an unreachable branch; flagged, not excluded."
   ],
   "floor": {
-    "statements": 17.4,
-    "branches": 14.6,
-    "functions": 20.4,
-    "lines": 17.8
+    "statements": 18.6,
+    "branches": 15.6,
+    "functions": 21.7,
+    "lines": 19
   },
   "target": {
     "statements": 100,

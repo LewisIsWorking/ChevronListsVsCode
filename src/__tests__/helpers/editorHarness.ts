@@ -41,6 +41,10 @@ export interface Harness {
     revealed: { start: [number, number]; end: [number, number] }[];
     /** Decoration calls, for decoration modules. */
     decorations: { type: unknown; count: number }[];
+    /** Snippet bodies passed to insertSnippet, for the snippet-expansion paths. */
+    snippets: string[];
+    /** Replaces the cursor set, for multi-cursor and range-selection commands. */
+    setSelections(ranges: [number, number][]): void;
 }
 
 /** Builds a document whose content is `lines`, and an editor over it. */
@@ -62,6 +66,7 @@ export function makeEditor(
     const edits: RecordedEdit[] = [];
     const revealed: Harness['revealed'] = [];
     const decorations: Harness['decorations'] = [];
+    const snippets: string[] = [];
 
     const lineAt = (lineOrPos: number | { line: number }) => {
         const i = typeof lineOrPos === 'number' ? lineOrPos : lineOrPos.line;
@@ -168,7 +173,10 @@ export function makeEditor(
         setDecorations(type: unknown, ranges: unknown[]) {
             decorations.push({ type, count: Array.isArray(ranges) ? ranges.length : 0 });
         },
-        insertSnippet: () => Promise.resolve(true),
+        insertSnippet: (snippet: { value: string }) => {
+            snippets.push(snippet?.value ?? String(snippet));
+            return Promise.resolve(true);
+        },
     };
 
     editor.selections = [editor.selection];
@@ -181,6 +189,13 @@ export function makeEditor(
         edits,
         revealed,
         decorations,
+        snippets,
+        // Each entry is [startLine, endLine]; a single-line pair is a plain cursor.
+        setSelections(ranges: [number, number][]) {
+            editor.selections = ranges.map(([a, b]) =>
+                new vscode.Selection(new vscode.Position(a, 0), new vscode.Position(b, 0)));
+            editor.selection = editor.selections[0] ?? editor.selection;
+        },
     };
 }
 

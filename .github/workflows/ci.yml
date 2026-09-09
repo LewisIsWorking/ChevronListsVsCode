@@ -22,7 +22,7 @@ jobs:
         run: bun install
 
       - name: Run tests (istanbul-instrumented)
-        run: bun test src/__tests__
+        run: bun test src/__tests__ --timeout 60000
 
       # Enforces the 100%-coverage policy (statements, branches, functions,
       # lines) as a ratchet: fails if any metric drops below the floor in

@@ -269,8 +269,15 @@ const mods: Record<string, () => Promise<unknown>> = {
   'wrapItemCommands': () => import('../wrapItemCommands'),
 };
 
+// Each import pulls in the whole transitive graph, instrumented by istanbul on
+// load. commandRegistrations* reach ~200 modules apiece and can exceed Bun's
+// 5000ms default on a loaded machine, which showed up as an intermittent
+// 3-4 test failure rather than anything real. Given a generous ceiling: this
+// asserts a module LOADS, so a slow load is still a pass.
+const LOAD_TIMEOUT_MS = 60_000;
+
 describe('every module imports', () => {
   for (const [name, load] of Object.entries(mods)) {
-    it(name, async () => { await load(); expect(true).toBe(true); });
+    it(name, async () => { await load(); expect(true).toBe(true); }, LOAD_TIMEOUT_MS);
   }
 });
