@@ -41,10 +41,10 @@
     "instance of literal-100% meeting an unreachable branch; flagged, not excluded."
   ],
   "floor": {
-    "statements": 19.7,
-    "branches": 16.4,
-    "functions": 22.8,
-    "lines": 20.3
+    "statements": 21.5,
+    "branches": 17.5,
+    "functions": 24.7,
+    "lines": 22.1
   },
   "target": {
     "statements": 100,
