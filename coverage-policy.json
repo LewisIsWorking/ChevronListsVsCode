@@ -38,13 +38,19 @@
     "unreachable at runtime: getChevronLines only returns lines that already",
     "parsed as bullet or numbered, so if(bullet) and if(chevrons) can never be",
     "false - but TypeScript needs them to narrow string|undefined. First real",
-    "instance of literal-100% meeting an unreachable branch; flagged, not excluded."
+    "instance of literal-100% meeting an unreachable branch; flagged, not excluded.",
+    "",
+    "2026-09-10 (2): second instance of the unreachable-guard pattern.",
+    "heatmapCommands.showHeatmap re-reads activeTextEditor and guards on it,",
+    "but both callers already checked, so the guard can never be true - and",
+    "TypeScript needs it to narrow TextEditor|undefined. Same shape as the",
+    "tabHandler ones. Two files now sit just under 100% for this reason alone."
   ],
   "floor": {
-    "statements": 21.5,
-    "branches": 17.5,
-    "functions": 24.7,
-    "lines": 22.1
+    "statements": 22.7,
+    "branches": 18.9,
+    "functions": 26.2,
+    "lines": 23.3
   },
   "target": {
     "statements": 100,
