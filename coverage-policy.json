@@ -47,10 +47,10 @@
     "tabHandler ones. Two files now sit just under 100% for this reason alone."
   ],
   "floor": {
-    "statements": 22.7,
-    "branches": 18.9,
-    "functions": 26.2,
-    "lines": 23.3
+    "statements": 24.4,
+    "branches": 20.4,
+    "functions": 27.5,
+    "lines": 24.9
   },
   "target": {
     "statements": 100,
