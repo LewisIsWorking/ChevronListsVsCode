@@ -50,13 +50,21 @@
     "line 60 is  (bullet?.chevrons ?? numbered?.chevrons ?? '>>')  - the >> default",
     "can never be taken: the function has already returned unless content parsed,",
     "and content only exists when bullet or numbered matched. Same class as the",
-    "if-guards in tabHandler and heatmapCommands, expressed as a ?? default."
+    "if-guards in tabHandler and heatmapCommands, expressed as a ?? default.",
+    "",
+    "2026-09-14 (2): fourth unreachable instance - recurrenceCommands L84, the same",
+    "?? '>>' default as previewItemCommands. Four files now sit just under 100% purely",
+    "for this pattern.",
+    "",
+    "KNOWN BUGS are recorded as it.failing tests asserting CORRECT behaviour (see",
+    "recurrenceCommands.test.ts). They pass while the bug exists and Bun fails them",
+    "the moment it is fixed. They are covered code, not exclusions."
   ],
   "floor": {
-    "statements": 27.4,
-    "branches": 24.1,
-    "functions": 30,
-    "lines": 27.7
+    "statements": 29.7,
+    "branches": 26.4,
+    "functions": 31.7,
+    "lines": 30
   },
   "target": {
     "statements": 100,
