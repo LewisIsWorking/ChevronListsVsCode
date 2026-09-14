@@ -44,13 +44,19 @@
     "heatmapCommands.showHeatmap re-reads activeTextEditor and guards on it,",
     "but both callers already checked, so the guard can never be true - and",
     "TypeScript needs it to narrow TextEditor|undefined. Same shape as the",
-    "tabHandler ones. Two files now sit just under 100% for this reason alone."
+    "tabHandler ones. Two files now sit just under 100% for this reason alone.",
+    "",
+    "2026-09-14: third unreachable instance, a different shape. previewItemCommands",
+    "line 60 is  (bullet?.chevrons ?? numbered?.chevrons ?? '>>')  - the >> default",
+    "can never be taken: the function has already returned unless content parsed,",
+    "and content only exists when bullet or numbered matched. Same class as the",
+    "if-guards in tabHandler and heatmapCommands, expressed as a ?? default."
   ],
   "floor": {
-    "statements": 24.4,
-    "branches": 20.4,
-    "functions": 27.5,
-    "lines": 24.9
+    "statements": 26.3,
+    "branches": 22.8,
+    "functions": 28.9,
+    "lines": 26.6
   },
   "target": {
     "statements": 100,
