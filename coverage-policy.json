@@ -53,10 +53,10 @@
     "if-guards in tabHandler and heatmapCommands, expressed as a ?? default."
   ],
   "floor": {
-    "statements": 26.3,
-    "branches": 22.8,
-    "functions": 28.9,
-    "lines": 26.6
+    "statements": 27.4,
+    "branches": 24.1,
+    "functions": 30,
+    "lines": 27.7
   },
   "target": {
     "statements": 100,

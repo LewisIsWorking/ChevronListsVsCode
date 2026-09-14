@@ -284,6 +284,10 @@ export const recorded = {
     error:    [] as string[],
     commands: [] as { command: string; args: unknown[] }[],
     clipboard: '',
+    /** Every showQuickPick call: what was offered and with which options. */
+    quickPickCalls: [] as { items: unknown; options: unknown }[],
+    /** Every showInputBox call's options. */
+    inputBoxCalls: [] as unknown[],
 };
 
 /** Queued answers for the next prompt calls. Pop order is FIFO. */
@@ -298,6 +302,8 @@ export function __reset(): void {
     recorded.info.length = 0;
     recorded.warning.length = 0;
     recorded.error.length = 0;
+    recorded.quickPickCalls.length = 0;
+    recorded.inputBoxCalls.length = 0;
     recorded.commands.length = 0;
     recorded.clipboard = '';
     queued.quickPick.length = 0;
@@ -360,8 +366,14 @@ export const window = {
 
     // Prompts answer from `queued`; an empty queue means the user cancelled,
     // which is the branch most command code forgets to handle.
-    showQuickPick: (_items?: unknown, _opts?: unknown) => Promise.resolve(queued.quickPick.shift()),
-    showInputBox: (_opts?: unknown) => Promise.resolve(queued.inputBox.shift()),
+    showQuickPick: (items?: unknown, options?: unknown) => {
+        recorded.quickPickCalls.push({ items, options });
+        return Promise.resolve(queued.quickPick.shift());
+    },
+    showInputBox: (options?: unknown) => {
+        recorded.inputBoxCalls.push(options);
+        return Promise.resolve(queued.inputBox.shift());
+    },
     showSaveDialog: (_opts?: unknown) => Promise.resolve(queued.saveDialog.shift()),
     showOpenDialog: (_opts?: unknown) => Promise.resolve(undefined),
 
