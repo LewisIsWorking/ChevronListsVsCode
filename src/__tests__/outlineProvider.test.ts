@@ -1,114 +1,96 @@
-import { describe, it, expect } from 'bun:test';
-import { isHeader, parseBullet, parseNumbered } from '../patterns';
-import { getSectionRange } from '../documentUtils';
-import type { LineReader } from '../types';
+/**
+ * Covers src/outlineProvider.ts.
+ *
+ * The previous version of this file rebuilt the outline logic locally --
+ * "Pure outline-building logic mirrored from outlineProvider.ts" -- and tested
+ * that copy, so ChevronOutlineProvider itself was never executed and the module
+ * sat at 0%. These tests drive the real provider through the editor harness.
+ */
+import { describe, it, expect, beforeEach } from 'bun:test';
+import * as vscode from 'vscode';
+import { makeEditor } from './helpers/editorHarness';
+import { ChevronOutlineProvider } from '../outlineProvider';
 
-// ── Pure outline-building logic mirrored from outlineProvider.ts ─────────────
+const mock = vscode as unknown as { __reset(): void };
 
-interface SymbolChild  { name: string; kind: 'bullet' | 'numbered'; }
-interface OutlineSymbol { name: string; detail: string; children: SymbolChild[]; startLine: number; }
-
-function makeDoc(lines: string[]): LineReader {
-    return { lineCount: lines.length, lineAt: (i: number) => ({ text: lines[i] }) };
+/** Runs the real provider over `lines`. */
+function outline(lines: string[]) {
+    const { document } = makeEditor(lines);
+    return new ChevronOutlineProvider().provideDocumentSymbols(document as never);
 }
 
-function buildOutline(doc: LineReader, prefix: string): OutlineSymbol[] {
-    const symbols: OutlineSymbol[] = [];
-    for (let i = 0; i < doc.lineCount; i++) {
-        const text = doc.lineAt(i).text;
-        if (!isHeader(text)) { continue; }
-        const headerName   = text.replace(/^> /, '');
-        const [start, end] = getSectionRange(doc, i);
-        let itemCount      = 0;
-        const children: SymbolChild[] = [];
-        for (let j = start + 1; j <= end; j++) {
-            const line    = doc.lineAt(j).text;
-            const bullet  = parseBullet(line, prefix);
-            const numbered = parseNumbered(line);
-            if (bullet && bullet.content) {
-                itemCount++;
-                children.push({ name: bullet.content, kind: 'bullet' });
-            } else if (numbered && numbered.content) {
-                itemCount++;
-                children.push({ name: `${numbered.num}. ${numbered.content}`, kind: 'numbered' });
-            }
-        }
-        symbols.push({
-            name:      headerName,
-            detail:    itemCount === 1 ? '1 item' : `${itemCount} items`,
-            children,
-            startLine: i,
-        });
-    }
-    return symbols;
-}
+beforeEach(() => mock.__reset());
 
-// ── Tests ─────────────────────────────────────────────────────────────────────
-
-describe('buildOutline', () => {
-    it('returns empty array for a file with no headers', () => {
-        const doc = makeDoc(['>> - item', 'plain text']);
-        expect(buildOutline(doc, '-')).toHaveLength(0);
+describe('ChevronOutlineProvider', () => {
+    it('returns nothing for a document with no headers', () => {
+        expect(outline(['just prose', '>> - an orphan item'])).toHaveLength(0);
     });
 
-    it('creates one symbol per header', () => {
-        const doc = makeDoc(['> Alpha', '>> - a', '> Beta', '>> - b']);
-        const symbols = buildOutline(doc, '-');
-        expect(symbols).toHaveLength(2);
-        expect(symbols[0].name).toBe('Alpha');
-        expect(symbols[1].name).toBe('Beta');
+    it('emits one symbol per header, named without the marker', () => {
+        const symbols = outline(['> First', '> Second']);
+        expect(symbols.map((s) => s.name)).toEqual(['First', 'Second']);
     });
 
-    it('strips the > prefix from header name', () => {
-        const doc = makeDoc(['> My Section']);
-        expect(buildOutline(doc, '-')[0].name).toBe('My Section');
+    it('labels the item count, pluralised', () => {
+        const two = outline(['> Tasks', '>> - a', '>> - b']);
+        expect(two[0].detail).toBe('2 items');
     });
 
-    it('shows correct item count in detail', () => {
-        const doc = makeDoc(['> Header', '>> - one', '>> - two', '>> - three']);
-        expect(buildOutline(doc, '-')[0].detail).toBe('3 items');
+    it('uses the singular for exactly one item', () => {
+        const one = outline(['> Tasks', '>> - only']);
+        expect(one[0].detail).toBe('1 item');
     });
 
-    it('uses singular "1 item" for a single item', () => {
-        const doc = makeDoc(['> Header', '>> - only']);
-        expect(buildOutline(doc, '-')[0].detail).toBe('1 item');
+    it('reports zero items for an empty section', () => {
+        const none = outline(['> Empty', 'prose, not an item']);
+        expect(none[0].detail).toBe('0 items');
     });
 
-    it('shows "0 items" for an empty section', () => {
-        const doc = makeDoc(['> Header']);
-        expect(buildOutline(doc, '-')[0].detail).toBe('0 items');
+    it('adds a child per bullet, carrying the content as the name', () => {
+        const [section] = outline(['> Tasks', '>> - write tests', '>> - ship it']);
+        expect(section.children.map((c) => c.name)).toEqual(['write tests', 'ship it']);
+        expect(section.children.every((c) => c.kind === vscode.SymbolKind.String)).toBe(true);
     });
 
-    it('adds bullet children with correct names', () => {
-        const doc = makeDoc(['> Header', '>> - Alpha', '>> - Beta']);
-        const children = buildOutline(doc, '-')[0].children;
-        expect(children).toHaveLength(2);
-        expect(children[0]).toMatchObject({ name: 'Alpha', kind: 'bullet' });
-        expect(children[1]).toMatchObject({ name: 'Beta',  kind: 'bullet' });
+    it('prefixes numbered children with their number', () => {
+        const [section] = outline(['> Tasks', '>> 1. first', '>> 4. fourth']);
+        expect(section.children.map((c) => c.name)).toEqual(['1. first', '4. fourth']);
+        expect(section.children.every((c) => c.kind === vscode.SymbolKind.Number)).toBe(true);
     });
 
-    it('adds numbered children with number prefix', () => {
-        const doc = makeDoc(['> Header', '>> 1. First', '>> 2. Second']);
-        const children = buildOutline(doc, '-')[0].children;
-        expect(children[0]).toMatchObject({ name: '1. First',  kind: 'numbered' });
-        expect(children[1]).toMatchObject({ name: '2. Second', kind: 'numbered' });
+    it('mixes bullet and numbered children in document order', () => {
+        const [section] = outline(['> Tasks', '>> - bullet', '>> 2. numbered']);
+        expect(section.children.map((c) => c.name)).toEqual(['bullet', '2. numbered']);
     });
 
-    it('records the correct start line for each section', () => {
-        const doc = makeDoc(['plain', '> Header', '>> - item']);
-        expect(buildOutline(doc, '-')[0].startLine).toBe(1);
+    it('skips lines that are neither bullet nor numbered', () => {
+        const [section] = outline(['> Tasks', '>> - kept', 'plain prose', '   ', '>> 1. also kept']);
+        expect(section.children.map((c) => c.name)).toEqual(['kept', '1. also kept']);
     });
 
-    it('does not include empty-content items as children', () => {
-        const doc = makeDoc(['> Header', '>> - ', '>> - RealItem']);
-        const children = buildOutline(doc, '-')[0].children;
-        expect(children).toHaveLength(1);
-        expect(children[0].name).toBe('RealItem');
+    it('skips a bullet with empty content', () => {
+        // `>> - ` parses as a bullet but has nothing to show in the outline.
+        const [section] = outline(['> Tasks', '>> - ', '>> - real']);
+        expect(section.children.map((c) => c.name)).toEqual(['real']);
     });
 
-    it('works with custom prefix', () => {
-        const doc = makeDoc(['> Header', '>> * CustomItem']);
-        const children = buildOutline(doc, '*')[0].children;
-        expect(children[0].name).toBe('CustomItem');
+    it('keeps each section to its own children', () => {
+        const [one, two] = outline(['> One', '>> - a', '> Two', '>> - b', '>> - c']);
+        expect(one.children.map((c) => c.name)).toEqual(['a']);
+        expect(two.children.map((c) => c.name)).toEqual(['b', 'c']);
+        expect(one.detail).toBe('1 item');
+        expect(two.detail).toBe('2 items');
+    });
+
+    it('spans the section in its range and the header line in its selection', () => {
+        const [section] = outline(['> Tasks', '>> - a', '>> - b']);
+        expect(section.selectionRange.start.line).toBe(0);
+        expect(section.range.start.line).toBe(0);
+        expect(section.range.end.line).toBe(2);
+    });
+
+    it('marks a section as a Module symbol', () => {
+        const [section] = outline(['> Tasks']);
+        expect(section.kind).toBe(vscode.SymbolKind.Module);
     });
 });

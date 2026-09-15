@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { parseBullet, parseNumbered, isHeader } from './patterns';
+import { parseBullet, parseNumbered } from './patterns';
 import { getSectionRange } from './documentUtils';
 
 interface ArchiveItem extends vscode.QuickPickItem { lineIndex: number; }

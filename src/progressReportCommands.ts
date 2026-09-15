@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { isHeader, parseBullet, parseNumbered } from './patterns';
-import { parseCheck, countChecks } from './checkParser';
+import { isHeader, parseBullet, parseNumbered, formatDate } from './patterns';
+import { countChecks } from './checkParser';
 import { getSectionRange } from './documentUtils';
-import { collectDueDates } from './dueDateParser';
 import { parseWordCountGoal } from './wordGoalParser';
+import { itemWordCount } from './metadataStripper';
 
 /** Command: opens a side panel with a per-section progress report */
 export async function onShowProgressReport(): Promise<void> {
@@ -14,7 +14,7 @@ export async function onShowProgressReport(): Promise<void> {
     const { prefix } = getConfig();
     const doc        = editor.document;
     const today      = new Date();
-    const todayStr   = today.toISOString().slice(0, 10);
+    const todayStr   = formatDate(today);
     const lines: string[] = [`# Progress Report — ${doc.fileName.split(/[\\/]/).pop()}\n`];
 
     for (let i = 0; i < doc.lineCount; i++) {
@@ -33,7 +33,7 @@ export async function onShowProgressReport(): Promise<void> {
             const content  = bullet?.content ?? numbered?.content ?? null;
             if (!content) { continue; }
             items++;
-            words += content.trim().split(/\s+/).filter(Boolean).length;
+            words += itemWordCount(content);
             if (content.startsWith('? ')) { flagged++; }
             const dateMatch = content.match(/@(\d{4}-\d{2}-\d{2})/);
             if (dateMatch && dateMatch[1] < todayStr) { overdue++; }

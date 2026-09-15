@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
-import { stripAllMetadata } from './metadataStripper';
+import { itemWordCount } from './metadataStripper';
 
 /** Command: shows current section name, word count and item count as a quick orientation */
 export async function onShowSectionPath(): Promise<void> {
@@ -23,7 +23,7 @@ export async function onShowSectionPath(): Promise<void> {
         const content = parseBullet(t, prefix)?.content ?? parseNumbered(t)?.content ?? null;
         if (!content) { continue; }
         items++;
-        words += stripAllMetadata(content).trim().split(/\s+/).filter(Boolean).length;
+        words += itemWordCount(content);
     }
 
     const lineInSection = cursorLine - headerLine;

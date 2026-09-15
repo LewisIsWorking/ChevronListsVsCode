@@ -4,10 +4,11 @@ import { isHeader, parseBullet, parseNumbered } from './patterns';
 import { parseCheck } from './checkParser';
 import { getSectionRange } from './documentUtils';
 import { findHeaderAbove } from './documentUtils';
+import { appendBlock, lineAfter, sectionContentEnd, wholeLineRanges } from './lineEdits';
 
 const ARCHIVE_HEADER = '> Archive';
 
-/** Finds or creates the Archive section at the end of the document */
+/** The line of the > Archive header, or -1 when there is none */
 function findArchiveLine(document: vscode.TextDocument): number {
     for (let i = 0; i < document.lineCount; i++) {
         const text = document.lineAt(i).text;
@@ -16,6 +17,13 @@ function findArchiveLine(document: vscode.TextDocument): number {
         }
     }
     return -1;
+}
+
+/** How many blank lines sit directly above `line` */
+function blankLinesAbove(doc: vscode.TextDocument, line: number): number {
+    let n = 0;
+    while (line - n - 1 >= 0 && doc.lineAt(line - n - 1).text.trim() === '') { n++; }
+    return n;
 }
 
 /** Command: moves all [x] done items from the current section to the Archive */
@@ -46,21 +54,21 @@ export async function onArchiveDoneItems(): Promise<void> {
         return;
     }
 
+    const archiveLine = findArchiveLine(doc);
+    if (headerLine === archiveLine) {
+        vscode.window.showInformationMessage('CL: These items are already in the Archive');
+        return;
+    }
+    const archived = doneLines.map(l => l.text).join('\n');
+
     await editor.edit(eb => {
-        // Delete done lines in reverse order to keep indices valid
-        for (const { lineIndex } of [...doneLines].reverse()) {
-            eb.delete(doc.lineAt(lineIndex).rangeIncludingLineBreak);
-        }
-        // Append to archive (or create it)
-        const archiveLine = findArchiveLine(doc);
-        const insertLine  = archiveLine >= 0
-            ? getSectionRange(doc, archiveLine)[1] + 1
-            : doc.lineCount;
-        const prefix_str  = archiveLine >= 0 ? '' : `\n${ARCHIVE_HEADER}\n`;
-        eb.insert(
-            new vscode.Position(insertLine, 0),
-            prefix_str + doneLines.map(l => l.text).join('\n') + '\n'
-        );
+        for (const range of wholeLineRanges(doc, doneLines.map(l => l.lineIndex))) { eb.delete(range); }
+        // After the Archive's last item, not after the blank lines that end its
+        // section; or a new Archive at the end of the file
+        const ins = archiveLine >= 0
+            ? lineAfter(doc, sectionContentEnd(doc, archiveLine), archived)
+            : appendBlock(doc, `${ARCHIVE_HEADER}\n${archived}`, doneLines.map(l => l.lineIndex));
+        eb.insert(ins.position, ins.text);
     });
 
     vscode.window.showInformationMessage(`CL: Archived ${doneLines.length} done item${doneLines.length === 1 ? '' : 's'}`);
@@ -75,23 +83,30 @@ export async function onArchiveSection(): Promise<void> {
     const headerLine = findHeaderAbove(doc, editor.selection.active.line);
     if (headerLine < 0) { vscode.window.showInformationMessage('CL: No section found at cursor'); return; }
 
+    // Archived sections go straight after the Archive's items, so the Archive
+    // itself, or a section already sitting there, has nowhere to move to.
+    const archiveLine = findArchiveLine(doc);
+    if (archiveLine >= 0 && archiveLine <= headerLine
+        && sectionContentEnd(doc, archiveLine) + 1 >= headerLine - blankLinesAbove(doc, headerLine)) {
+        vscode.window.showInformationMessage('CL: This section is already archived');
+        return;
+    }
+
     const headerText  = doc.lineAt(headerLine).text;
     const [, end]     = getSectionRange(doc, headerLine);
-    const sectionText = Array.from({ length: end - headerLine + 1 }, (_, k) =>
+    const sectionText = Array.from({ length: sectionContentEnd(doc, headerLine) - headerLine + 1 }, (_, k) =>
         doc.lineAt(headerLine + k).text
-    ).join('\n') + '\n';
+    ).join('\n');
+    const sectionLines = Array.from({ length: end - headerLine + 1 }, (_, k) => headerLine + k);
 
     await editor.edit(eb => {
-        // Delete the section
-        const deleteRange = new vscode.Range(headerLine, 0, end + 1, 0);
-        eb.delete(deleteRange);
-        // Append to archive
-        const archiveLine = findArchiveLine(doc);
-        const insertLine  = archiveLine >= 0
-            ? getSectionRange(doc, archiveLine)[1] + 1
-            : doc.lineCount;
-        const prefix_str  = archiveLine >= 0 ? '' : `\n${ARCHIVE_HEADER}\n`;
-        eb.insert(new vscode.Position(insertLine, 0), prefix_str + sectionText);
+        // The section and the blank lines after it go; the copy in the archive
+        // takes only its content
+        for (const range of wholeLineRanges(doc, sectionLines)) { eb.delete(range); }
+        const ins = archiveLine >= 0
+            ? lineAfter(doc, sectionContentEnd(doc, archiveLine), sectionText)
+            : appendBlock(doc, `${ARCHIVE_HEADER}\n${sectionText}`, sectionLines);
+        eb.insert(ins.position, ins.text);
     });
 
     vscode.window.showInformationMessage(`CL: Archived "${headerText.replace(/^> /, '')}"`);

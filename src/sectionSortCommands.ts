@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { isHeader } from './patterns';
-import { getSectionRange } from './documentUtils';
 
 interface SectionBlock { name: string; lines: string[]; }
 

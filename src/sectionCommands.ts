@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { findHeaderAbove, findHeaderBelow, getSectionRange, getTightSectionRange } from './documentUtils';
+import { lineAfter, sectionContentEnd } from './lineEdits';
 
 type EditBuilder = vscode.TextEditorEdit;
 
@@ -48,10 +49,15 @@ export async function onDuplicateSection(): Promise<void> {
     if (!editor) { return; }
     const headerLine = findHeaderAbove(editor.document, editor.selection.active.line);
     if (headerLine < 0) { return; }
-    const [start, end] = getSectionRange(editor.document, headerLine);
-    const lines        = getLines(editor.document, start, end);
-    await editor.edit((eb: EditBuilder) =>
-        eb.insert(new vscode.Position(end + 1, 0), lines.join('\n') + '\n'));
+    const doc          = editor.document;
+    const [start, end] = getSectionRange(doc, headerLine);
+    // Copy the header and its content, placed after the content with the same
+    // blank-line spacing the section already has before whatever follows it.
+    const contentEnd   = sectionContentEnd(doc, headerLine);
+    const spacing      = getLines(doc, contentEnd + 1, end);
+    const copy         = [...spacing, ...getLines(doc, start, contentEnd)];
+    const ins          = lineAfter(doc, contentEnd, copy.join('\n'));
+    await editor.edit((eb: EditBuilder) => eb.insert(ins.position, ins.text));
 }
 
 /** Swaps the section containing the cursor with the section immediately above it */

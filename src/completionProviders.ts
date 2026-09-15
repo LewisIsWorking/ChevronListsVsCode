@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { parseBullet, parseNumbered, isHeader, formatDate, nextWeekday } from './patterns';
-import { extractTags, uniqueTags } from './tagParser';
-import { collectMentions, uniqueMentions } from './mentionParser';
+import { parseBullet, parseNumbered, isHeader, formatDate, nextWeekday, addMonths } from './patterns';
+import { extractTags } from './tagParser';
+import { uniqueMentions } from './mentionParser';
 
 // ── Tag completion (#) ────────────────────────────────────────────────────────
 
@@ -14,7 +14,8 @@ export class ChevronTagCompletionProvider implements vscode.CompletionItemProvid
     ): vscode.CompletionItem[] {
         const lineText = document.lineAt(position).text;
         const prefix   = lineText.slice(0, position.character);
-        if (!prefix.endsWith('#')) { return []; }
+        // Only where a tag can start: not after "C", or in a URL fragment
+        if (!/(?:^|\s)#$/.test(prefix)) { return []; }
 
         const { prefix: listPrefix } = getConfig();
         const freq = new Map<string, number>();
@@ -132,7 +133,7 @@ export class ChevronDateCompletionProvider implements vscode.CompletionItemProvi
         const today     = new Date();
         const tomorrow  = new Date(today); tomorrow.setDate(today.getDate() + 1);
         const nextWeek  = new Date(today); nextWeek.setDate(today.getDate() + 7);
-        const nextMonth = new Date(today); nextMonth.setMonth(today.getMonth() + 1);
+        const nextMonth = addMonths(today, 1);   // setMonth overflowed the 29th-31st
 
         const suggestions = [
             { label: 'today',      date: today,              sort: '1' },

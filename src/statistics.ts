@@ -1,14 +1,14 @@
-import { getConfig } from './config';
 import { isHeader, parseBullet, parseNumbered } from './patterns';
 import { getSectionRange } from './documentUtils';
 import { extractTags } from './tagParser';
-import { parseCheck, countChecks } from './checkParser';
+import { parseCheck } from './checkParser';
 import { parseColourLabel } from './colourLabelParser';
 import { parseFlag } from './flagParser';
 import { parseComment } from './commentParser';
 import { parseCreatedDate } from './itemAgeParser';
 import { parseWordCountGoal } from './wordGoalParser';
 import type { LineReader } from './types';
+import { itemWordCount } from './metadataStripper';
 
 /** Statistics for a single chevron section */
 export interface SectionStats {
@@ -65,7 +65,7 @@ export function computeFileStats(doc: LineReader, prefix: string): FileStats {
             const content  = bullet?.content ?? numbered?.content ?? null;
             if (!content) { continue; }
             items++;
-            words     += content.trim().split(/\s+/).filter(Boolean).length;
+            words     += itemWordCount(content);
             tags      += extractTags(content).length;
             if (parseColourLabel(content)) { coloured++; }
             if (parseFlag(content))        { flagged++; }

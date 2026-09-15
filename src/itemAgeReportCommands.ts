@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { isHeader } from './patterns';
 import { collectAgedItems } from './patterns';
 import type { AgedItem } from './patterns';
 

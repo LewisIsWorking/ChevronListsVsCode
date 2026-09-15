@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { parseBullet, parseNumbered } from './patterns';
+import { parseBullet, parseNumbered, todayDate } from './patterns';
 import { getConfig } from './config';
 
 let overdueBar: vscode.StatusBarItem | undefined;
@@ -22,7 +22,7 @@ export function updateOverdueStatusBar(editor: vscode.TextEditor | undefined): v
 
     const { prefix } = getConfig();
     const doc        = editor.document;
-    const today      = new Date().toISOString().slice(0, 10);
+    const today      = todayDate();
     let   overdue    = 0;
 
     for (let i = 0; i < doc.lineCount; i++) {

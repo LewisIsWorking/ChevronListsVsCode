@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { isHeader, parseBullet, parseNumbered } from './patterns';
+import { parseBullet, parseNumbered } from './patterns';
 import { extractTags } from './tagParser';
 import { uniqueTags } from './tagParser';
-import { getSectionRange } from './documentUtils';
 
 interface TagPickItem extends vscode.QuickPickItem { tag: string; }
 

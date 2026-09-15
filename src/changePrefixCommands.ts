@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { parseBullet, parseNumbered } from './patterns';
+import { parseBullet } from './patterns';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
 
 /** Command: changes the bullet prefix on all items in the current section */

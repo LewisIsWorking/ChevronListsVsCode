@@ -5,6 +5,7 @@ import { parseCheck } from './checkParser';
 import { parseWordCountGoal } from './wordGoalParser';
 import { getSectionRange } from './documentUtils';
 import { findHeaderAbove } from './documentUtils';
+import { itemWordCount } from './metadataStripper';
 
 let statusBarItem: vscode.StatusBarItem | undefined;
 
@@ -22,7 +23,7 @@ function countSectionWords(document: vscode.TextDocument, prefix: string, start:
         const bullet  = parseBullet(text, prefix);
         const numbered = parseNumbered(text);
         const content  = bullet?.content ?? numbered?.content ?? null;
-        if (content) { words += content.trim().split(/\s+/).filter(Boolean).length; }
+        if (content) { words += itemWordCount(content); }
     }
     return words;
 }

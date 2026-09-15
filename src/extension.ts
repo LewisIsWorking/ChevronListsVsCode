@@ -17,7 +17,6 @@ import { registerLockEnforcement }                           from './lockEnforce
 import { registerCollapseMemory }                            from './sectionCollapseMemory';
 import { showTipOfDay, onShowTipOfDay }                              from './tipOfDay';
 import { clearJumpHistory }                                  from './jumpHistory';
-import { getConfig }                                         from './config';
 import { openOnFirstInstall }                                from './settingsPanel';
 import { getChevronDiagCollection }                           from './diagnosticProvider';
 import { getExpiryDiagCollection }                            from './expiryDiagnostics';

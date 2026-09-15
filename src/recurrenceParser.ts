@@ -1,5 +1,5 @@
 import type { LineReader } from './types';
-import { parseBullet, parseNumbered } from './patterns';
+import { parseBullet, parseNumbered, addMonths, formatDate } from './patterns';
 
 export type RecurrenceType = 'daily' | 'weekly' | 'monthly';
 
@@ -56,7 +56,8 @@ export function nextOccurrence(dateStr: string, type: RecurrenceType): string {
     const date = new Date(y, m - 1, d);
     if (type === 'daily')   { date.setDate(date.getDate() + 1); }
     if (type === 'weekly')  { date.setDate(date.getDate() + 7); }
-    if (type === 'monthly') { date.setMonth(date.getMonth() + 1); }
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    // addMonths clamps to the month's length; setMonth would overflow the 29th-31st
+    // into the month after next (31 Jan -> 3 Mar), skipping a month entirely.
+    const next = type === 'monthly' ? addMonths(date, 1) : date;
+    return formatDate(next);
 }

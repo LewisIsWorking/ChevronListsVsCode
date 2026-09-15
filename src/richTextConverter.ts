@@ -1,4 +1,3 @@
-import type { LineReader } from './types';
 
 /** Maps raw marker syntax to readable symbols */
 const PRIORITY_SYMBOLS: Record<string, string> = { '!!!': '🔴', '!!': '🟠', '!': '🟡' };

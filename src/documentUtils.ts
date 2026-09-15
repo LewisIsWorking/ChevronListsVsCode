@@ -1,22 +1,18 @@
 import type { LineReader, SectionRange } from './types';
 import { isHeader, parseNumbered, parseBullet } from './patterns';
+import { prevNumberInRun } from './numberingRuns';
 
 /**
- * Scans backwards from lineIndex to find the previous numbered item at the
- * same chevron depth. Returns 0 if none found (so the first item becomes 1).
+ * The number of the previous numbered item in the same list at this depth, or
+ * 0 if lineIndex starts a list (so the first item becomes 1). A header or a
+ * shallower line ends a list; see NumberingRuns.
  */
 export function prevNumberAtDepth(
     doc: LineReader,
     lineIndex: number,
     chevrons: string
 ): number {
-    for (let i = lineIndex - 1; i >= 0; i--) {
-        const text  = doc.lineAt(i).text;
-        const match = parseNumbered(text);
-        if (match && match.chevrons === chevrons) { return match.num; }
-        if (isHeader(text)) { break; }
-    }
-    return 0;
+    return prevNumberInRun(doc, lineIndex, chevrons);
 }
 
 /**

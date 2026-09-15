@@ -3,7 +3,6 @@ import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
 import { stripAllMetadata } from './metadataStripper';
-import { toMarkdownTable } from './patterns';
 
 type ExportFormat = 'Markdown' | 'Plain Text' | 'JSON' | 'CSV' | 'HTML';
 
@@ -46,8 +45,10 @@ export async function onCopySectionAs(): Promise<void> {
     let output = '';
     switch (format.label as ExportFormat) {
         case 'Markdown':
+            // Numbered items keep their number, as in Copy Section as Markdown;
+            // they used to come out as "- " bullets.
             output = `## ${sectionName}\n\n` + items.map(i =>
-                `${'  '.repeat(i.depth)}- ${i.content}`).join('\n');
+                `${'  '.repeat(i.depth)}${i.num !== null ? `${i.num}.` : '-'} ${i.content}`).join('\n');
             break;
         case 'Plain Text':
             output = `${sectionName}\n\n` + items.map(i =>

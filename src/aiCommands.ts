@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { isHeader, parseBullet, parseNumbered } from './patterns';
+import { parseBullet, parseNumbered } from './patterns';
 import { getSectionRange } from './documentUtils';
 import { findHeaderAbove } from './documentUtils';
+import { lineAfter, sectionContentEnd } from './lineEdits';
 
 const API_URL = 'https://api.anthropic.com/v1/messages';
 const MODEL   = 'claude-sonnet-4-20250514';
@@ -82,6 +83,8 @@ export async function onSuggestItems(): Promise<void> {
     const { prefix } = getConfig();
     const { header, items } = getSectionText(editor.document, prefix, editor.selection.active.line);
     if (!header) { vscode.window.showInformationMessage('CL: No section header found at cursor'); return; }
+    // Read before awaiting Claude: the cursor may be anywhere by the time it replies
+    const headerLine = findHeaderAbove(editor.document, editor.selection.active.line);
 
     await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Notification, title: 'CL: Asking Claude for suggestions...', cancellable: false },
@@ -97,10 +100,9 @@ export async function onSuggestItems(): Promise<void> {
                 );
                 if (!picks?.length) { return; }
 
-                const [, endLine] = getSectionRange(editor.document, findHeaderAbove(editor.document, editor.selection.active.line));
-                const insertPos   = new vscode.Position(endLine + 1, 0);
-                const newLines    = picks.map(p => `${'>'.repeat(2)} ${prefix} ${p.label}`).join('\n') + '\n';
-                await editor.edit(eb => eb.insert(insertPos, newLines));
+                const ins = lineAfter(editor.document, sectionContentEnd(editor.document, headerLine),
+                    picks.map(p => `>> ${prefix} ${p.label}`).join('\n'));
+                await editor.edit(eb => eb.insert(ins.position, ins.text));
             } catch (e: unknown) {
                 vscode.window.showErrorMessage(`CL: ${(e as Error).message}`);
             }
@@ -116,6 +118,8 @@ export async function onSummariseSection(): Promise<void> {
     const { prefix } = getConfig();
     const { header, items } = getSectionText(editor.document, prefix, editor.selection.active.line);
     if (!header) { vscode.window.showInformationMessage('CL: No section header found at cursor'); return; }
+    // Read before awaiting Claude: the cursor may be anywhere by the time it replies
+    const headerLine = findHeaderAbove(editor.document, editor.selection.active.line);
 
     await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Notification, title: 'CL: Summarising section...', cancellable: false },
@@ -124,9 +128,8 @@ export async function onSummariseSection(): Promise<void> {
                 const user    = `Section: "${header}"\nItems:\n${items.map(i => `- ${i}`).join('\n')}`;
                 const summary = (await callClaude(SYSTEM_SUMMARISE, user)).trim();
 
-                const headerLine = findHeaderAbove(editor.document, editor.selection.active.line);
-                const insertPos  = new vscode.Position(headerLine + 1, 0);
-                await editor.edit(eb => eb.insert(insertPos, `>> - _${summary}_\n`));
+                const ins = lineAfter(editor.document, headerLine, `>> ${prefix} _${summary}_`);
+                await editor.edit(eb => eb.insert(ins.position, ins.text));
             } catch (e: unknown) {
                 vscode.window.showErrorMessage(`CL: ${(e as Error).message}`);
             }
@@ -157,11 +160,15 @@ export async function onExpandItem(): Promise<void> {
                 const user     = `Section: "${header}"\nItem to expand: "${content}"`;
                 const reply    = await callClaude(SYSTEM_EXPAND, user);
                 const subItems = reply.split('\n').map(l => l.trim()).filter(Boolean);
+                if (subItems.length === 0) {
+                    vscode.window.showInformationMessage('CL: Claude suggested no sub-items');
+                    return;
+                }
                 const depth    = (bullet?.chevrons ?? numbered?.chevrons ?? '>>').length;
                 const newChevs = '>'.repeat(depth + 1);
-                const newLines = subItems.map(s => `${newChevs} ${prefix} ${s}`).join('\n') + '\n';
-                const insertPos = new vscode.Position(cursorLine + 1, 0);
-                await editor.edit(eb => eb.insert(insertPos, newLines));
+                const ins      = lineAfter(editor.document, cursorLine,
+                    subItems.map(s => `${newChevs} ${prefix} ${s}`).join('\n'));
+                await editor.edit(eb => eb.insert(ins.position, ins.text));
             } catch (e: unknown) {
                 vscode.window.showErrorMessage(`CL: ${(e as Error).message}`);
             }

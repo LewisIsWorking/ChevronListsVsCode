@@ -284,6 +284,10 @@ export const recorded = {
     error:    [] as string[],
     commands: [] as { command: string; args: unknown[] }[],
     clipboard: '',
+    /** Every showQuickPick call: what was offered and with which options. */
+    quickPickCalls: [] as { items: unknown; options: unknown }[],
+    /** Every showInputBox call's options. */
+    inputBoxCalls: [] as unknown[],
 };
 
 /** Queued answers for the next prompt calls. Pop order is FIFO. */
@@ -291,26 +295,64 @@ export const queued = {
     quickPick: [] as unknown[],
     inputBox:  [] as (string | undefined)[],
     saveDialog: [] as (Uri | undefined)[],
+    /** Answers for message buttons; with none queued a message answers with its first button. */
+    message:   [] as (string | undefined)[],
 };
+
+/**
+ * The button a message resolves with. A leading MessageOptions object such as
+ * { modal: true } is not a button: answering with it made every modal confirm
+ * in the extension read as "cancelled".
+ */
+function messageAnswer(items: unknown[]): string | undefined {
+    const buttons = typeof items[0] === 'object' && items[0] !== null ? items.slice(1) : items;
+    if (queued.message.length > 0) { return queued.message.shift(); }
+    return buttons[0] as string | undefined;
+}
 
 /** Clears all recorded interactions, queued answers and registrations. */
 export function __reset(): void {
     recorded.info.length = 0;
     recorded.warning.length = 0;
     recorded.error.length = 0;
+    recorded.quickPickCalls.length = 0;
+    recorded.inputBoxCalls.length = 0;
     recorded.commands.length = 0;
     recorded.clipboard = '';
     queued.quickPick.length = 0;
     queued.inputBox.length = 0;
     queued.saveDialog.length = 0;
+    queued.message.length = 0;
     registeredCommands.clear();
     configValues.clear();
+    quickPicks.length = 0;
     (window as { activeTextEditor?: unknown }).activeTextEditor = undefined;
     window.visibleTextEditors.length = 0;
 }
 
 const registeredCommands = new Map<string, (...args: unknown[]) => unknown>();
 const configValues = new Map<string, unknown>();
+
+/** Every quick pick created so far, newest last. Cleared by __reset(). */
+export const quickPicks: {
+    items: unknown[];
+    activeItems: unknown[];
+    placeholder: string;
+    shown: boolean;
+    disposed: boolean;
+    fireActive(items: unknown[]): void;
+    fireSelection(items: unknown[]): void;
+    fireAccept(): void;
+    fireHide(): void;
+    hide(): void;
+}[] = [];
+
+/** The most recently created quick pick, for the common single-pick case. */
+export function lastQuickPick(): (typeof quickPicks)[number] {
+    const p = quickPicks[quickPicks.length - 1];
+    if (!p) { throw new Error('No quick pick was created'); }
+    return p;
+}
 
 /** Seeds a workspace configuration value, e.g. __setConfig('chevron-lists.prefix', '*'). */
 export function __setConfig(key: string, value: unknown): void { configValues.set(key, value); }
@@ -323,35 +365,72 @@ export const window = {
     activeTextEditor: undefined as unknown,
     visibleTextEditors: [] as unknown[],
 
-    showInformationMessage: (msg: string, ...items: string[]) => {
+    showInformationMessage: (msg: string, ...items: unknown[]) => {
         recorded.info.push(msg);
-        return Promise.resolve(items[0]);
+        return Promise.resolve(messageAnswer(items));
     },
-    showWarningMessage: (msg: string, ...items: string[]) => {
+    showWarningMessage: (msg: string, ...items: unknown[]) => {
         recorded.warning.push(msg);
-        return Promise.resolve(items[0]);
+        return Promise.resolve(messageAnswer(items));
     },
-    showErrorMessage: (msg: string, ...items: string[]) => {
+    showErrorMessage: (msg: string, ...items: unknown[]) => {
         recorded.error.push(msg);
-        return Promise.resolve(items[0]);
+        return Promise.resolve(messageAnswer(items));
     },
 
     // Prompts answer from `queued`; an empty queue means the user cancelled,
     // which is the branch most command code forgets to handle.
-    showQuickPick: (_items?: unknown, _opts?: unknown) => Promise.resolve(queued.quickPick.shift()),
-    showInputBox: (_opts?: unknown) => Promise.resolve(queued.inputBox.shift()),
+    showQuickPick: (items?: unknown, options?: unknown) => {
+        recorded.quickPickCalls.push({ items, options });
+        return Promise.resolve(queued.quickPick.shift());
+    },
+    showInputBox: (options?: unknown) => {
+        recorded.inputBoxCalls.push(options);
+        return Promise.resolve(queued.inputBox.shift());
+    },
     showSaveDialog: (_opts?: unknown) => Promise.resolve(queued.saveDialog.shift()),
     showOpenDialog: (_opts?: unknown) => Promise.resolve(undefined),
 
-    createQuickPick: () => ({
-        items: [] as unknown[], activeItems: [] as unknown[], selectedItems: [] as unknown[],
-        placeholder: "", title: "", value: "", busy: false, canSelectMany: false,
-        onDidChangeActive: (_: unknown) => noopDisposable(),
-        onDidChangeSelection: (_: unknown) => noopDisposable(),
-        onDidAccept: (_: unknown) => noopDisposable(),
-        onDidHide: (_: unknown) => noopDisposable(),
-        show: () => {}, hide: () => {}, dispose: () => {},
-    }),
+    // Records its handlers so a test can drive the pick: fireActive() for the
+    // live-preview path, fireAccept() for selection, fireHide() for cancel.
+    // hide() fires onDidHide the way the real control does, which matters
+    // because accept handlers typically call pick.hide() themselves.
+    createQuickPick: () => {
+        const onActive: ((items: unknown[]) => void)[] = [];
+        const onSelection: ((items: unknown[]) => void)[] = [];
+        const onAccept: (() => void)[] = [];
+        const onHide: (() => void)[] = [];
+
+        const pick = {
+            items: [] as unknown[],
+            activeItems: [] as unknown[],
+            selectedItems: [] as unknown[],
+            placeholder: '', title: '', value: '',
+            busy: false, canSelectMany: false, matchOnDescription: false, matchOnDetail: false,
+            shown: false, disposed: false,
+
+            onDidChangeActive: (cb: (items: unknown[]) => void) => { onActive.push(cb); return noopDisposable(); },
+            onDidChangeSelection: (cb: (items: unknown[]) => void) => { onSelection.push(cb); return noopDisposable(); },
+            onDidAccept: (cb: () => void) => { onAccept.push(cb); return noopDisposable(); },
+            onDidHide: (cb: () => void) => { onHide.push(cb); return noopDisposable(); },
+
+            show() { pick.shown = true; },
+            hide() { pick.shown = false; for (const cb of [...onHide]) { cb(); } },
+            dispose() { pick.disposed = true; },
+
+            /** Test hook: simulate the highlight moving to `items`. */
+            fireActive(items: unknown[]) { pick.activeItems = items; for (const cb of [...onActive]) { cb(items); } },
+            /** Test hook: simulate the selection changing. */
+            fireSelection(items: unknown[]) { pick.selectedItems = items; for (const cb of [...onSelection]) { cb(items); } },
+            /** Test hook: simulate the user pressing Enter. */
+            fireAccept() { for (const cb of [...onAccept]) { cb(); } },
+            /** Test hook: simulate the user dismissing the pick. */
+            fireHide() { pick.hide(); },
+        };
+
+        quickPicks.push(pick);
+        return pick;
+    },
 
     createTextEditorDecorationType: (opts?: unknown) => ({ key: "dec", options: opts, dispose: () => {} }),
 

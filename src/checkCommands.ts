@@ -3,27 +3,36 @@ import { getConfig } from './config';
 import { toggleCheckLine, parseCheck } from './checkParser';
 import { findHeaderAbove, getSectionRange } from './documentUtils';
 import { countChecks } from './checkParser';
-import { isHeader } from './patterns';
+import { appendBlock, lineAfter, wholeLineRanges } from './lineEdits';
 
-/** Moves a completed item to the > Archive section, creating it if needed */
-async function autoArchiveLine(editor: vscode.TextEditor, lineIndex: number): Promise<void> {
-    const doc      = editor.document;
-    const itemText = doc.lineAt(lineIndex).text;
+/**
+ * Moves completed items to the top of the > Archive section, creating it if needed.
+ *
+ * All the items move in one edit, in document order. They used to move one at a
+ * time from the bottom up, reusing line numbers read before any move: when the
+ * Archive was above the items, each insertion shifted the lines below it, so
+ * later moves deleted the wrong line.
+ */
+async function autoArchiveLines(editor: vscode.TextEditor, lines: number[]): Promise<void> {
+    const doc = editor.document;
     let   archiveLine = -1;
 
     for (let i = 0; i < doc.lineCount; i++) {
         if (doc.lineAt(i).text.toLowerCase() === '> archive') { archiveLine = i; break; }
     }
 
+    // Items already in the Archive section stay where they are.
+    const [archiveStart, archiveEnd] = archiveLine >= 0 ? getSectionRange(doc, archiveLine) : [-1, -1];
+    const toMove = [...new Set(lines)].filter(l => l < archiveStart || l > archiveEnd).sort((a, b) => a - b);
+    if (toMove.length === 0) { return; }
+    const items = toMove.map(l => doc.lineAt(l).text).join('\n');
+
     await editor.edit(eb => {
-        eb.delete(doc.lineAt(lineIndex).rangeIncludingLineBreak);
-        if (archiveLine >= 0) {
-            const insertAt = archiveLine + 1;
-            eb.insert(new vscode.Position(insertAt, 0), itemText + '\n');
-        } else {
-            const end = doc.lineCount;
-            eb.insert(new vscode.Position(end, 0), `\n> Archive\n${itemText}\n`);
-        }
+        for (const range of wholeLineRanges(doc, toMove)) { eb.delete(range); }
+        const ins = archiveLine >= 0
+            ? lineAfter(doc, archiveLine, items)
+            : appendBlock(doc, `> Archive\n${items}`, toMove);
+        eb.insert(ins.position, ins.text);
     });
 }
 
@@ -50,11 +59,8 @@ export async function onToggleItemDone(): Promise<void> {
         }
     });
 
-    // Archive in reverse order so line indices stay valid
     if (linesToArchive.length > 0) {
-        for (const line of linesToArchive.reverse()) {
-            await autoArchiveLine(editor, line);
-        }
+        await autoArchiveLines(editor, linesToArchive);
     }
 }
 

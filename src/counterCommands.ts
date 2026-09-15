@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { isHeader, parseBullet, parseNumbered } from './patterns';
+import { parseBullet, parseNumbered } from './patterns';
 import { parseCheck } from './checkParser';
 import { extractTags } from './tagParser';
 import { getSectionRange } from './documentUtils';
 import { findHeaderAbove } from './documentUtils';
+import { itemWordCount } from './metadataStripper';
 
 /** Command: shows a summary notification for the current section */
 export async function onShowSectionSummary(): Promise<void> {
@@ -28,7 +29,7 @@ export async function onShowSectionSummary(): Promise<void> {
         const content  = bullet?.content ?? numbered?.content ?? null;
         if (!content) { continue; }
         items++;
-        words += content.trim().split(/\s+/).filter(Boolean).length;
+        words += itemWordCount(content);
         const check = parseCheck(content);
         if (check?.state === 'done') { done++; }
         for (const tag of extractTags(content)) {
@@ -39,12 +40,10 @@ export async function onShowSectionSummary(): Promise<void> {
     const tagLine = Object.keys(tagCounts).length > 0
         ? `  Tags: ${Object.entries(tagCounts).map(([t, n]) => `#${t}×${n}`).join(', ')}`
         : '';
-    const checkLine = items > 0 && Object.keys(tagCounts).length === 0 && done > 0
-        ? `  Done: ${done}/${items}`
-        : done > 0 ? `  Done: ${done}/${items}` : '';
+    const checkLine = done > 0 ? `  Done: ${done}/${items}` : '';
 
     vscode.window.showInformationMessage(
-        `"${name}" — ${items} item${items === 1 ? '' : 's'}, ${words} words${checkLine}${tagLine}`
+        `"${name}" — ${items} item${items === 1 ? '' : 's'}, ${words} word${words === 1 ? '' : 's'}${checkLine}${tagLine}`
     );
 }
 

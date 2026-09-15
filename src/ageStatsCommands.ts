@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { parseBullet, parseNumbered, formatDate } from './patterns';
+import { parseBullet, parseNumbered } from './patterns';
 import { parseCreatedDate, ageInDays } from './itemAgeParser';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
 

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { collectColourLabels, COLOUR_LABELS } from './colourLabelParser';
+import { collectColourLabels } from './colourLabelParser';
 import type { ColourLabel } from './colourLabelParser';
 
 interface ColourPickItem extends vscode.QuickPickItem { colour: ColourLabel; }

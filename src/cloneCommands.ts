@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
-import { getConfig } from './config';
-import { parseBullet, parseNumbered, isHeader } from './patterns';
-import { getSectionRange } from './documentUtils';
+import { isHeader } from './patterns';
 import { findHeaderAbove } from './documentUtils';
+import { lineAfter, sectionContentEnd } from './lineEdits';
 
 function revealLine(editor: vscode.TextEditor, lineIndex: number): void {
     const pos = new vscode.Position(lineIndex, 0);
@@ -26,12 +25,9 @@ export async function onCloneItem(): Promise<void> {
 
     const headerLine = findHeaderAbove(doc, lineIndex);
     if (headerLine < 0) { return; }
-    const [, end] = getSectionRange(doc, headerLine);
-
-    await editor.edit(eb =>
-        eb.insert(new vscode.Position(end + 1, 0), text + '\n')
-    );
-    revealLine(editor, end + 1);
+    const ins = lineAfter(doc, sectionContentEnd(doc, headerLine), text);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
+    revealLine(editor, ins.line);
 }
 
 /** Command: duplicates the item at the cursor to a chosen section */
@@ -61,9 +57,7 @@ export async function onCloneItemToSection(): Promise<void> {
     );
     if (!pick) { return; }
 
-    const [, end] = getSectionRange(doc, pick.lineIndex);
-    await editor.edit(eb =>
-        eb.insert(new vscode.Position(end + 1, 0), text + '\n')
-    );
-    revealLine(editor, end + 1);
+    const ins = lineAfter(doc, sectionContentEnd(doc, pick.lineIndex), text);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
+    revealLine(editor, ins.line);
 }

@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
-import { getConfig } from './config';
-import { parseBullet, parseNumbered } from './patterns';
+import { parseNumbered } from './patterns';
 import { findHeaderAbove, getSectionRange } from './documentUtils';
-import { prevNumberAtDepth } from './documentUtils';
+import { NumberingRuns } from './numberingRuns';
 
 type EditBuilder = vscode.TextEditorEdit;
 
@@ -10,7 +9,6 @@ type EditBuilder = vscode.TextEditorEdit;
 export async function onRebaseListFromHere(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== 'markdown') { return; }
-    const { prefix } = getConfig();
     const doc        = editor.document;
     const lineIndex  = editor.selection.active.line;
     const text       = doc.lineAt(lineIndex).text;
@@ -23,24 +21,24 @@ export async function onRebaseListFromHere(): Promise<void> {
     if (headerLine < 0) { return; }
     const [, end]    = getSectionRange(doc, headerLine);
 
-    // Start from the previous number at this depth + 1
-    const startNum   = prevNumberAtDepth(doc, lineIndex, numbered.chevrons) + 1;
-    const counters   = new Map<string, number>([[numbered.chevrons, startNum - 1]]);
-
+    // Each list continues from its last number above the cursor; see NumberingRuns.
+    // Counters used to be kept per depth, so the child lists of different parents
+    // were numbered as one list.
+    const runs     = new NumberingRuns();
+    const counters = new Map<number, number>();
     let changed = 0;
     await editor.edit((eb: EditBuilder) => {
-        for (let i = lineIndex; i <= end; i++) {
-            const t  = doc.lineAt(i).text;
-            const n  = parseNumbered(t);
-            if (!n) { continue; }
-            const prev = counters.get(n.chevrons) ?? (prevNumberAtDepth(doc, i, n.chevrons));
-            const next = prev + 1;
-            counters.set(n.chevrons, next);
+        for (let i = headerLine + 1; i <= end; i++) {
+            const t   = doc.lineAt(i).text;
+            const run = runs.visit(t);
+            if (run === null) { continue; }
+            const n = parseNumbered(t)!;
+            if (i < lineIndex) { counters.set(run, n.num); continue; }
+            const next = (counters.get(run) ?? 0) + 1;
+            counters.set(run, next);
             if (n.num !== next) {
                 eb.replace(doc.lineAt(i).range, `${n.chevrons} ${next}. ${n.content}`);
                 changed++;
-            } else {
-                counters.set(n.chevrons, n.num);
             }
         }
     });
@@ -66,16 +64,26 @@ export async function onOffsetListNumbers(): Promise<void> {
     if (!input?.trim()) { return; }
     const offset = Number(input.trim());
 
-    let changed = 0;
+    const numberedLines: number[] = [];
+    for (let i = headerLine + 1; i <= end; i++) {
+        if (parseNumbered(doc.lineAt(i).text)) { numberedLines.push(i); }
+    }
+    // All or nothing. Items that would go below 1 used to be skipped silently
+    // while the rest moved, so "1, 2, 10" offset by -5 became "1, 2, 5" and the
+    // message only said "Offset 1 item by -5".
+    const tooLow = numberedLines.filter(i => parseNumbered(doc.lineAt(i).text)!.num + offset < 1).length;
+    if (tooLow > 0) {
+        vscode.window.showInformationMessage(
+            `CL: Offsetting by ${offset} would take ${tooLow} item${tooLow === 1 ? '' : 's'} below 1 — nothing changed`
+        );
+        return;
+    }
+
+    const changed = numberedLines.length;
     await editor.edit((eb: EditBuilder) => {
-        for (let i = headerLine + 1; i <= end; i++) {
-            const t = doc.lineAt(i).text;
-            const n = parseNumbered(t);
-            if (!n) { continue; }
-            const newNum = n.num + offset;
-            if (newNum < 1) { continue; } // skip items that would go below 1
-            eb.replace(doc.lineAt(i).range, `${n.chevrons} ${newNum}. ${n.content}`);
-            changed++;
+        for (const i of numberedLines) {
+            const n = parseNumbered(doc.lineAt(i).text)!;
+            eb.replace(doc.lineAt(i).range, `${n.chevrons} ${n.num + offset}. ${n.content}`);
         }
     });
     vscode.window.showInformationMessage(

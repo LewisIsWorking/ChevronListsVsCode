@@ -9,21 +9,46 @@ export interface TagOccurrence {
     line:      number;
 }
 
-/** Regex that matches #tag tokens inside item content */
-export const TAG_RE = /#([\w-]+)/g;
+/**
+ * A #tag: "#" at the start of the text or after whitespace, then a word
+ * character, then word characters or hyphens. Group 1 is the name.
+ *
+ * This is the ONE definition of a tag. There used to be several: "#([\w-]+)"
+ * here, "#(\w+)" in exports, stats, complexity and rename, none of them anchored,
+ * so "#to-do" was the tag "to" in some features and "to-do" in others, and a URL
+ * like "example.com/guide#setup" had a tag "setup" (and lost "#setup" when
+ * metadata was stripped). It matches the JetBrains plugin's definition.
+ */
+export const TAG_RE = /(?<!\S)#(\w[\w-]*)/g;
 
-/** Extracts all unique tag names from a content string */
+/** A fresh copy of TAG_RE, so callers never share its lastIndex. */
+export function tagRegex(): RegExp {
+    return new RegExp(TAG_RE.source, 'g');
+}
+
+/** A regex for one specific tag, any case, that does not match longer tags such as "#to-do" for "to". */
+export function oneTagRegex(tag: string): RegExp {
+    const name = tag.replace(/^#/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`(?<!\\S)#${name}(?![\\w-])`, 'gi');
+}
+
+/** Extracts all unique tag names from a content string, lower-cased */
 export function extractTags(content: string): string[] {
     const tags: string[] = [];
-    for (const match of content.matchAll(TAG_RE)) {
+    for (const match of content.matchAll(tagRegex())) {
         tags.push(match[1].toLowerCase());
     }
     return [...new Set(tags)];
 }
 
+/** Whether content carries `tag` (with or without its #), in any case */
+export function hasTag(content: string, tag: string): boolean {
+    return oneTagRegex(tag).test(content);
+}
+
 /** Strips all #tag tokens from a content string for display */
 export function stripTags(content: string): string {
-    return content.replace(/#[\w-]+/g, '').replace(/\s{2,}/g, ' ').trim();
+    return content.replace(tagRegex(), '').replace(/\s{2,}/g, ' ').trim();
 }
 
 /** Collects all tag occurrences in a document */
@@ -53,8 +78,12 @@ export function uniqueTags(doc: LineReader, prefix: string): string[] {
     return [...new Set(all)].sort();
 }
 
-/** Renames a tag in a single line of text, returns the updated string */
+/**
+ * Renames a tag in a single line of text, returns the updated string. Any case
+ * of the old tag is renamed, as tags are compared case-insensitively everywhere
+ * else; a tag followed by punctuation such as ")" is renamed; a longer tag
+ * that merely starts with the old name is not.
+ */
 export function renameTagInText(text: string, oldTag: string, newTag: string): string {
-    const re = new RegExp(`#${oldTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=[\\s,;.!?]|$)`, 'g');
-    return text.replace(re, `#${newTag}`);
+    return text.replace(oneTagRegex(oldTag), `#${newTag.replace(/^#/, '')}`);
 }

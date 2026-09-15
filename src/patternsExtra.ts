@@ -3,6 +3,7 @@
  * Additional pure utilities — split from patternsExport.ts to stay under 200 lines.
  * Re-exported by patterns.ts so callers use a single import.
  */
+import { extractTags } from './tagParser';
 
 /** Pure: extracts due date string from content for sorting, or high sentinel for undated */
 export function extractSortDate(content: string): string {
@@ -93,7 +94,7 @@ export function scoreItemComplexity(content: string): {
     dueDate: number; expiry: number; vote: number; label: number; total: number;
 } {
     const priority = content.match(/^!!!/) ? 3 : content.match(/^!!/) ? 2 : content.match(/^!/) ? 1 : 0;
-    const tags     = (content.match(/#\w+/g) ?? []).length;
+    const tags     = extractTags(content).length;
     const estimate = /~\w+/.test(content) ? 1 : 0;
     const dueDate  = /@\d{4}-\d{2}-\d{2}/.test(content) ? 1 : 0;
     const expiry   = /@expires:\d{4}-\d{2}-\d{2}/.test(content) ? 1 : 0;

@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { isHeader } from './patterns';
 import { findHeaderAbove } from './documentUtils';
 
 /** Command: renames the current section header and updates all [[links]] in the file */

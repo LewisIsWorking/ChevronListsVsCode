@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { getConfig } from './config';
 
 let focusTimer: { end: number; bar: vscode.StatusBarItem; interval: ReturnType<typeof setInterval> } | undefined;
 
