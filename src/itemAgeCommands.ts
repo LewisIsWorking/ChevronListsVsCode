@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { parseBullet, parseNumbered } from './patterns';
+import { parseBullet, parseNumbered, todayDate } from './patterns';
 import { collectAgedItems } from './itemAgeParser';
 
 interface AgePickItem extends vscode.QuickPickItem { lineIndex: number; }
@@ -19,7 +19,7 @@ export async function onStampItem(): Promise<void> {
         vscode.window.showInformationMessage('CL: Place cursor on a chevron item to stamp it');
         return;
     }
-    const today    = new Date().toISOString().slice(0, 10);
+    const today    = todayDate();
     const chevrons = bullet?.chevrons ?? numbered!.chevrons;
     const content  = bullet?.content  ?? numbered!.content;
     const num      = numbered?.num ?? null;

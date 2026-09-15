@@ -4,6 +4,7 @@
  * Re-exported by patterns.ts. Functions added in phases 42-43 live in patternsExtra.ts.
  */
 import { parseBullet, parseNumbered, isHeader } from './patterns';
+import { todayDate } from './patternsUtils';
 
 /** Formats elapsed milliseconds as Ns / Nm / NhNm */
 export function formatElapsed(ms: number): string {
@@ -22,7 +23,7 @@ export function convertToObsidian(lines: string[], prefix: string): string {
     const out: string[]  = [];
     const allTags        = new Set<string>();
     let   firstHeader    = true;
-    const date           = new Date().toISOString().slice(0, 10);
+    const date           = todayDate();
     for (const line of lines) {
         if (isHeader(line)) {
             const name = line.replace(/^> /, '').replace(/\s*==\d+/, '').replace(/\s*\[colour:[^\]]+\]/gi, '').trim();

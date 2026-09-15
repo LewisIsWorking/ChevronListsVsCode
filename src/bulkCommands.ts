@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { isHeader, parseBullet, parseNumbered } from './patterns';
+import { isHeader, parseBullet, parseNumbered, todayDate } from './patterns';
 import { getSectionRange } from './documentUtils';
 import { findHeaderAbove } from './documentUtils';
 
@@ -66,7 +66,7 @@ export async function onBulkSetDueDate(): Promise<void> {
     if (!editor || editor.document.languageId !== 'markdown') { return; }
     const date = await vscode.window.showInputBox({
         prompt:      'Due date for all items (YYYY-MM-DD)',
-        placeHolder: `${new Date().toISOString().slice(0, 10)}`,
+        placeHolder: `${todayDate()}`,
         validateInput: v => /^\d{4}-\d{2}-\d{2}$/.test(v) ? null : 'Format must be YYYY-MM-DD',
     });
     if (!date?.trim()) { return; }

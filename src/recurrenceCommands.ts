@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { collectRecurringItems, nextOccurrence } from './recurrenceParser';
 import { extractDate } from './dueDateParser';
-import { parseBullet, parseNumbered } from './patterns';
+import { parseBullet, parseNumbered, todayDate } from './patterns';
 
 interface RecurPickItem extends vscode.QuickPickItem {
     lineIndex: number;
@@ -79,7 +79,7 @@ export async function onGenerateNextOccurrence(): Promise<void> {
 
     const type      = recMatch[1].toLowerCase() as 'daily' | 'weekly' | 'monthly';
     const dateMatch = extractDate(content);
-    const baseDate  = dateMatch?.dateStr ?? new Date().toISOString().slice(0, 10);
+    const baseDate  = dateMatch?.dateStr ?? todayDate();
     const newDate   = nextOccurrence(baseDate, type);
     const chevrons  = bullet?.chevrons ?? numbered?.chevrons ?? '>>';
     const cleanText = content.replace(dateMatch ? `@${dateMatch.dateStr}` : '', '').trim();

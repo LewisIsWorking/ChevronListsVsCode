@@ -196,12 +196,11 @@ describe('onGenerateNextOccurrence', () => {
         expect(h.lines()[1]).toBe('>>>> - Deep @weekly @2026-01-08');
     });
 
-    it.failing('BUG: a monthly item due on the 31st does not skip February', async () => {
+    it('a monthly item due on the 31st does not skip February', async () => {
+        // Regression: nextOccurrence used Date#setMonth, which overflowed "Feb 31"
+        // into 3 March, skipping February and drifting the schedule to the 3rd.
         const h = openEditor(['>> - Rent @monthly @2026-01-31', 'after'], { cursor: 0 });
         await onGenerateNextOccurrence();
-        // Currently '2026-03-03'. nextOccurrence (recurrenceParser) uses Date#setMonth,
-        // which overflows "Feb 31" into March -- so February is skipped entirely and
-        // the schedule drifts to the 3rd. Expected: clamp to the last day of February.
         expect(h.lines()[1]).toBe('>> - Rent @monthly @2026-02-28');
     });
 

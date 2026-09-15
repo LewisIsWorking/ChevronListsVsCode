@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { isHeader, parseBullet, parseNumbered } from './patterns';
+import { isHeader, parseBullet, parseNumbered, formatDate } from './patterns';
 import { parseCheck, countChecks } from './checkParser';
 import { getSectionRange } from './documentUtils';
 import { collectDueDates } from './dueDateParser';
@@ -14,7 +14,7 @@ export async function onShowProgressReport(): Promise<void> {
     const { prefix } = getConfig();
     const doc        = editor.document;
     const today      = new Date();
-    const todayStr   = today.toISOString().slice(0, 10);
+    const todayStr   = formatDate(today);
     const lines: string[] = [`# Progress Report — ${doc.fileName.split(/[\\/]/).pop()}\n`];
 
     for (let i = 0; i < doc.lineCount; i++) {

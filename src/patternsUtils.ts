@@ -5,9 +5,37 @@
  */
 import { parseBullet, parseNumbered } from './patterns';
 
-/** Formats a Date as YYYY-MM-DD */
+/**
+ * Formats a Date as YYYY-MM-DD using its LOCAL calendar date.
+ *
+ * This deliberately does not use toISOString(), which reports the UTC date.
+ * Dates across the extension are built at local midnight (new Date(y, m, d)),
+ * and anywhere east of UTC local midnight is still the previous day in UTC --
+ * so toISOString() put every result one day early. In the UK that meant every
+ * date operation was off by one for the whole of British Summer Time.
+ */
 export function formatDate(d: Date): string {
-    return d.toISOString().slice(0, 10);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** Today's local calendar date as YYYY-MM-DD. */
+export function todayDate(): string {
+    return formatDate(new Date());
+}
+
+/**
+ * Adds whole calendar months, clamping the day to the target month's length.
+ *
+ * Date#setMonth overflows instead: 31 January + 1 month is "31 February", which
+ * rolls on to 3 March, skipping February entirely. The same happens from any
+ * 29th-31st into a shorter month (31 March -> 1 May skips April).
+ */
+export function addMonths(d: Date, months: number): Date {
+    const target = new Date(d.getFullYear(), d.getMonth() + months, 1);
+    const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    target.setDate(Math.min(d.getDate(), lastDay));
+    return target;
 }
 
 /** Returns the next occurrence of a given day of week (0=Sun, 5=Fri etc.) */
@@ -41,7 +69,7 @@ export function parseNaturalDate(input: string, from: Date = new Date()): string
     if (s === 'today')      { return formatDate(today); }
     if (s === 'tomorrow')   { const d = new Date(today); d.setDate(d.getDate() + 1); return formatDate(d); }
     if (s === 'next week')  { const d = new Date(today); d.setDate(d.getDate() + 7); return formatDate(d); }
-    if (s === 'next month') { const d = new Date(today); d.setMonth(d.getMonth() + 1); return formatDate(d); }
+    if (s === 'next month') { return formatDate(addMonths(today, 1)); }
     return null;
 }
 

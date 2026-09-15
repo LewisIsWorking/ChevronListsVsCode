@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { getConfig } from './config';
-import { parseBullet, parseNumbered, isHeader } from './patterns';
+import { parseBullet, parseNumbered, isHeader, todayDate } from './patterns';
 
 interface TodayItem extends vscode.QuickPickItem {
     uri:       vscode.Uri;
@@ -12,7 +12,7 @@ interface TodayItem extends vscode.QuickPickItem {
 /** Command: shows all items due today or overdue across the workspace */
 export async function onTodayView(): Promise<void> {
     const { prefix } = getConfig();
-    const today      = new Date().toISOString().slice(0, 10);
+    const today      = todayDate();
     const files      = await vscode.workspace.findFiles('**/*.md', '**/node_modules/**');
     const items: TodayItem[] = [];
 

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { parseNumbered, parseBullet, replaceDate, stripDate, markDone, shiftDate, formatDate } from './patterns';
+import { parseNumbered, parseBullet, replaceDate, stripDate, markDone, shiftDate, formatDate, todayDate } from './patterns';
 import { prevNumberAtDepth } from './documentUtils';
 import { getConfig } from './config';
 import { makeEdit, makeAction } from './codeActionHelpers';
@@ -73,7 +73,7 @@ function emptySectionActions(doc: vscode.TextDocument, diags: vscode.Diagnostic[
 function overdueActions(doc: vscode.TextDocument, diags: vscode.Diagnostic[]): vscode.CodeAction[] {
     const actions: vscode.CodeAction[] = [];
     const { prefix } = getConfig();
-    const today      = new Date().toISOString().slice(0, 10);
+    const today      = todayDate();
     for (const diag of diags) {
         const line     = diag.range.start.line;
         const text     = doc.lineAt(line).text;

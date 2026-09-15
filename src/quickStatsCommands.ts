@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { parseBullet, parseNumbered, isHeader } from './patterns';
+import { parseBullet, parseNumbered, isHeader, todayDate } from './patterns';
 import { parseCheck } from './checkParser';
 import { extractTags } from './tagParser';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
@@ -17,7 +17,7 @@ export async function onQuickStats(): Promise<void> {
 
     const name        = doc.lineAt(headerLine).text.replace(/^> /, '').trim();
     const [, end]     = getSectionRange(doc, headerLine);
-    const today       = new Date().toISOString().slice(0, 10);
+    const today       = todayDate();
     let   items = 0, done = 0, words = 0, tags = 0, overdue = 0;
 
     for (let i = headerLine + 1; i <= end; i++) {

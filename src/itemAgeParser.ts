@@ -14,7 +14,11 @@ export function ageInDays(dateStr: string, today: Date = new Date()): number {
     const [y, m, d] = dateStr.split('-').map(Number);
     const date = new Date(y, m - 1, d);
     const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    return Math.floor((todayMidnight.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    // Math.round, not floor: across a daylight-saving change a local "day" is 23 or
+    // 25 hours, so a whole-day gap measures just under or over N*24h. floor() lost
+    // a day on the spring change (an item made on 29 March read as 0 days old on
+    // the 30th). Both ends are local midnights, so rounding is exact.
+    return Math.round((todayMidnight.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export interface AgedItem {
