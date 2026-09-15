@@ -64,16 +64,26 @@ export async function onOffsetListNumbers(): Promise<void> {
     if (!input?.trim()) { return; }
     const offset = Number(input.trim());
 
-    let changed = 0;
+    const numberedLines: number[] = [];
+    for (let i = headerLine + 1; i <= end; i++) {
+        if (parseNumbered(doc.lineAt(i).text)) { numberedLines.push(i); }
+    }
+    // All or nothing. Items that would go below 1 used to be skipped silently
+    // while the rest moved, so "1, 2, 10" offset by -5 became "1, 2, 5" and the
+    // message only said "Offset 1 item by -5".
+    const tooLow = numberedLines.filter(i => parseNumbered(doc.lineAt(i).text)!.num + offset < 1).length;
+    if (tooLow > 0) {
+        vscode.window.showInformationMessage(
+            `CL: Offsetting by ${offset} would take ${tooLow} item${tooLow === 1 ? '' : 's'} below 1 — nothing changed`
+        );
+        return;
+    }
+
+    const changed = numberedLines.length;
     await editor.edit((eb: EditBuilder) => {
-        for (let i = headerLine + 1; i <= end; i++) {
-            const t = doc.lineAt(i).text;
-            const n = parseNumbered(t);
-            if (!n) { continue; }
-            const newNum = n.num + offset;
-            if (newNum < 1) { continue; } // skip items that would go below 1
-            eb.replace(doc.lineAt(i).range, `${n.chevrons} ${newNum}. ${n.content}`);
-            changed++;
+        for (const i of numberedLines) {
+            const n = parseNumbered(doc.lineAt(i).text)!;
+            eb.replace(doc.lineAt(i).range, `${n.chevrons} ${n.num + offset}. ${n.content}`);
         }
     });
     vscode.window.showInformationMessage(
