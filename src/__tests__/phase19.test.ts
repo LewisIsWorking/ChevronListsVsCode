@@ -47,7 +47,11 @@ describe('stripAllMetadata', () => {
         expect(stripAllMetadata('good idea +5')).toBe('good idea');
     });
     it('strips multiple markers', () => {
-        const result = stripAllMetadata('[x] deploy #urgent !!! @2026-01-01 +3');
+        // Markers in the positions their parsers recognise: checkbox then priority
+        // lead, the vote trails. This fixture previously put "!!!" mid-sentence
+        // and expected it stripped -- but parsePriority never treats a mid-sentence
+        // "!!!" as a priority, so no other feature did either.
+        const result = stripAllMetadata('[x] !!! deploy #urgent @2026-01-01 +3');
         expect(result).toBe('deploy');
     });
 });
