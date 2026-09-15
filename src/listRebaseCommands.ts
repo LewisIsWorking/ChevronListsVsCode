@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { parseNumbered } from './patterns';
 import { findHeaderAbove, getSectionRange } from './documentUtils';
-import { prevNumberAtDepth } from './documentUtils';
+import { NumberingRuns } from './numberingRuns';
 
 type EditBuilder = vscode.TextEditorEdit;
 
@@ -21,24 +21,24 @@ export async function onRebaseListFromHere(): Promise<void> {
     if (headerLine < 0) { return; }
     const [, end]    = getSectionRange(doc, headerLine);
 
-    // Start from the previous number at this depth + 1
-    const startNum   = prevNumberAtDepth(doc, lineIndex, numbered.chevrons) + 1;
-    const counters   = new Map<string, number>([[numbered.chevrons, startNum - 1]]);
-
+    // Each list continues from its last number above the cursor; see NumberingRuns.
+    // Counters used to be kept per depth, so the child lists of different parents
+    // were numbered as one list.
+    const runs     = new NumberingRuns();
+    const counters = new Map<number, number>();
     let changed = 0;
     await editor.edit((eb: EditBuilder) => {
-        for (let i = lineIndex; i <= end; i++) {
-            const t  = doc.lineAt(i).text;
-            const n  = parseNumbered(t);
-            if (!n) { continue; }
-            const prev = counters.get(n.chevrons) ?? (prevNumberAtDepth(doc, i, n.chevrons));
-            const next = prev + 1;
-            counters.set(n.chevrons, next);
+        for (let i = headerLine + 1; i <= end; i++) {
+            const t   = doc.lineAt(i).text;
+            const run = runs.visit(t);
+            if (run === null) { continue; }
+            const n = parseNumbered(t)!;
+            if (i < lineIndex) { counters.set(run, n.num); continue; }
+            const next = (counters.get(run) ?? 0) + 1;
+            counters.set(run, next);
             if (n.num !== next) {
                 eb.replace(doc.lineAt(i).range, `${n.chevrons} ${next}. ${n.content}`);
                 changed++;
-            } else {
-                counters.set(n.chevrons, n.num);
             }
         }
     });

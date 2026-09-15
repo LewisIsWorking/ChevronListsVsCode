@@ -4,6 +4,7 @@
  * All functions here are re-exported by patterns.ts so callers use a single import.
  */
 import { parseBullet, parseNumbered } from './patterns';
+import { NumberingRuns } from './numberingRuns';
 
 /**
  * Formats a Date as YYYY-MM-DD using its LOCAL calendar date.
@@ -200,17 +201,16 @@ export function getFirstItemPrefix(listPrefix: string, defaultNewListType: strin
 export function computeAutoFixEdits(
     lines: Array<{ text: string; lineIndex: number }>
 ): Array<{ lineIndex: number; newText: string }> {
-    // Group by section (last header seen) + chevron depth so lists in different
-    // sections are never compared against each other.
-    const byDepth = new Map<string, Array<{ lineIndex: number; num: number; text: string }>>();
-    let currentSection = -1;
+    // Group by list, so items are only compared with the items of their own list:
+    // not across sections, and not across the child lists of different parents.
+    const byDepth = new Map<number, Array<{ lineIndex: number; num: number; text: string }>>();
+    const runs    = new NumberingRuns();
     for (const { text, lineIndex } of lines) {
-        if (/^> /.test(text)) { currentSection = lineIndex; continue; }
-        const m = parseNumbered(text);
-        if (!m) { continue; }
-        const key = `${currentSection}::${m.chevrons}`;
-        if (!byDepth.has(key)) { byDepth.set(key, []); }
-        byDepth.get(key)!.push({ lineIndex, num: m.num, text });
+        const run = runs.visit(text);
+        if (run === null) { continue; }
+        const m = parseNumbered(text)!;
+        if (!byDepth.has(run)) { byDepth.set(run, []); }
+        byDepth.get(run)!.push({ lineIndex, num: m.num, text });
     }
     const edits: Array<{ lineIndex: number; newText: string }> = [];
     for (const items of byDepth.values()) {

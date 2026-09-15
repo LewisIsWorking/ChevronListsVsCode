@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { parseNumbered, parseBullet, replaceDate, stripDate, markDone, shiftDate, todayDate } from './patterns';
-import { prevNumberAtDepth } from './documentUtils';
+import { nextInRun } from './numberingRuns';
 import { getConfig } from './config';
 import { makeEdit, makeAction } from './codeActionHelpers';
 import { parseExpiry } from './expiryParser';
@@ -11,10 +11,16 @@ const QF = vscode.CodeActionKind.QuickFix;
 function badNumberingActions(doc: vscode.TextDocument, diags: vscode.Diagnostic[]): vscode.CodeAction[] {
     const actions: vscode.CodeAction[] = [];
     for (const diag of diags) {
-        const line     = diag.range.start.line;
-        const numbered = parseNumbered(doc.lineAt(line).text);
-        if (!numbered) { continue; }
-        const expected = prevNumberAtDepth(doc, line, numbered.chevrons) + 1;
+        // The diagnostic sits on the item BEFORE the break ("expected 3 next but
+        // found 5"), so the item to fix is the next one in its list. This used to
+        // fix the flagged item itself, whose number was already right, offering
+        // "change 2 to 2".
+        const flagged  = parseNumbered(doc.lineAt(diag.range.start.line).text);
+        if (!flagged) { continue; }
+        const line     = nextInRun(doc, diag.range.start.line, flagged.chevrons);
+        if (line < 0) { continue; }
+        const numbered = parseNumbered(doc.lineAt(line).text)!;
+        const expected = flagged.num + 1;
         actions.push(makeAction(`CL: Fix: change ${numbered.num} to ${expected}`, QF, diag, {
             preferred: true,
             edit: makeEdit(doc.uri, doc.lineAt(line).range,

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { findHeaderAbove, getSectionRange } from './documentUtils';
+import { NumberingRuns } from './numberingRuns';
 
 type EditBuilder = vscode.TextEditorEdit;
 
@@ -58,16 +59,12 @@ export async function onRenumberItems(): Promise<void> {
     const headerLine = findHeaderAbove(editor.document, editor.selection.active.line);
     if (headerLine < 0) { return; }
     const [, end]    = getSectionRange(editor.document, headerLine);
-    const counters   = new Map<string, number>();
+    const renumbered = renumber(Array.from({ length: end - headerLine }, (_, k) => editor.document.lineAt(headerLine + 1 + k).text));
     await editor.edit((eb: EditBuilder) => {
-        for (let i = headerLine + 1; i <= end; i++) {
-            const text    = editor.document.lineAt(i).text;
-            const numbered = parseNumbered(text);
-            if (!numbered) { continue; }
-            const next = (counters.get(numbered.chevrons) ?? 0) + 1;
-            counters.set(numbered.chevrons, next);
-            eb.replace(editor.document.lineAt(i).range, `${numbered.chevrons} ${next}. ${numbered.content}`);
-        }
+        renumbered.forEach((text, k) => {
+            const line = editor.document.lineAt(headerLine + 1 + k);
+            if (parseNumbered(line.text)) { eb.replace(line.range, text); }
+        });
     });
 }
 
@@ -83,18 +80,27 @@ export async function onConvertBulletsToNumbered(): Promise<void> {
     const headerLine = findHeaderAbove(doc, editor.selection.active.line);
     if (headerLine < 0) { vscode.window.showInformationMessage('CL: No section found at cursor'); return; }
     const [, end]    = getSectionRange(doc, headerLine);
-    const maxNum     = new Map<string, number>();
+    // Which list each bullet joins once numbered, and the highest number already
+    // in each list: a bullet continues its own list, not every list at its depth.
+    const runs       = new NumberingRuns();
+    const runOf      = new Map<number, number>();
+    const maxNum     = new Map<number, number>();
     for (let i = headerLine + 1; i <= end; i++) {
-        const n = parseNumbered(doc.lineAt(i).text);
-        if (n) { maxNum.set(n.chevrons, Math.max(maxNum.get(n.chevrons) ?? 0, n.num)); }
+        const text = doc.lineAt(i).text;
+        const run  = runs.visit(text, parseBullet(text, prefix) !== null);
+        if (run === null) { continue; }
+        runOf.set(i, run);
+        const n = parseNumbered(text);
+        if (n) { maxNum.set(run, Math.max(maxNum.get(run) ?? 0, n.num)); }
     }
     let converted = 0;
     await editor.edit((eb: EditBuilder) => {
         for (let i = headerLine + 1; i <= end; i++) {
             const bullet = parseBullet(doc.lineAt(i).text, prefix);
             if (!bullet) { continue; }
-            const next = (maxNum.get(bullet.chevrons) ?? 0) + 1;
-            maxNum.set(bullet.chevrons, next);
+            const run  = runOf.get(i)!;
+            const next = (maxNum.get(run) ?? 0) + 1;
+            maxNum.set(run, next);
             eb.replace(doc.lineAt(i).range, `${bullet.chevrons} ${next}. ${bullet.content}`);
             converted++;
         }
@@ -126,14 +132,16 @@ export async function onConvertNumberedToBullets(): Promise<void> {
     if (converted === 0) { vscode.window.showInformationMessage('CL: No numbered items found to convert'); }
 }
 
-/** Pure renumber function for use in tests and diagnostics */
+/** Pure: numbers every list from 1, each list counted separately (see NumberingRuns) */
 export function renumber(lines: string[]): string[] {
-    const counters = new Map<string, number>();
+    const counters = new Map<number, number>();
+    const runs     = new NumberingRuns();
     return lines.map(text => {
-        const numbered = parseNumbered(text);
-        if (!numbered) { return text; }
-        const next = (counters.get(numbered.chevrons) ?? 0) + 1;
-        counters.set(numbered.chevrons, next);
+        const run = runs.visit(text);
+        if (run === null) { return text; }
+        const numbered = parseNumbered(text)!;
+        const next = (counters.get(run) ?? 0) + 1;
+        counters.set(run, next);
         return `${numbered.chevrons} ${next}. ${numbered.content}`;
     });
 }

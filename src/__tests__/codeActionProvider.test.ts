@@ -59,7 +59,8 @@ describe('ChevronCodeActionProvider', () => {
 
 describe('bad-numbering fixes', () => {
     it('offers the corrected number, a custom start, and a fix-all', () => {
-        const t = titles(['> Tasks', '>> 1. a', '>> 5. b'], [diag(2, 'bad-numbering')]);
+        // Anchored where collectIssues puts it: on the item BEFORE the break.
+        const t = titles(['> Tasks', '>> 1. a', '>> 5. b'], [diag(1, 'bad-numbering')]);
         expect(t).toEqual([
             'CL: Fix: change 5 to 2',
             'CL: Set custom start number here…',
@@ -68,13 +69,14 @@ describe('bad-numbering fixes', () => {
     });
 
     it('marks the corrected number as the preferred fix', () => {
-        const [first] = actions(['> Tasks', '>> 1. a', '>> 5. b'], [diag(2, 'bad-numbering')]);
+        const [first] = actions(['> Tasks', '>> 1. a', '>> 5. b'], [diag(1, 'bad-numbering')]);
         expect(first.isPreferred).toBe(true);
     });
 
-    it('rewrites the line to the expected number', () => {
-        const [first] = actions(['> Tasks', '>> 1. a', '>> 5. b'], [diag(2, 'bad-numbering')]);
+    it('rewrites the out-of-sequence item after the flagged one', () => {
+        const [first] = actions(['> Tasks', '>> 1. a', '>> 5. b'], [diag(1, 'bad-numbering')]);
         expect(first.edit?.operations[0].text).toBe('>> 2. b');
+        expect(first.edit?.operations[0].range?.start.line).toBe(2);
     });
 
     it('skips a diagnostic anchored on a line that is not numbered', () => {
@@ -196,11 +198,11 @@ describe('expiry fixes', () => {
 describe('mixed diagnostics', () => {
     it('returns each family in a stable order', () => {
         const t = titles(
-            ['> Tasks', '>> 5. a @2020-01-01'],
+            ['> Tasks', '>> 1. a @2020-01-01', '>> 5. b'],
             [diag(1, 'overdue'), diag(1, 'bad-numbering')]
         );
         // bad-numbering is emitted before overdue regardless of input order
-        expect(t[0]).toContain('CL: Fix: change 5');
+        expect(t[0]).toBe('CL: Fix: change 5 to 2');
         expect(t.some((x) => x.startsWith('CL: Reschedule'))).toBe(true);
     });
 });

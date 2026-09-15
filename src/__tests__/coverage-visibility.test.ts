@@ -146,7 +146,6 @@ const mods: Record<string, () => Promise<unknown>> = {
   'newSectionCommands': () => import('../newSectionCommands'),
   'noteCommands': () => import('../noteCommands'),
   'noteParser': () => import('../noteParser'),
-  'numberingCodeActions': () => import('../numberingCodeActions'),
   'obsidianExportCommands': () => import('../obsidianExportCommands'),
   'outlineProvider': () => import('../outlineProvider'),
   'overdueEscalation': () => import('../overdueEscalation'),
