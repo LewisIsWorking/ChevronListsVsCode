@@ -75,6 +75,7 @@ import { ChevronEstimateCompletionProvider,
          ChevronRatingCompletionProvider,
          ChevronHeaderCompletionProvider }                from './completionProvidersExtra';
 import { registerPhase40Commands }                        from './commandRegistrationsD';
+import { registerPasteItemsProvider }                     from './pasteItemsProvider';
 
 const MARKDOWN = { language: 'markdown' };
 const comp     = vscode.languages.registerCompletionItemProvider;
@@ -159,5 +160,6 @@ export function registerPhase12to32Commands(): vscode.Disposable[] {
         comp(MARKDOWN, new ChevronEstimateCompletionProvider(), '~'),
         comp(MARKDOWN, new ChevronRatingCompletionProvider(),   '★'),
         comp(MARKDOWN, new ChevronHeaderCompletionProvider(),   '>'),
+        ...registerPasteItemsProvider(),
     ];
 }

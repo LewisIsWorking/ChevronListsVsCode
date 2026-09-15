@@ -174,6 +174,11 @@
                     "default": true,
                     "description": "Automatically fix duplicate or out-of-sequence numbered list items as you type (e.g. two >> 2. items become >> 2. and >> 3.)."
                 },
+                "chevron-lists.pasteLinesAsItems": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "When you paste several lines into a chevron item, put each line on its own item at the same depth (numbered items keep counting). The paste widget still offers plain text. Needs VS Code 1.97 or later."
+                },
                 "chevron-lists.templates": {
                     "type": "array",
                     "default": [],
