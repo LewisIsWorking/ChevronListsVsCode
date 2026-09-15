@@ -15,5 +15,6 @@ export function getConfig(): ChevronConfig {
         defaultNewListType:  cfg.get<string>('defaultNewListType', 'unordered'),
         colourPreset:        cfg.get<string>('colourPreset', 'default'),
         anthropicApiKey:     cfg.get<string>('anthropicApiKey', ''),
+        pasteLinesAsItems:   cfg.get<boolean>('pasteLinesAsItems', true),
     };
 }

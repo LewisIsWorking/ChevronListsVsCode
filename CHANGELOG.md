@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+### Added
+- **Pasting several lines into an item puts each line on its own item.** Paste a chat log or an e-mail into `>> 1. ` and every non-blank line becomes an item at the same depth: numbered items keep counting (and the items after them are renumbered), bullets use your prefix. Indentation is trimmed and a line that is already a chevron item keeps only its text. It is the default paste inside an item; the paste widget still offers plain text, and `chevron-lists.pasteLinesAsItems` turns it off. Needs VS Code 1.97 or later; older versions paste as before.
+
 ## [26.6.0] - 2026-09-06
 ### Fixed
 - **Diagnostics were retained for every markdown file opened in a session.** All four `DiagnosticCollection`s (`chevron-lists`, `chevron-lists-dates`, `chevron-lists-wordgoals`, `chevron-lists-expiry`) called `.set(uri, ...)` on each refresh but never released the entry when the document closed — `onDidCloseTextDocument` only cleared jump history. A `DiagnosticCollection` is a strong URI-keyed map owned by the extension host, so each file kept four `Diagnostic[]` arrays alive until the window was reloaded. Closing a document now clears all four via the new `diagnosticCleanup` / `diagnosticSinks` pair. This is the leak the 26.4.2 audit missed.
