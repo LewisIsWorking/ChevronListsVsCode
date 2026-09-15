@@ -10,6 +10,7 @@ export async function onDuplicateItem(): Promise<void> {
     const { prefix } = getConfig();
     const doc        = editor.document;
     const lineIndex  = editor.selection.active.line;
+    const character  = editor.selection.active.character;
     const text       = doc.lineAt(lineIndex).text;
     const bullet     = parseBullet(text, prefix);
     const numbered   = parseNumbered(text);
@@ -19,11 +20,15 @@ export async function onDuplicateItem(): Promise<void> {
         return;
     }
 
-    await editor.edit(eb =>
-        eb.insert(new vscode.Position(lineIndex + 1, 0), text + '\n')
-    );
+    // The last line has no line after it to insert at; VS Code would clamp that
+    // position to the end of the file and glue the copy onto the original.
+    const isLastLine = lineIndex === doc.lineCount - 1;
+    await editor.edit(eb => {
+        if (isLastLine) { eb.insert(doc.lineAt(lineIndex).range.end, '\n' + text); }
+        else            { eb.insert(new vscode.Position(lineIndex + 1, 0), text + '\n'); }
+    });
 
-    // Move cursor to the duplicate
-    const pos = new vscode.Position(lineIndex + 1, editor.selection.active.character);
+    // Move cursor to the duplicate, keeping the column it was in before the edit
+    const pos = new vscode.Position(lineIndex + 1, character);
     editor.selection = new vscode.Selection(pos, pos);
 }

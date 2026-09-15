@@ -15,6 +15,16 @@
  *
  * Edits are applied by character offset, not by line, so replace/insert/delete
  * all work uniformly and multi-line ranges behave like the real editor.
+ *
+ * Two more behaviours copy the real editor, because commands that ignore them
+ * are wrong in VS Code while looking right against a simpler fake:
+ *   - Positions are clamped to the document. A position past the end of a line
+ *     is the end of that line; a line past the last line is the end of the file.
+ *     So inserting at (lastLine + 1, 0) in a file without a trailing newline
+ *     appends to the last line, as it does in VS Code.
+ *   - Selections move with edits. Text inserted before a cursor pushes it along,
+ *     and an empty cursor at the insertion point ends up after the new text, as
+ *     if typed. A non-empty selection grows when text is inserted at its edges.
  */
 import * as vscode from 'vscode';
 
@@ -45,6 +55,23 @@ export interface Harness {
     snippets: string[];
     /** Replaces the cursor set, for multi-cursor and range-selection commands. */
     setSelections(ranges: [number, number][]): void;
+}
+
+/**
+ * Where offset `p` (in the text before `edits`) ends up afterwards.
+ * `isStartEdge` is true for the start of a non-empty selection, which stays put
+ * when text is inserted exactly there (the selection grows); every other
+ * position at an insertion point is pushed past the inserted text.
+ */
+function moveOffset(p: number, edits: { start: number; end: number; text: string }[], isStartEdge: boolean): number {
+    let shift = 0;
+    for (const e of edits) {
+        const delta = e.text.length - (e.end - e.start);
+        if (e.end < p) { shift += delta; }
+        else if (e.start < p) { return moveOffset(e.start, edits.filter(x => x !== e), false) + e.text.length; }
+        else if (e.start === p && e.end === p && !isStartEdge) { shift += delta; }
+    }
+    return p + shift;
 }
 
 /** Builds a document whose content is `lines`, and an editor over it. */
@@ -81,11 +108,13 @@ export function makeEditor(
         };
     };
 
-    /** Character offset of a Position in the joined text. */
+    /** Character offset of a Position in the joined text, clamped like TextDocument.validatePosition. */
     const offsetAt = (pos: { line: number; character: number }): number => {
+        if (pos.line >= content.length) { return content.join(LF).length; }
+        const line = Math.max(0, pos.line);
         let off = 0;
-        for (let i = 0; i < pos.line && i < content.length; i++) { off += content[i].length + 1; }
-        return off + pos.character;
+        for (let i = 0; i < line; i++) { off += content[i].length + 1; }
+        return off + Math.min(Math.max(0, pos.character), content[line].length);
     };
 
     const positionAt = (offset: number) => {
@@ -156,12 +185,25 @@ export function makeEditor(
         edit(cb: (eb: typeof editBuilder) => void) {
             pending.length = 0;
             cb(editBuilder);
+            const applied = [...pending];
+            // Selection edges as offsets in the ORIGINAL text, before any edit lands.
+            const before = editor.selections.map(sel => {
+                const { anchor, active } = sel as { anchor: { line: number; character: number }; active: { line: number; character: number } };
+                return { anchor: offsetAt(anchor), active: offsetAt(active) };
+            });
             let whole = content.join(LF);
-            for (const e of [...pending].sort((a, b) => b.start - a.start)) {
+            for (const e of [...applied].sort((a, b) => b.start - a.start)) {
                 whole = whole.slice(0, e.start) + e.text + whole.slice(e.end);
             }
             content = whole.split(LF);
             pending.length = 0;
+            const moved = before.map(({ anchor, active }) => {
+                const lo = Math.min(anchor, active), hi = Math.max(anchor, active);
+                const map = (p: number) => moveOffset(p, applied, lo !== hi && p === lo);
+                return new vscode.Selection(positionAt(map(anchor)), positionAt(map(active)));
+            });
+            editor.selections = moved;
+            editor.selection = moved[0] ?? editor.selection;
             return Promise.resolve(true);
         },
         revealRange(range: { start: { line: number; character: number }; end: { line: number; character: number } }) {
