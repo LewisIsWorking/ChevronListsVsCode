@@ -81,11 +81,26 @@ export async function onGenerateNextOccurrence(): Promise<void> {
     const dateMatch = extractDate(content);
     const baseDate  = dateMatch?.dateStr ?? todayDate();
     const newDate   = nextOccurrence(baseDate, type);
-    const chevrons  = bullet?.chevrons ?? numbered?.chevrons ?? '>>';
+    // `content` only exists when the line parsed as a bullet or a numbered item,
+    // so exactly one of them is set here.
+    const source    = (numbered ?? bullet)!;
+    // Keep the item's own kind. This used to write `${prefix}` unconditionally,
+    // turning `>> 3. Review` into `>> - Review`. A numbered item continues the
+    // sequence the same way the Enter handler does.
+    const marker    = numbered ? `${numbered.num + 1}.` : prefix;
     const cleanText = content.replace(dateMatch ? `@${dateMatch.dateStr}` : '', '').trim();
-    const newLine   = `${chevrons} ${prefix} ${cleanText} @${newDate}\n`;
+    const newItem   = `${source.chevrons} ${marker} ${cleanText} @${newDate}`;
 
-    await editor.edit(eb =>
-        eb.insert(new vscode.Position(lineIndex + 1, 0), newLine)
-    );
+    // Inserting at Position(lineIndex + 1, 0) on the LAST line of a file with no
+    // trailing newline targets a position that does not exist, which resolves to
+    // the end of the same line and glued the new item onto the old one. Append
+    // after a newline there instead.
+    const isLastLine = lineIndex === doc.lineCount - 1;
+    await editor.edit(eb => {
+        if (isLastLine) {
+            eb.insert(doc.lineAt(lineIndex).range.end, `\n${newItem}`);
+        } else {
+            eb.insert(new vscode.Position(lineIndex + 1, 0), `${newItem}\n`);
+        }
+    });
 }

@@ -1,23 +1,19 @@
 /**
  * Covers src/recurrenceCommands.ts.
  *
- * Writing these found TWO real bugs in onGenerateNextOccurrence, both
- * confirmed by execution rather than by reading:
+ * Writing these found three real bugs, all confirmed by execution and all now
+ * fixed, each with a regression test below:
  *
- *   1. The generated item is always a BULLET. The template is
- *      `${chevrons} ${prefix} ...`, so a numbered source `>> 3. Review` yields
- *      `>> - Review`.
+ *   1. The generated item was always a BULLET -- a numbered `>> 3. Review`
+ *      produced `>> - Review`. It now continues the numbering (`>> 4.`), matching
+ *      the Enter handler.
  *
- *   2. The insert goes to Position(lineIndex + 1, 0). When the recurring item
- *      is the LAST line of a file with no trailing newline, that position does
- *      not exist and resolves to the end of the same line, so the new item is
- *      glued onto the existing one. Mid-file and files ending in a newline are
- *      fine -- verified -- so this is specifically end-of-file.
+ *   2. On the LAST line of a file with no trailing newline, the insert position
+ *      did not exist and resolved to the end of the same line, gluing the new
+ *      item onto the old one. It now appends after a newline there.
  *
- * Both are written as `it.failing` asserting the CORRECT behaviour. That keeps
- * them visible without enshrining a corrupted document as "expected", and Bun
- * fails the test the moment either is fixed so the marker can be removed.
- * Product behaviour is deliberately not changed here.
+ *   3. A monthly item due on the 31st skipped February (Date#setMonth overflow in
+ *      nextOccurrence). Fixed in recurrenceParser via addMonths.
  */
 import { describe, it, expect, beforeEach } from 'bun:test';
 import * as vscode from 'vscode';
@@ -204,18 +200,52 @@ describe('onGenerateNextOccurrence', () => {
         expect(h.lines()[1]).toBe('>> - Rent @monthly @2026-02-28');
     });
 
-    it.failing('BUG: keeps a numbered item numbered', async () => {
+    // Regression: the generated line always used the bullet prefix, so a numbered
+    // item's next occurrence came out as a bullet. It now continues the numbering
+    // the same way the Enter handler does.
+    it('keeps a numbered item numbered, continuing the sequence', async () => {
         const h = openEditor(['>> 3. Review @weekly @2026-01-01', 'after'], { cursor: 0 });
         await onGenerateNextOccurrence();
-        // Currently produces '>> - Review @weekly @2026-01-08'.
-        expect(h.lines()[1]).toMatch(/^>> \d+\. Review @weekly @2026-01-08$/);
+        expect(h.lines()).toEqual([
+            '>> 3. Review @weekly @2026-01-01',
+            '>> 4. Review @weekly @2026-01-08',
+            'after',
+        ]);
     });
 
-    it.failing('BUG: puts the new item on its own line at the end of a file', async () => {
+    it('keeps a nested numbered item at its depth', async () => {
+        const h = openEditor(['>>> 1. Sub @daily @2026-01-01', 'after'], { cursor: 0 });
+        await onGenerateNextOccurrence();
+        expect(h.lines()[1]).toBe('>>> 2. Sub @daily @2026-01-02');
+    });
+
+    // Regression: inserting at the line after the LAST line resolved to the end of
+    // that same line, gluing the new item onto the old one:
+    //   '>> - Review @weekly @2026-01-01>> - Review @weekly @2026-01-08'
+    it('puts the new item on its own line at the end of a file', async () => {
         const h = openEditor(['> S', '>> - Review @weekly @2026-01-01'], { cursor: 1 });
         await onGenerateNextOccurrence();
-        // Currently glues it on: '>> - Review @weekly @2026-01-01>> - Review @weekly @2026-01-08'.
-        expect(h.lines()[1]).toBe('>> - Review @weekly @2026-01-01');
-        expect(h.lines()[2]).toBe('>> - Review @weekly @2026-01-08');
+        expect(h.lines()).toEqual([
+            '> S',
+            '>> - Review @weekly @2026-01-01',
+            '>> - Review @weekly @2026-01-08',
+        ]);
+    });
+
+    it('does not add a stray blank line when the file already ends in a newline', async () => {
+        const h = openEditor(['> S', '>> - Review @weekly @2026-01-01', ''], { cursor: 1 });
+        await onGenerateNextOccurrence();
+        expect(h.lines()).toEqual([
+            '> S',
+            '>> - Review @weekly @2026-01-01',
+            '>> - Review @weekly @2026-01-08',
+            '',
+        ]);
+    });
+
+    it('keeps a numbered item numbered at the end of a file', async () => {
+        const h = openEditor(['>> 1. Only @daily @2026-01-01'], { cursor: 0 });
+        await onGenerateNextOccurrence();
+        expect(h.lines()).toEqual(['>> 1. Only @daily @2026-01-01', '>> 2. Only @daily @2026-01-02']);
     });
 });
