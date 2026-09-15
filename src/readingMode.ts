@@ -4,6 +4,8 @@ import { buildHtml } from './htmlExporter';
 import * as path from 'path';
 
 let readingPanel: vscode.WebviewPanel | undefined;
+/** The live-update listener for the document currently shown in the panel */
+let readingSub: vscode.Disposable | undefined;
 
 /** Command: opens the current file in a clean reading mode webview */
 export function onEnterReadingMode(): void {
@@ -26,16 +28,24 @@ export function onEnterReadingMode(): void {
             vscode.ViewColumn.Beside,
             { enableScripts: false }
         );
-        readingPanel.onDidDispose(() => { readingPanel = undefined; });
+        readingPanel.onDidDispose(() => {
+            readingSub?.dispose();
+            readingSub   = undefined;
+            readingPanel = undefined;
+        });
     }
 
+    // Reusing the panel for another file: retitle it and stop listening to the
+    // previous file. Every call used to add a listener that lived as long as
+    // the panel, so edits to the first file flipped the panel back to it.
+    readingPanel.title = `${fileName} — Reading Mode`;
     readingPanel.webview.html = buildHtml(doc, prefix, fileName);
 
     // Live-update when the document changes
-    const sub = vscode.workspace.onDidChangeTextDocument(event => {
+    readingSub?.dispose();
+    readingSub = vscode.workspace.onDidChangeTextDocument(event => {
         if (readingPanel && event.document === doc) {
             readingPanel.webview.html = buildHtml(doc, prefix, fileName);
         }
     });
-    readingPanel.onDidDispose(() => sub.dispose());
 }

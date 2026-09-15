@@ -16,7 +16,9 @@ export async function onExportAsHtml(): Promise<void> {
     const fileName    = path.basename(doc.fileName, path.extname(doc.fileName));
     const htmlContent = buildHtml(doc, prefix, fileName);
 
-    const defaultUri = vscode.Uri.file(
+    // An untitled document has no folder, so its default would be a bare relative
+    // path such as "Untitled-1.html"; leave the dialog to choose instead.
+    const defaultUri = doc.isUntitled ? undefined : vscode.Uri.file(
         path.join(path.dirname(doc.fileName), `${fileName}.html`)
     );
 

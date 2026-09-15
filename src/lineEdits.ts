@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { LineReader } from './types';
-import { getSectionRange } from './documentUtils';
+import { findHeaderAbove, getSectionRange } from './documentUtils';
 
 /** An insertion that puts text on its own line(s), and where that text starts. */
 export interface LineInsert {
@@ -93,6 +93,27 @@ export function wholeLineRanges(doc: LineReader, lines: Iterable<number>): vscod
 /** The range that deletes one line entirely; see wholeLineRanges. */
 export function wholeLineRange(doc: LineReader, line: number): vscode.Range {
     return wholeLineRanges(doc, [line])[0];
+}
+
+/**
+ * The insertion for a whole new section block (a header and its lines) asked
+ * for at `cursorLine`, and the line its header lands on.
+ *
+ * With the cursor on a header, or outside any section, the block goes at the
+ * cursor line followed by a blank line. With the cursor inside a section it
+ * goes after that section's content, after a blank line. Inserting a header in
+ * the middle of a section used to hand every item below the cursor to the new
+ * section.
+ */
+export function sectionBlockInsert(doc: LineReader, cursorLine: number, block: string[]): LineInsert {
+    const headerLine = findHeaderAbove(doc, cursorLine);
+    if (headerLine < 0 || headerLine === cursorLine) {
+        // A blank line separates the block from what follows, unless that line is blank already.
+        const gap = doc.lineAt(cursorLine).text.trim() === '' ? '' : '\n';
+        return { position: new vscode.Position(cursorLine, 0), text: `${block.join('\n')}\n${gap}`, line: cursorLine };
+    }
+    const ins = lineAfter(doc, sectionContentEnd(doc, headerLine), ['', ...block].join('\n'));
+    return { ...ins, line: ins.line + 1 };
 }
 
 /**
