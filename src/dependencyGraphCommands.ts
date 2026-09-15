@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { getConfig } from './config';
 import { isHeader } from './patterns';
 
 interface DepEdge { from: string; to: string; }

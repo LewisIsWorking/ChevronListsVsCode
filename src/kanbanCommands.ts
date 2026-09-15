@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, isHeader } from './patterns';
 import { parseCheck } from './checkParser';
-import { getSectionRange } from './documentUtils';
 
 interface KanbanCard { content: string; section: string; line: number; }
 

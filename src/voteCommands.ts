@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
-import { parseVote, setVoteCount, collectVotedItems } from './voteParser';
+import { parseVote, setVoteCount } from './voteParser';
 import { getSectionRange } from './documentUtils';
 import { findHeaderAbove } from './documentUtils';
 

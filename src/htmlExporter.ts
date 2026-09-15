@@ -1,6 +1,4 @@
 import { isHeader, parseBullet, parseNumbered } from './patterns';
-import { extractTags } from './tagParser';
-import { extractLinks } from './linkParser';
 import { parseCheck } from './checkParser';
 import type { LineReader } from './types';
 

@@ -1,4 +1,3 @@
-import type { LineReader } from './types';
 
 /**
  * The number of words an author wrote in an item: metadata stripped first.

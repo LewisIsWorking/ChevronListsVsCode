@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
-import { getConfig } from './config';
-import { parseBullet, parseNumbered } from './patterns';
+import { parseNumbered } from './patterns';
 import { findHeaderAbove, getSectionRange } from './documentUtils';
 import { prevNumberAtDepth } from './documentUtils';
 
@@ -10,7 +9,6 @@ type EditBuilder = vscode.TextEditorEdit;
 export async function onRebaseListFromHere(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== 'markdown') { return; }
-    const { prefix } = getConfig();
     const doc        = editor.document;
     const lineIndex  = editor.selection.active.line;
     const text       = doc.lineAt(lineIndex).text;

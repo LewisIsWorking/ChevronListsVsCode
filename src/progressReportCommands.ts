@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { isHeader, parseBullet, parseNumbered, formatDate } from './patterns';
-import { parseCheck, countChecks } from './checkParser';
+import { countChecks } from './checkParser';
 import { getSectionRange } from './documentUtils';
-import { collectDueDates } from './dueDateParser';
 import { parseWordCountGoal } from './wordGoalParser';
 import { itemWordCount } from './metadataStripper';
 

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { isHeader, parseBullet, parseNumbered } from './patterns';
+import { isHeader } from './patterns';
 
 const SECTION_LINK_RE = /\[\[([^\]#|]+?)(?:#[^\]]+)?\]\]/g;
 const FILE_LINK_RE    = /\[\[file:([^\]]+?)\]\]/g;

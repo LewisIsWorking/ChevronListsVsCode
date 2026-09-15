@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { getConfig } from './config';
 import { isHeader, parseBullet, parseNumbered } from './patterns';
 import { parseWordCountGoal, headerNameWithoutGoal } from './wordGoalParser';
 import { getSectionRange } from './documentUtils';

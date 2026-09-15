@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { parseBullet, parseNumbered, groupLinesByTag } from './patterns';
+import { groupLinesByTag } from './patterns';
 import { extractTags } from './tagParser';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
 

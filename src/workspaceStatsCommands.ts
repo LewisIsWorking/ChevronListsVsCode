@@ -3,7 +3,6 @@ import { getConfig } from './config';
 import { isHeader, parseBullet, parseNumbered } from './patterns';
 import { extractTags } from './tagParser';
 import { parseCheck } from './checkParser';
-import { getSectionRange } from './documentUtils';
 import { itemWordCount } from './metadataStripper';
 
 /** Command: shows aggregated statistics across all markdown files in the workspace */

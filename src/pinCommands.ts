@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
-import { getConfig } from './config';
 import { isHeader } from './patterns';
-import { togglePin, isPinned, getPinnedSections } from './pinState';
+import { togglePin, getPinnedSections } from './pinState';
 
 /** Command: toggle pin on the section header nearest the cursor */
 export async function onTogglePin(context: vscode.ExtensionContext): Promise<void> {

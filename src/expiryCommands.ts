@@ -1,8 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { parseBullet, parseNumbered } from './patterns';
 import { collectExpiredItems } from './expiryParser';
-import { findHeaderAbove } from './documentUtils';
 
 interface ExpiredPickItem extends vscode.QuickPickItem { lineIndex: number; }
 

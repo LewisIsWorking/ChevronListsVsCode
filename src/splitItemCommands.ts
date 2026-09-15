@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
-import { prevNumberAtDepth } from './documentUtils';
 
 /** Command: splits the item at the cursor position into two items */
 export async function onSplitItemAtCursor(): Promise<void> {

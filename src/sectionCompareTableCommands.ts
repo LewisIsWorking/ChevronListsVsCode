@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
-import { getSectionRange, findHeaderAbove } from './documentUtils';
+import { getSectionRange } from './documentUtils';
 import { stripAllMetadata } from './metadataStripper';
 
 /** Command: shows two sections side by side as a Markdown comparison table */

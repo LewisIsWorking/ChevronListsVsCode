@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, isHeader, formatDate, nextWeekday, addMonths } from './patterns';
-import { extractTags, uniqueTags } from './tagParser';
-import { collectMentions, uniqueMentions } from './mentionParser';
+import { extractTags } from './tagParser';
+import { uniqueMentions } from './mentionParser';
 
 // ── Tag completion (#) ────────────────────────────────────────────────────────
 

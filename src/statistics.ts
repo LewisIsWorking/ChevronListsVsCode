@@ -1,8 +1,7 @@
-import { getConfig } from './config';
 import { isHeader, parseBullet, parseNumbered } from './patterns';
 import { getSectionRange } from './documentUtils';
 import { extractTags } from './tagParser';
-import { parseCheck, countChecks } from './checkParser';
+import { parseCheck } from './checkParser';
 import { parseColourLabel } from './colourLabelParser';
 import { parseFlag } from './flagParser';
 import { parseComment } from './commentParser';

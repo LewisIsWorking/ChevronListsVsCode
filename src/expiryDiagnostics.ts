@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { parseBullet, parseNumbered } from './patterns';
 import { parseExpiry, isExpired } from './expiryParser';
-import { getConfig } from './config';
 
 const EXPIRY_DIAG_SOURCE = 'Chevron Lists';
 let expiryDiagCollection: vscode.DiagnosticCollection | undefined;

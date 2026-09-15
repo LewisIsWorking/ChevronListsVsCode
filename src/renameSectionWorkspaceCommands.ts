@@ -1,6 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
-import { getConfig } from './config';
 import { isHeader } from './patterns';
 
 /** Command: renames a section and updates [[links]] across all workspace files */
