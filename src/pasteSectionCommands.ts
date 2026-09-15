@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
+import { sectionBlockInsert } from './lineEdits';
 
 /** Command: pastes clipboard text as a new chevron section */
 export async function onPasteAsSection(): Promise<void> {
@@ -15,15 +16,21 @@ export async function onPasteAsSection(): Promise<void> {
         return;
     }
 
-    // First line → header, remaining → bullet items
-    const header    = `> ${lines[0]}`;
-    const items     = lines.slice(1).map(l => `>> ${prefix} ${l}`);
-    const newSection = [header, ...items, ''].join('\n');
+    // First line → header, remaining → items. Markers already on the copied
+    // text are replaced, not stacked: "> Title" used to become "> > Title" and
+    // "- milk" became ">> - - milk". A numbered line stays numbered.
+    const name  = lines[0].replace(/^(?:>+|#+)\s*/, '');
+    const items = lines.slice(1).map(l => {
+        const text     = l.replace(/^>{2,}\s+/, '');
+        const numbered = /^(\d+)[.)]\s+(.*)$/.exec(text);
+        if (numbered) { return `>> ${numbered[1]}. ${numbered[2]}`; }
+        return `>> ${prefix} ${text.replace(/^[-*+•]\s+/, '')}`;
+    });
 
-    const insertPos = new vscode.Position(editor.selection.active.line, 0);
-    await editor.edit(eb => eb.insert(insertPos, newSection + '\n'));
+    const ins = sectionBlockInsert(editor.document, editor.selection.active.line, [`> ${name}`, ...items]);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
 
     vscode.window.showInformationMessage(
-        `CL: Pasted as section "${lines[0]}" with ${items.length} item${items.length === 1 ? '' : 's'}`
+        `CL: Pasted as section "${name}" with ${items.length} item${items.length === 1 ? '' : 's'}`
     );
 }
