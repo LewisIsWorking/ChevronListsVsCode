@@ -1,6 +1,7 @@
 import { isHeader, parseBullet, parseNumbered } from './patterns';
 import { parseCheck } from './checkParser';
 import type { LineReader } from './types';
+import { TAG_RE } from './tagParser';
 
 /** Escapes HTML special characters */
 export function escHtml(s: string): string {
@@ -9,9 +10,10 @@ export function escHtml(s: string): string {
 
 /** Renders item content — converts #tags to badges and [[links]] to anchors */
 export function renderContent(content: string): string {
-    // Split on [[links]] and #tags, escape everything else
+    // Split on [[links]] and #tags, escape everything else. A "#" or "[" that
+    // starts neither is plain text, so a URL fragment is not turned into a badge.
     return content
-        .replace(/\[\[([^\]]+)\]\]|#([\w-]+)|([^[#]+)/g, (match, link, tag, plain) => {
+        .replace(new RegExp(`\\[\\[([^\\]]+)\\]\\]|${TAG_RE.source}|([^[#]+|[[#])`, 'g'), (_match, link, tag, plain) => {
             if (link !== undefined) {
                 return `<a class="cl-link" href="#section-${slugify(link)}">${escHtml(link)}</a>`;
             }

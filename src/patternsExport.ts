@@ -5,6 +5,7 @@
  */
 import { parseBullet, parseNumbered, isHeader } from './patterns';
 import { todayDate } from './patternsUtils';
+import { extractTags } from './tagParser';
 
 /** Formats elapsed milliseconds as Ns / Nm / NhNm */
 export function formatElapsed(ms: number): string {
@@ -20,47 +21,46 @@ export function formatElapsed(ms: number): string {
 /** Pure: converts chevron-list lines to Obsidian-compatible markdown */
 export function convertToObsidian(lines: string[], prefix: string): string {
     if (lines.length === 0) { return ''; }
-    const out: string[]  = [];
+    const body: string[] = [];
     const allTags        = new Set<string>();
-    let   firstHeader    = true;
-    const date           = todayDate();
+    const PRIORITY_EMOJI = ['🟡', '🟠', '🔴'];
     for (const line of lines) {
         if (isHeader(line)) {
             const name = line.replace(/^> /, '').replace(/\s*==\d+/, '').replace(/\s*\[colour:[^\]]+\]/gi, '').trim();
-            if (firstHeader) {
-                out.push('---', `created: ${date}`, 'tags: []', '---', '', `## ${name}`);
-                firstHeader = false;
-            } else {
-                out.push('', `## ${name}`);
-            }
+            if (body.length > 0) { body.push(''); }
+            body.push(`## ${name}`);
             continue;
         }
         const bullet   = parseBullet(line, prefix);
         const numbered = parseNumbered(line);
         const content  = bullet?.content ?? numbered?.content ?? null;
-        if (!content) { if (line.trim()) { out.push(line); } continue; }
+        if (!content) { if (line.trim()) { body.push(line); } continue; }
         const depth    = (bullet?.chevrons ?? numbered!.chevrons).length - 2;
         const indent   = '  '.repeat(depth);
-        const converted = content
-            .replace(/\[x\]\s*/,                        '- [x] ')
-            .replace(/\[ \]\s*/,                        '- [ ] ')
-            .replace(/\[\]\s*/,                         '- [ ] ')
+        // The checkbox and priority are only markers at the START, in that order,
+        // as their parsers read them. They used to be replaced anywhere, and the
+        // checkbox brought its own "- ": "[x] done" became "- - [x] done",
+        // "array[x] here" became "array- [x] here", "wow!!! great" got an emoji.
+        let rest = content;
+        let marks = '';
+        const check = /^\[(x| ?)\]\s*/i.exec(rest);
+        if (check) { marks += check[1].toLowerCase() === 'x' ? '[x] ' : '[ ] '; rest = rest.slice(check[0].length); }
+        const priority = /^(!{1,3}) +/.exec(rest);
+        if (priority) { marks += `${PRIORITY_EMOJI[priority[1].length - 1]} `; rest = rest.slice(priority[0].length); }
+        rest = rest
             .replace(/@expires:(\d{4}-\d{2}-\d{2})/g,  '⏰ $1')
             .replace(/@(\d{4}-\d{2}-\d{2})/g,          '📅 $1')
-            .replace(/!!!\s*/,                          '🔴 ')
-            .replace(/!!\s*/,                           '🟠 ')
-            .replace(/^!\s*/,                           '🟡 ')
             .replace(/\[\[file:([^\]]+)\]\]/g,          '[[$1]]')
             .trim();
-        out.push(`${indent}- ${converted}`);
-        for (const m of content.matchAll(/#(\w+)/g)) { allTags.add(m[1]); }
+        // Numbered items keep their number rather than becoming "- " bullets.
+        body.push(`${indent}${numbered ? `${numbered.num}.` : '-'} ${marks}${rest}`.trimEnd());
+        for (const tag of extractTags(content)) { allTags.add(tag); }
     }
-    if (allTags.size > 0) {
-        const tagList = [...allTags].map(t => `  - ${t}`).join('\n');
-        const idx = out.findIndex(l => l === 'tags: []');
-        if (idx >= 0) { out[idx] = `tags:\n${tagList}`; }
-    }
-    return out.join('\n');
+    // Frontmatter must be the first thing in the file. It used to be written at
+    // the first header, so a file with items above its first header got it in
+    // the middle, and a file with no header lost its tags.
+    const tags = allTags.size > 0 ? ['tags:', ...[...allTags].map(t => `  - ${t}`)] : ['tags: []'];
+    return ['---', `created: ${todayDate()}`, ...tags, '---', '', ...body].join('\n');
 }
 
 /** Pure: word-level diff summary between two strings */
@@ -103,7 +103,6 @@ export interface TagStat { tag: string; total: number; done: number; }
 
 /** Pure: collects per-tag item/done counts from document lines */
 export function collectTagStats(lines: Array<{ text: string }>, prefix: string): TagStat[] {
-    const TAG_RE     = /#(\w+)/g;
     const CHECK_DONE = /^\[x\] /i;
     const CHECK_ANY  = /^\[(x| ?)\] /i;
     const BULLET_RE  = new RegExp(`^(>{2,}) ${prefix === '-' ? '-' : prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} (.*)$`);
@@ -112,7 +111,9 @@ export function collectTagStats(lines: Array<{ text: string }>, prefix: string):
     for (const { text } of lines) {
         const content = text.match(BULLET_RE)?.[2] ?? text.match(NUM_RE)?.[2] ?? null;
         if (!content) { continue; }
-        const tags = [...content.matchAll(TAG_RE)].map(m => m[1]);
+        // Unique and lower-cased, like every other tag count: "#Work" and "#work"
+        // are one tag, and an item tagged twice counts once.
+        const tags = extractTags(content);
         if (tags.length === 0) { continue; }
         const done = CHECK_ANY.test(content) && CHECK_DONE.test(content);
         for (const tag of tags) {

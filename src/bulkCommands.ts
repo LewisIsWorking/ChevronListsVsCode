@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, todayDate } from './patterns';
+import { hasTag } from './tagParser';
 import { getSectionRange } from './documentUtils';
 import { findHeaderAbove } from './documentUtils';
 
@@ -37,11 +38,15 @@ async function bulkTransformSection(
 export async function onBulkTagItems(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== 'markdown') { return; }
-    const tag = await vscode.window.showInputBox({ prompt: 'Tag to add to all items (without #)', placeHolder: 'urgent' });
-    if (!tag?.trim()) { return; }
+    const input = await vscode.window.showInputBox({ prompt: 'Tag to add to all items (without #)', placeHolder: 'urgent' });
+    // A leading # is accepted rather than doubled into "##urgent".
+    const tag = input?.trim().replace(/^#+/, '');
+    if (!tag) { return; }
     await bulkTransformSection(editor, (content) => {
-        if (content.includes(`#${tag.trim()}`)) { return content; }
-        return `${content} #${tag.trim()}`;
+        // The tag itself, in any case -- not any text containing it: "#tagging"
+        // used to count as already having "#tag".
+        if (hasTag(content, tag)) { return content; }
+        return `${content} #${tag}`;
     });
 }
 

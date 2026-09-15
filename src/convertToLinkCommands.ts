@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, isHeader } from './patterns';
+import { stripTags } from './tagParser';
 
 /** Command: replaces the cursor item with a [[SectionName]] link if a matching section exists */
 export async function onConvertItemToSectionLink(): Promise<void> {
@@ -20,7 +21,7 @@ export async function onConvertItemToSectionLink(): Promise<void> {
     const content     = bullet?.content  ?? numbered!.content;
     const num         = numbered?.num ?? null;
     // Strip markers to get plain name for matching
-    const plainName   = content.replace(/\[.\]\s*|[!]+\s*|#\w+|@\S+|~\S+|\+\d+|\/\/.*$/g, '').trim();
+    const plainName   = stripTags(content).replace(/\[.\]\s*|[!]+\s*|@\S+|~\S+|\+\d+|\/\/.*$/g, '').trim();
 
     // Find a section with matching name (case-insensitive)
     let matchedName: string | null = null;

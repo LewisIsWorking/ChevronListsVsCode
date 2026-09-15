@@ -1,3 +1,4 @@
+import { tagRegex } from './tagParser';
 
 /**
  * The number of words an author wrote in an item: metadata stripped first.
@@ -38,7 +39,7 @@ export function stripAllMetadata(content: string): string {
     s = s.replace(/\s*\+\d+\s*$/, '');              // votes         (VOTE_RE, end)
     s = s.replace(/(?:^|\s+)\/\/.*$/, '');          // inline comment (COMMENT_RE; not URLs)
     // These parsers match anywhere in the content.
-    s = s.replace(/#[\w-]+/g, '');                  // tags
+    s = s.replace(tagRegex(), '');                  // tags (not URL fragments)
     s = s.replace(/@\d{4}-\d{2}-\d{2}/g, '');       // due dates
     s = s.replace(/@created:\d{4}-\d{2}-\d{2}/g, ''); // creation dates
     s = s.replace(/@(?:daily|weekly|monthly)/g, ''); // recurrence

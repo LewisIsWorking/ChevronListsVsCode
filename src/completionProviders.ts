@@ -14,7 +14,8 @@ export class ChevronTagCompletionProvider implements vscode.CompletionItemProvid
     ): vscode.CompletionItem[] {
         const lineText = document.lineAt(position).text;
         const prefix   = lineText.slice(0, position.character);
-        if (!prefix.endsWith('#')) { return []; }
+        // Only where a tag can start: not after "C", or in a URL fragment
+        if (!/(?:^|\s)#$/.test(prefix)) { return []; }
 
         const { prefix: listPrefix } = getConfig();
         const freq = new Map<string, number>();
