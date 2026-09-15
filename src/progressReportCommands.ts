@@ -5,6 +5,7 @@ import { parseCheck, countChecks } from './checkParser';
 import { getSectionRange } from './documentUtils';
 import { collectDueDates } from './dueDateParser';
 import { parseWordCountGoal } from './wordGoalParser';
+import { itemWordCount } from './metadataStripper';
 
 /** Command: opens a side panel with a per-section progress report */
 export async function onShowProgressReport(): Promise<void> {
@@ -33,7 +34,7 @@ export async function onShowProgressReport(): Promise<void> {
             const content  = bullet?.content ?? numbered?.content ?? null;
             if (!content) { continue; }
             items++;
-            words += content.trim().split(/\s+/).filter(Boolean).length;
+            words += itemWordCount(content);
             if (content.startsWith('? ')) { flagged++; }
             const dateMatch = content.match(/@(\d{4}-\d{2}-\d{2})/);
             if (dateMatch && dateMatch[1] < todayStr) { overdue++; }

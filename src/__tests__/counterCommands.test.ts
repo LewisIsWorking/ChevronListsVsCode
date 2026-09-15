@@ -1,12 +1,8 @@
 /**
  * Covers src/counterCommands.ts. SECTION-REPORT family.
  *
- * onShowSectionSummary builds its "Done" suffix with a nested ternary whose
- * two truthy arms produce the identical string -- the first condition is
- * redundant. It is left as-is (not this change's business), but every operand
- * still has to be exercised for branch coverage, so the fixtures below are
- * chosen per operand: an empty section, done-with-tags, done-without-tags and
- * not-done-without-tags.
+ * Word counts come from itemWordCount, so checkbox, tag and date markup are not
+ * words; see wordCountAgreement.test.ts for the cross-command guarantee.
  */
 import { describe, it, expect, beforeEach } from 'bun:test';
 import * as vscode from 'vscode';
@@ -58,41 +54,40 @@ describe('onShowSectionSummary', () => {
     it('uses the singular for one item', async () => {
         openEditor(['> S', '>> - solo'], { cursor: 1 });
         await onShowSectionSummary();
-        // Note: "words" is never singularised, unlike "items" -- asserted as shipped.
-        expect(lastInfo()).toBe('"S" — 1 item, 1 words');
+        // "1 word", not "1 words": the word count used to be the only unpluralised noun.
+        expect(lastInfo()).toBe('"S" — 1 item, 1 word');
     });
 
     it('adds the done count when there are completed items but no tags', async () => {
         openEditor(['> S', '>> - [x] a', '>> - [ ] b'], { cursor: 1 });
         await onShowSectionSummary();
-        // 5, not 4: words are split on whitespace, so an UNCHECKED box "[ ]" is
-        // two tokens while a checked "[x]" is one. Checkbox markup is counted as
-        // prose -- asserted as shipped, and worth knowing if word counts look high.
-        expect(lastInfo()).toBe('"S" — 2 items, 5 words  Done: 1/2');
+        // 2: checkbox markup is not prose. This used to report 5, because words
+        // were split on raw whitespace and an unchecked "[ ]" is two tokens.
+        expect(lastInfo()).toBe('"S" — 2 items, 2 words  Done: 1/2');
     });
 
     it('adds the done count alongside tags', async () => {
         openEditor(['> S', '>> - [x] a #t'], { cursor: 1 });
         await onShowSectionSummary();
-        expect(lastInfo()).toBe('"S" — 1 item, 3 words  Done: 1/1  Tags: #t×1');
+        expect(lastInfo()).toBe('"S" — 1 item, 1 word  Done: 1/1  Tags: #t×1');
     });
 
     it('tallies each tag across the section', async () => {
         openEditor(['> S', '>> - a #x #y', '>> - b #x'], { cursor: 1 });
         await onShowSectionSummary();
-        expect(lastInfo()).toBe('"S" — 2 items, 5 words  Tags: #x×2, #y×1');
+        expect(lastInfo()).toBe('"S" — 2 items, 2 words  Tags: #x×2, #y×1');
     });
 
     it('counts numbered items and skips non-item lines', async () => {
         openEditor(['> S', '>> 1. counted', 'loose prose line'], { cursor: 1 });
         await onShowSectionSummary();
-        expect(lastInfo()).toBe('"S" — 1 item, 1 words');
+        expect(lastInfo()).toBe('"S" — 1 item, 1 word');
     });
 
     it('stops at the next section', async () => {
         openEditor(['> One', '>> - a', '> Two', '>> - b', '>> - c'], { cursor: 1 });
         await onShowSectionSummary();
-        expect(lastInfo()).toBe('"One" — 1 item, 1 words');
+        expect(lastInfo()).toBe('"One" — 1 item, 1 word');
     });
 });
 

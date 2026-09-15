@@ -4,6 +4,7 @@ import { isHeader, parseBullet, parseNumbered } from './patterns';
 import { extractTags } from './tagParser';
 import { parseCheck } from './checkParser';
 import { getSectionRange } from './documentUtils';
+import { itemWordCount } from './metadataStripper';
 
 /** Command: shows aggregated statistics across all markdown files in the workspace */
 export async function onShowWorkspaceStatistics(): Promise<void> {
@@ -32,7 +33,7 @@ export async function onShowWorkspaceStatistics(): Promise<void> {
                     const content  = bullet?.content ?? numbered?.content ?? null;
                     if (!content) { continue; }
                     totalItems++;
-                    totalWords += content.trim().split(/\s+/).filter(Boolean).length;
+                    totalWords += itemWordCount(content);
                     totalTags  += extractTags(content).length;
                     const check = parseCheck(content);
                     if (check) { totalChecks++; if (check.state === 'done') { totalDone++; } }

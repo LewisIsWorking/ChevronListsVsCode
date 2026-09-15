@@ -4,7 +4,7 @@ import { parseBullet, parseNumbered, isHeader, todayDate } from './patterns';
 import { parseCheck } from './checkParser';
 import { extractTags } from './tagParser';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
-import { stripAllMetadata } from './metadataStripper';
+import { itemWordCount } from './metadataStripper';
 
 /** Command: shows a quick one-line stats message for the cursor section */
 export async function onQuickStats(): Promise<void> {
@@ -25,7 +25,7 @@ export async function onQuickStats(): Promise<void> {
         const content = parseBullet(t, prefix)?.content ?? parseNumbered(t)?.content ?? null;
         if (!content) { continue; }
         items++;
-        words  += stripAllMetadata(content).trim().split(/\s+/).filter(Boolean).length;
+        words  += itemWordCount(content);
         tags   += extractTags(content).length;
         if (parseCheck(content)?.state === 'done') { done++; }
         const m = content.match(/@(\d{4}-\d{2}-\d{2})/);

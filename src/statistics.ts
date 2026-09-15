@@ -9,6 +9,7 @@ import { parseComment } from './commentParser';
 import { parseCreatedDate } from './itemAgeParser';
 import { parseWordCountGoal } from './wordGoalParser';
 import type { LineReader } from './types';
+import { itemWordCount } from './metadataStripper';
 
 /** Statistics for a single chevron section */
 export interface SectionStats {
@@ -65,7 +66,7 @@ export function computeFileStats(doc: LineReader, prefix: string): FileStats {
             const content  = bullet?.content ?? numbered?.content ?? null;
             if (!content) { continue; }
             items++;
-            words     += content.trim().split(/\s+/).filter(Boolean).length;
+            words     += itemWordCount(content);
             tags      += extractTags(content).length;
             if (parseColourLabel(content)) { coloured++; }
             if (parseFlag(content))        { flagged++; }

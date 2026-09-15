@@ -1,5 +1,21 @@
 import type { LineReader } from './types';
 
+/**
+ * The number of words an author wrote in an item: metadata stripped first.
+ *
+ * This is the ONE definition of an item's word count. There used to be two:
+ * about a third of the extension stripped metadata first and the rest counted
+ * raw content, so `#urgent`, `[x]` and `@2026-01-01` were words in some places
+ * and not others. The same section showed different totals in the status bar
+ * and in Quick Stats, and a word goal could read as met in its progress
+ * decoration while its nudge said otherwise. Worse, an unchecked "[ ]" counted
+ * as two words and a checked "[x]" as one.
+ */
+export function itemWordCount(content: string): number {
+    const plain = stripAllMetadata(content);
+    return plain ? plain.split(/\s+/).length : 0;
+}
+
 /** Strips all known Chevron Lists markers from item content, leaving plain text */
 export function stripAllMetadata(content: string): string {
     // Each marker is stripped only where its PARSER recognises it. Previously the
