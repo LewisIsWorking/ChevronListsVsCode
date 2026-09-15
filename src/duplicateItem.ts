@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
+import { lineAfter } from './lineEdits';
 
 /** Command: duplicates the item at the cursor directly below itself */
 export async function onDuplicateItem(): Promise<void> {
@@ -20,15 +21,10 @@ export async function onDuplicateItem(): Promise<void> {
         return;
     }
 
-    // The last line has no line after it to insert at; VS Code would clamp that
-    // position to the end of the file and glue the copy onto the original.
-    const isLastLine = lineIndex === doc.lineCount - 1;
-    await editor.edit(eb => {
-        if (isLastLine) { eb.insert(doc.lineAt(lineIndex).range.end, '\n' + text); }
-        else            { eb.insert(new vscode.Position(lineIndex + 1, 0), text + '\n'); }
-    });
+    const ins = lineAfter(doc, lineIndex, text);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
 
     // Move cursor to the duplicate, keeping the column it was in before the edit
-    const pos = new vscode.Position(lineIndex + 1, character);
+    const pos = new vscode.Position(ins.line, character);
     editor.selection = new vscode.Selection(pos, pos);
 }

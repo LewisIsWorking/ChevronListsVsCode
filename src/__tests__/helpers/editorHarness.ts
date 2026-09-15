@@ -191,10 +191,29 @@ export function makeEditor(
                 const { anchor, active } = sel as { anchor: { line: number; character: number }; active: { line: number; character: number } };
                 return { anchor: offsetAt(anchor), active: offsetAt(active) };
             });
-            let whole = content.join(LF);
-            for (const e of [...applied].sort((a, b) => b.start - a.start)) {
-                whole = whole.slice(0, e.start) + e.text + whole.slice(e.end);
+            // Every edit is relative to the ORIGINAL text, as in VS Code, so the
+            // result is stitched together in one pass rather than by applying the
+            // edits one after another. Applying them in turn goes wrong when an
+            // insert touches a deleted range: the deletion swallows the insert.
+            // Order: by position; at the same position inserts come before a
+            // replaced range, and otherwise edits keep their call order.
+            const original = content.join(LF);
+            const order = applied.map((e, i) => ({ e, i }))
+                .sort((x, y) => (x.e.start - y.e.start)
+                    || ((x.e.end > x.e.start ? 1 : 0) - (y.e.end > y.e.start ? 1 : 0))
+                    || (x.i - y.i))
+                .map(x => x.e);
+            let whole = '';
+            let cursor = 0;
+            for (const e of order) {
+                if (e.start < cursor) {
+                    // VS Code rejects the whole edit with this message.
+                    throw new Error('Overlapping ranges are not allowed!');
+                }
+                whole += original.slice(cursor, e.start) + e.text;
+                cursor = e.end;
             }
+            whole += original.slice(cursor);
             content = whole.split(LF);
             pending.length = 0;
             const moved = before.map(({ anchor, active }) => {

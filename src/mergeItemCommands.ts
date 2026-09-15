@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
+import { wholeLineRange } from './lineEdits';
 
 /** Command: joins the item at the cursor with the item below it */
 export async function onMergeItemWithNext(): Promise<void> {
@@ -42,7 +43,7 @@ export async function onMergeItemWithNext(): Promise<void> {
         ? `${chevrons} ${num}. ${mergedContent}`
         : `${chevrons} ${prefix} ${mergedContent}`;
 
-    const deleteRange = doc.lineAt(nextIndex).rangeIncludingLineBreak;
+    const deleteRange = wholeLineRange(doc, nextIndex);
     await editor.edit(eb => {
         eb.replace(doc.lineAt(lineIndex).range, newLine);
         eb.delete(deleteRange);

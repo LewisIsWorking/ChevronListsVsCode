@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { parseNote, getNoteLineForItem, buildNoteLine } from './noteParser';
+import { lineAfter, wholeLineRange } from './lineEdits';
 
 /** Command: toggles a note line on/off for the item at the cursor */
 export async function onToggleNote(): Promise<void> {
@@ -26,12 +27,11 @@ export async function onToggleNote(): Promise<void> {
     await editor.edit(eb => {
         if (noteLine >= 0) {
             // Remove existing note
-            const range = doc.lineAt(noteLine).rangeIncludingLineBreak;
-            eb.delete(range);
+            eb.delete(wholeLineRange(doc, noteLine));
         } else {
             // Add a new note
-            const insertPos = new vscode.Position(lineIndex + 1, 0);
-            eb.insert(insertPos, buildNoteLine(chevrons, 'Note text here') + '\n');
+            const ins = lineAfter(doc, lineIndex, buildNoteLine(chevrons, 'Note text here'));
+            eb.insert(ins.position, ins.text);
         }
     });
 

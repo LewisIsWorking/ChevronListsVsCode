@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { isHeader } from './patterns';
-import { isPinned, getPinnedSections } from './pinState';
-import { getSectionRange } from './documentUtils';
+import { isPinned } from './pinState';
+import { lineAfter, sectionContentEnd } from './lineEdits';
 
 interface SectionPickItem extends vscode.QuickPickItem {
     uri:       vscode.Uri;
@@ -65,9 +65,6 @@ export async function onQuickCapture(context: vscode.ExtensionContext): Promise<
     if (!text?.trim()) { return; }
 
     // Step 3: insert at the end of the target section
-    const [, endLine] = getSectionRange(editor.document, targetPick.lineIndex);
-    const insertPos   = new vscode.Position(endLine + 1, 0);
-    await editor.edit(eb =>
-        eb.insert(insertPos, `${'>'.repeat(2)} ${prefix} ${text.trim()}\n`)
-    );
+    const ins = lineAfter(editor.document, sectionContentEnd(editor.document, targetPick.lineIndex), `>> ${prefix} ${text.trim()}`);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
 }

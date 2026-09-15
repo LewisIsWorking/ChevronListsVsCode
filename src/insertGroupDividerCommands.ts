@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { lineAfter } from './lineEdits';
 
 /** Command: inserts a >> -- Name group divider below the cursor line */
 export async function onInsertGroupDivider(): Promise<void> {
@@ -11,23 +12,16 @@ export async function onInsertGroupDivider(): Promise<void> {
     });
     if (!name?.trim()) { return; }
 
-    const doc        = editor.document;
-    const cursorLine = editor.selection.active.line;
-    const insertLine = cursorLine + 1;
-    const divider    = `>> -- ${name.trim()}`;
-    // The last line has no line after it to insert at; VS Code would clamp that
-    // position to the end of the file and glue the divider onto the last line.
-    const isLastLine = cursorLine === doc.lineCount - 1;
-    await editor.edit(eb => {
-        if (isLastLine) { eb.insert(doc.lineAt(cursorLine).range.end, `\n${divider}`); }
-        else            { eb.insert(new vscode.Position(insertLine, 0), `${divider}\n`); }
-    });
+    const doc     = editor.document;
+    const divider = `>> -- ${name.trim()}`;
+    const ins     = lineAfter(doc, editor.selection.active.line, divider);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
 
     // Place cursor after the inserted divider: the start of the following line,
     // or the end of the divider when it is now the last line
-    const newPos = isLastLine
-        ? new vscode.Position(insertLine, divider.length)
-        : new vscode.Position(insertLine + 1, 0);
+    const newPos = ins.line + 1 < doc.lineCount
+        ? new vscode.Position(ins.line + 1, 0)
+        : new vscode.Position(ins.line, divider.length);
     editor.selection = new vscode.Selection(newPos, newPos);
     vscode.window.showInformationMessage(`CL: Inserted group "-- ${name.trim()}"`);
 }

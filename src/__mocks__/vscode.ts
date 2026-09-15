@@ -295,7 +295,20 @@ export const queued = {
     quickPick: [] as unknown[],
     inputBox:  [] as (string | undefined)[],
     saveDialog: [] as (Uri | undefined)[],
+    /** Answers for message buttons; with none queued a message answers with its first button. */
+    message:   [] as (string | undefined)[],
 };
+
+/**
+ * The button a message resolves with. A leading MessageOptions object such as
+ * { modal: true } is not a button: answering with it made every modal confirm
+ * in the extension read as "cancelled".
+ */
+function messageAnswer(items: unknown[]): string | undefined {
+    const buttons = typeof items[0] === 'object' && items[0] !== null ? items.slice(1) : items;
+    if (queued.message.length > 0) { return queued.message.shift(); }
+    return buttons[0] as string | undefined;
+}
 
 /** Clears all recorded interactions, queued answers and registrations. */
 export function __reset(): void {
@@ -309,6 +322,7 @@ export function __reset(): void {
     queued.quickPick.length = 0;
     queued.inputBox.length = 0;
     queued.saveDialog.length = 0;
+    queued.message.length = 0;
     registeredCommands.clear();
     configValues.clear();
     quickPicks.length = 0;
@@ -351,17 +365,17 @@ export const window = {
     activeTextEditor: undefined as unknown,
     visibleTextEditors: [] as unknown[],
 
-    showInformationMessage: (msg: string, ...items: string[]) => {
+    showInformationMessage: (msg: string, ...items: unknown[]) => {
         recorded.info.push(msg);
-        return Promise.resolve(items[0]);
+        return Promise.resolve(messageAnswer(items));
     },
-    showWarningMessage: (msg: string, ...items: string[]) => {
+    showWarningMessage: (msg: string, ...items: unknown[]) => {
         recorded.warning.push(msg);
-        return Promise.resolve(items[0]);
+        return Promise.resolve(messageAnswer(items));
     },
-    showErrorMessage: (msg: string, ...items: string[]) => {
+    showErrorMessage: (msg: string, ...items: unknown[]) => {
         recorded.error.push(msg);
-        return Promise.resolve(items[0]);
+        return Promise.resolve(messageAnswer(items));
     },
 
     // Prompts answer from `queued`; an empty queue means the user cancelled,

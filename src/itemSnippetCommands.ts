@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
+import { lineAfter } from './lineEdits';
 
 interface ItemSnippet { name: string; description: string; template: string; }
 
@@ -33,10 +34,10 @@ export async function onInsertItemSnippet(): Promise<void> {
     const cursor    = editor.selection.active;
     const chevrons  = '>>';
     const itemStart = `${chevrons} ${prefix} `;
-    const insertPos = new vscode.Position(cursor.line + 1, 0);
-    await editor.edit(eb => eb.insert(insertPos, itemStart + '\n'));
+    const ins       = lineAfter(editor.document, cursor.line, itemStart);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
 
-    const snippetPos = new vscode.Position(cursor.line + 1, itemStart.length);
+    const snippetPos = new vscode.Position(ins.line, itemStart.length);
     editor.selection = new vscode.Selection(snippetPos, snippetPos);
     await editor.insertSnippet(new vscode.SnippetString(pick.snippet.template), snippetPos);
 }

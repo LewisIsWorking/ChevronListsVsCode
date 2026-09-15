@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { formatDate, nextWeekday } from './patterns';
+import { lineAfter } from './lineEdits';
 
 interface RecurringTemplate { name: string; description: string; content: string; }
 
@@ -29,8 +29,9 @@ export async function onInsertRecurringItem(): Promise<void> {
     const { prefix }  = getConfig();
     const cursor      = editor.selection.active;
     const itemLine    = `>> ${prefix} ${pick.tmpl.content}`;
-    await editor.edit(eb => eb.insert(new vscode.Position(cursor.line + 1, 0), itemLine + '\n'));
+    const ins         = lineAfter(editor.document, cursor.line, itemLine);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
 
-    const pos = new vscode.Position(cursor.line + 1, itemLine.length);
+    const pos = new vscode.Position(ins.line, itemLine.length);
     editor.selection = new vscode.Selection(pos, pos);
 }

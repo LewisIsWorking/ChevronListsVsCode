@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
-import { isHeader } from './patterns';
 import { findHeaderAbove } from './documentUtils';
-import { getSectionRange } from './documentUtils';
+import { lineAfter, wholeLineRanges } from './lineEdits';
 
 const HIDDEN_MARKER = '>> [hidden]';
 
@@ -25,9 +24,8 @@ export async function onHideSection(): Promise<void> {
         return;
     }
 
-    await editor.edit(eb =>
-        eb.insert(new vscode.Position(headerLine + 1, 0), `${HIDDEN_MARKER}\n`)
-    );
+    const ins = lineAfter(doc, headerLine, HIDDEN_MARKER);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
     // Fold the section
     const pos = new vscode.Position(headerLine, 0);
     editor.selection = new vscode.Selection(pos, pos);
@@ -40,16 +38,15 @@ export async function onShowHiddenSections(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== 'markdown') { return; }
 
-    const doc  = editor.document;
-    let count  = 0;
+    const doc     = editor.document;
+    const markers: number[] = [];
+    for (let i = 0; i < doc.lineCount; i++) {
+        if (doc.lineAt(i).text === HIDDEN_MARKER) { markers.push(i); }
+    }
+    const count = markers.length;
 
     await editor.edit(eb => {
-        for (let i = 0; i < doc.lineCount; i++) {
-            if (doc.lineAt(i).text === HIDDEN_MARKER) {
-                eb.delete(doc.lineAt(i).rangeIncludingLineBreak);
-                count++;
-            }
-        }
+        for (const range of wholeLineRanges(doc, markers)) { eb.delete(range); }
     });
 
     if (count > 0) {

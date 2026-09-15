@@ -90,3 +90,34 @@ describe('selections move with edits', () => {
         expect(ed.selections.map(s => at(s.active))).toEqual([[2, 0], [3, 0]]);
     });
 });
+
+describe('several inserts at one position', () => {
+    it('keep the order they were made in', async () => {
+        const h = makeEditor(['ab']);
+        await (h.editor as Ed).edit(eb => {
+            eb.insert(new vscode.Position(0, 1), '1');
+            eb.insert(new vscode.Position(0, 1), '2');
+            eb.insert(new vscode.Position(0, 1), '3');
+        });
+        expect(h.lines()).toEqual(['a123b']);
+    });
+});
+
+describe('edits are relative to the original text', () => {
+    it('an insert touching the start of a deletion survives it', async () => {
+        const h = makeEditor(['keep', 'drop']);
+        await (h.editor as Ed).edit(eb => {
+            eb.delete(new vscode.Range(0, 4, 1, 4));
+            eb.insert(new vscode.Position(0, 4), '!');
+        });
+        expect(h.lines()).toEqual(['keep!']);
+    });
+
+    it('rejects overlapping ranges, as VS Code does', () => {
+        const h = makeEditor(['abcdef']);
+        expect(() => (h.editor as Ed).edit(eb => {
+            eb.delete(new vscode.Range(0, 0, 0, 4));
+            eb.replace(new vscode.Range(0, 2, 0, 5), 'X');
+        })).toThrow('Overlapping ranges are not allowed!');
+    });
+});

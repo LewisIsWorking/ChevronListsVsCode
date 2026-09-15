@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { parseCreatedDate, ageInDays } from './itemAgeParser';
+import { wholeLineRanges } from './lineEdits';
 
 /** Command: removes all items older than a user-specified number of days */
 export async function onRemoveOldItems(): Promise<void> {
@@ -18,6 +19,7 @@ export async function onRemoveOldItems(): Promise<void> {
 
     const { prefix } = getConfig();
     const days       = Number(input.trim());
+    const dayWord    = `${days} day${days === 1 ? '' : 's'}`;
     const doc        = editor.document;
     const today      = new Date();
 
@@ -35,21 +37,18 @@ export async function onRemoveOldItems(): Promise<void> {
     }
 
     if (toRemove.length === 0) {
-        vscode.window.showInformationMessage(`CL: No items older than ${days} days found`);
+        vscode.window.showInformationMessage(`CL: No items older than ${dayWord} found`);
         return;
     }
 
     const confirm = await vscode.window.showWarningMessage(
-        `Remove ${toRemove.length} item${toRemove.length === 1 ? '' : 's'} older than ${days} days?`,
+        `Remove ${toRemove.length} item${toRemove.length === 1 ? '' : 's'} older than ${dayWord}?`,
         { modal: true }, 'Remove'
     );
     if (confirm !== 'Remove') { return; }
 
-    // Delete in reverse order to preserve line indices
     await editor.edit(eb => {
-        for (const line of [...toRemove].reverse()) {
-            eb.delete(doc.lineAt(line).rangeIncludingLineBreak);
-        }
+        for (const range of wholeLineRanges(doc, toRemove)) { eb.delete(range); }
     });
 
     vscode.window.showInformationMessage(

@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
-import { parseNumbered, parseBullet, replaceDate, stripDate, markDone, shiftDate, formatDate, todayDate } from './patterns';
+import { parseNumbered, parseBullet, replaceDate, stripDate, markDone, shiftDate, todayDate } from './patterns';
 import { prevNumberAtDepth } from './documentUtils';
 import { getConfig } from './config';
 import { makeEdit, makeAction } from './codeActionHelpers';
 import { parseExpiry } from './expiryParser';
+import { lineAfter, wholeLineRange } from './lineEdits';
 
 const QF = vscode.CodeActionKind.QuickFix;
 
@@ -56,11 +57,11 @@ function emptySectionActions(doc: vscode.TextDocument, diags: vscode.Diagnostic[
     const { prefix } = getConfig();
     for (const diag of diags) {
         const line      = diag.range.start.line;
-        const insertPos = new vscode.Position(line + 1, 0);
+        const ins       = lineAfter(doc, line, `>> ${prefix} Item`);
         const addItem   = new vscode.WorkspaceEdit();
-        addItem.insert(doc.uri, insertPos, `>> ${prefix} Item\n`);
+        addItem.insert(doc.uri, ins.position, ins.text);
         const delEdit = new vscode.WorkspaceEdit();
-        delEdit.delete(doc.uri, doc.lineAt(line).rangeIncludingLineBreak);
+        delEdit.delete(doc.uri, wholeLineRange(doc, line));
         actions.push(makeAction('CL: Add placeholder item', QF, diag, { preferred: true, edit: addItem }));
         actions.push(makeAction('CL: Delete this empty section', QF, diag, { edit: delEdit }));
         actions.push(makeAction('CL: Quick capture to this section…', QF, diag, {

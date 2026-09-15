@@ -3,6 +3,7 @@ import { getConfig } from './config';
 import { collectRecurringItems, nextOccurrence } from './recurrenceParser';
 import { extractDate } from './dueDateParser';
 import { parseBullet, parseNumbered, todayDate } from './patterns';
+import { lineAfter } from './lineEdits';
 
 interface RecurPickItem extends vscode.QuickPickItem {
     lineIndex: number;
@@ -91,16 +92,9 @@ export async function onGenerateNextOccurrence(): Promise<void> {
     const cleanText = content.replace(dateMatch ? `@${dateMatch.dateStr}` : '', '').trim();
     const newItem   = `${source.chevrons} ${marker} ${cleanText} @${newDate}`;
 
-    // Inserting at Position(lineIndex + 1, 0) on the LAST line of a file with no
-    // trailing newline targets a position that does not exist, which resolves to
-    // the end of the same line and glued the new item onto the old one. Append
-    // after a newline there instead.
-    const isLastLine = lineIndex === doc.lineCount - 1;
-    await editor.edit(eb => {
-        if (isLastLine) {
-            eb.insert(doc.lineAt(lineIndex).range.end, `\n${newItem}`);
-        } else {
-            eb.insert(new vscode.Position(lineIndex + 1, 0), `${newItem}\n`);
-        }
-    });
+    // lineAfter, not Position(lineIndex + 1, 0): on the last line of a file with no
+    // trailing newline that position resolves to the end of the same line and
+    // glued the new item onto the old one.
+    const ins = lineAfter(doc, lineIndex, newItem);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
 }

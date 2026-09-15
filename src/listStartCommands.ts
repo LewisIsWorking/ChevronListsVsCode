@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { getConfig } from './config';
 import { parseNumbered } from './patterns';
 import { findHeaderAbove, getSectionRange } from './documentUtils';
+import { lineAfter } from './lineEdits';
 
 /**
  * Command: two behaviours depending on cursor position:
@@ -16,7 +16,6 @@ export async function onSetListStartNumber(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== 'markdown') { return; }
 
-    const { prefix }  = getConfig();
     const cursor      = editor.selection.active;
     const doc         = editor.document;
     const lineText    = doc.lineAt(cursor.line).text;
@@ -60,9 +59,9 @@ export async function onSetListStartNumber(): Promise<void> {
     } else {
         // ── Insert mode: add a fresh numbered item at cursor ──────────────────
         const itemPrefix = `${chevrons} ${startNum}. `;
-        const insertPos  = new vscode.Position(cursor.line + 1, 0);
-        await editor.edit(eb => eb.insert(insertPos, `${itemPrefix}\n`));
-        const newPos = new vscode.Position(cursor.line + 1, itemPrefix.length);
+        const ins        = lineAfter(editor.document, cursor.line, itemPrefix);
+        await editor.edit(eb => eb.insert(ins.position, ins.text));
+        const newPos = new vscode.Position(ins.line, itemPrefix.length);
         editor.selection = new vscode.Selection(newPos, newPos);
         editor.revealRange(new vscode.Range(newPos, newPos));
     }
