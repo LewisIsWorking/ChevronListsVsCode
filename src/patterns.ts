@@ -95,12 +95,27 @@ export function toMarkdownTable(rows: Array<{ num: number; content: string }>): 
     ].join('\n');
 }
 
-/** Increments the first number found in a content string. Returns null if no number found. */
+/**
+ * Increments the first number in the item's words, keeping its zero-padding
+ * ("Episode 09" becomes "Episode 10", "07" becomes "08"). Returns null if there
+ * is none.
+ *
+ * Numbers inside metadata are skipped: a date, estimate, vote, rating, tag or
+ * link. It used to take the first digits anywhere, so "@2026-01-01 step 1"
+ * became "@2027-01-01 step 1".
+ */
 export function incrementFirstNumber(content: string): string | null {
-    const match = content.match(/\d+/);
-    if (!match) { return null; }
-    const newNum = Number(match[0]) + 1;
-    return content.slice(0, match.index!) + newNum + content.slice(match.index! + match[0].length);
+    // A link can span words ("[[Part 1]]"), so its characters are masked first.
+    const masked = content.replace(/\[\[[^\]]*\]\]/g, m => ' '.repeat(m.length));
+    for (const word of masked.matchAll(/\S+/g)) {
+        if (/^[@~+★#]/.test(word[0])) { continue; }
+        const digits = /\d+/.exec(word[0]);
+        if (!digits) { continue; }
+        const at = word.index! + digits.index;
+        const next = String(Number(digits[0]) + 1).padStart(digits[0].length, '0');
+        return content.slice(0, at) + next + content.slice(at + digits[0].length);
+    }
+    return null;
 }
 
 /** Pure line-by-line diff of two string arrays. Lines prefixed with ' ', '+', or '-' */

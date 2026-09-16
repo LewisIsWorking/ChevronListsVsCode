@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { stripAllMetadata } from './metadataStripper';
-import { lineAfter } from './lineEdits';
+import { applyItemCopy, itemCopyBelow } from './lineEdits';
 
 /** Command: clones the item below itself with [x] prepended */
 export async function onCloneItemAsDone(): Promise<void> {
@@ -18,17 +18,12 @@ export async function onCloneItemAsDone(): Promise<void> {
         vscode.window.showInformationMessage('CL: Place cursor on a chevron item');
         return;
     }
-    const chevrons   = bullet?.chevrons ?? numbered!.chevrons;
-    const content    = bullet?.content  ?? numbered!.content;
-    const num        = numbered?.num ?? null;
+    const content    = (numbered ?? bullet)!.content;
     const newContent = content.startsWith('[x]') || content.startsWith('[ ]')
         ? content.replace(/^\[.\]\s*/, '[x] ')
         : `[x] ${content}`;
-    const newLine = num !== null
-        ? `${chevrons} ${num}. ${newContent}`
-        : `${chevrons} ${prefix} ${newContent}`;
-    const ins = lineAfter(doc, lineIndex, newLine);
-    await editor.edit(eb => eb.insert(ins.position, ins.text));
+    const copy = itemCopyBelow(doc, lineIndex, prefix, newContent);
+    await editor.edit(eb => applyItemCopy(eb, doc, copy));
 }
 
 /** Command: clones the item below itself with all markers stripped */
@@ -45,13 +40,6 @@ export async function onCloneItemStripped(): Promise<void> {
         vscode.window.showInformationMessage('CL: Place cursor on a chevron item');
         return;
     }
-    const chevrons   = bullet?.chevrons ?? numbered!.chevrons;
-    const content    = bullet?.content  ?? numbered!.content;
-    const num        = numbered?.num ?? null;
-    const stripped   = stripAllMetadata(content);
-    const newLine    = num !== null
-        ? `${chevrons} ${num}. ${stripped}`
-        : `${chevrons} ${prefix} ${stripped}`;
-    const ins = lineAfter(doc, lineIndex, newLine);
-    await editor.edit(eb => eb.insert(ins.position, ins.text));
+    const copy = itemCopyBelow(doc, lineIndex, prefix, stripAllMetadata((numbered ?? bullet)!.content));
+    await editor.edit(eb => applyItemCopy(eb, doc, copy));
 }

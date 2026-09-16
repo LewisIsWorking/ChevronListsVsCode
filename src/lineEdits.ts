@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import type { LineReader } from './types';
 import { findHeaderAbove, getSectionRange } from './documentUtils';
+import { parseBullet, parseNumbered } from './patterns';
+import { renumberFollowing } from './numberingRuns';
 
 /** An insertion that puts text on its own line(s), and where that text starts. */
 export interface LineInsert {
@@ -114,6 +116,42 @@ export function sectionBlockInsert(doc: LineReader, cursorLine: number, block: s
     }
     const ins = lineAfter(doc, sectionContentEnd(doc, headerLine), ['', ...block].join('\n'));
     return { ...ins, line: ins.line + 1 };
+}
+
+/** A new item straight below an existing one, and the renumbering its list needs */
+export interface ItemCopy {
+    insert:   LineInsert;
+    renumber: { line: number; text: string }[];
+}
+
+/**
+ * A copy of the item at `lineIndex`, with `content`, inserted straight below it.
+ *
+ * A numbered copy takes the next number and every later item in the list moves
+ * up by one. Copies used to repeat the original's number ("3. a", "3. b"),
+ * leaving the list out of sequence unless auto-fix happened to be on.
+ */
+export function itemCopyBelow(doc: LineReader, lineIndex: number, prefix: string, content: string): ItemCopy {
+    const text     = doc.lineAt(lineIndex).text;
+    const numbered = parseNumbered(text);
+    const chevrons = (numbered ?? parseBullet(text, prefix))!.chevrons;
+    const line     = numbered ? `${chevrons} ${numbered.num + 1}. ${content}` : `${chevrons} ${prefix} ${content}`;
+    // After the item's own children, so they stay with the original rather than
+    // being handed to the copy.
+    let after = lineIndex;
+    while (after + 1 < doc.lineCount && (/^(>{2,}) \S/.exec(doc.lineAt(after + 1).text)?.[1].length ?? 0) > chevrons.length) {
+        after++;
+    }
+    return {
+        insert:   lineAfter(doc, after, line),
+        renumber: numbered ? renumberFollowing(doc, lineIndex, chevrons, 1) : [],
+    };
+}
+
+/** Applies an ItemCopy in one edit */
+export function applyItemCopy(eb: vscode.TextEditorEdit, doc: vscode.TextDocument, copy: ItemCopy): void {
+    eb.insert(copy.insert.position, copy.insert.text);
+    for (const r of copy.renumber) { eb.replace(doc.lineAt(r.line).range, r.text); }
 }
 
 /**

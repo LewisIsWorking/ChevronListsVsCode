@@ -75,18 +75,19 @@ describe('ChevronMentionCompletionProvider', () => {
     });
 
     it('does not fire when the @ follows a digit, which means a date', () => {
-        expect(complete(p, ['>> - alice @alice', '>> - due 2026@'])).toHaveLength(0);
+        expect(complete(p, ['>> - Alice @Alice', '>> - due 2026@'])).toHaveLength(0);
+        expect(complete(p, ['>> - Alice @Alice', '>> - mail bob@'])).toHaveLength(0);
     });
 
     it('offers names already mentioned in the file', () => {
-        const items = complete(p, ['>> - ping @alice', '>> - ping @bob', '>> - @']);
-        expect(labels(items).sort()).toEqual(['alice', 'bob']);
+        const items = complete(p, ['>> - ping @Alice', '>> - ping @Bob', '>> - email bob@example.com @daily', '>> - @']);
+        expect(labels(items).sort()).toEqual(['Alice', 'Bob']);
     });
 
     it('inserts the bare name and shows the @ form as detail', () => {
-        const items = complete(p, ['>> - ping @alice', '>> - @']);
-        expect(items[0].insertText).toBe('alice');
-        expect(items[0].detail).toBe('@alice');
+        const items = complete(p, ['>> - ping @Alice', '>> - @']);
+        expect(items[0].insertText).toBe('Alice');
+        expect(items[0].detail).toBe('@Alice');
     });
 });
 

@@ -1,13 +1,15 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { getConfig } from './config';
 import { collectMentionStats } from './patterns';
 import type { MentionStat } from './patterns';
+import { escHtml } from './htmlExporter';
 
 function buildMentionsHtml(stats: MentionStat[], fileName: string): string {
     const rows = stats.map(s => {
-        const pct = s.total > 0 ? Math.round((s.done / s.total) * 100) : 0;
+        const pct = Math.round((s.done / s.total) * 100); // every listed entry has at least one item
         const bar = `<div class="bar" style="width:${pct}%"></div>`;
-        return `<tr><td>@${s.name}</td><td>${s.total}</td><td>${s.done}</td><td><div class="bar-wrap">${bar}</div></td><td>${pct}%</td></tr>`;
+        return `<tr><td>@${escHtml(s.name)}</td><td>${s.total}</td><td>${s.done}</td><td><div class="bar-wrap">${bar}</div></td><td>${pct}%</td></tr>`;
     }).join('');
     return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Mentions</title>
 <style>
@@ -20,7 +22,7 @@ td:first-child{color:#84CC16;font-weight:bold}
 .bar-wrap{background:var(--vscode-editor-inactiveSelectionBackground);border-radius:3px;height:8px;width:120px}
 .bar{background:#A855F7;border-radius:3px;height:8px}
 </style></head><body>
-<h1>👤 Mentions Report — ${fileName}</h1>
+<h1>👤 Mentions Report — ${escHtml(fileName)}</h1>
 ${stats.length === 0 ? '<p style="opacity:.5">No @Mentions found</p>' : `
 <table><thead><tr><th>Person</th><th>Items</th><th>Done</th><th>Progress</th><th>%</th></tr></thead>
 <tbody>${rows}</tbody></table>`}
@@ -35,7 +37,7 @@ export async function onShowMentionsReport(): Promise<void> {
     if (!editor || editor.document.languageId !== 'markdown') { return; }
     const { prefix } = getConfig();
     const doc        = editor.document;
-    const fileName   = doc.fileName.split(/[\\/]/).pop() ?? 'file';
+    const fileName   = path.basename(doc.fileName);
     const lines      = Array.from({ length: doc.lineCount }, (_, i) => ({ text: doc.lineAt(i).text }));
     const stats      = collectMentionStats(lines, prefix);
 

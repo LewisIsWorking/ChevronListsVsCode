@@ -3,6 +3,7 @@ import { getConfig } from './config';
 import { parseBullet, parseNumbered, countWords, formatReadingTime } from './patterns';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
 import { stripAllMetadata } from './metadataStripper';
+import { headerNameWithoutGoal } from './wordGoalParser';
 
 /** Command: shows estimated reading time for the current section or whole file */
 export async function onShowReadingTime(): Promise<void> {
@@ -23,7 +24,8 @@ export async function onShowReadingTime(): Promise<void> {
     };
 
     if (headerLine >= 0) {
-        const name    = doc.lineAt(headerLine).text.replace(/^> /, '');
+        // Without a ==N word goal marker, as the other word-count messages show it.
+        const name    = headerNameWithoutGoal(doc.lineAt(headerLine).text);
         const [, end] = getSectionRange(doc, headerLine);
         const words   = countWords(getContents(headerLine + 1, end));
         vscode.window.showInformationMessage(
