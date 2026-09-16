@@ -68,6 +68,21 @@ export function prevNumberInRun(doc: LineReader, lineIndex: number, chevrons: st
 }
 
 /**
+ * The replacements that add `by` to the number of every item after `lineIndex`
+ * in its list at depth `chevrons`: what keeps a list in sequence when `by`
+ * numbered items are inserted straight after `lineIndex`.
+ */
+export function renumberFollowing(doc: LineReader, lineIndex: number, chevrons: string, by: number): { line: number; text: string }[] {
+    const edits: { line: number; text: string }[] = [];
+    if (by === 0) { return edits; }
+    for (let i = nextInRun(doc, lineIndex, chevrons); i >= 0; i = nextInRun(doc, i, chevrons)) {
+        const n = parseNumbered(doc.lineAt(i).text)!;
+        edits.push({ line: i, text: `${n.chevrons} ${n.num + by}. ${n.content}` });
+    }
+    return edits;
+}
+
+/**
  * The line of the next numbered item after `lineIndex` in the same list at
  * depth `chevrons`, or -1 when the list ends first.
  */

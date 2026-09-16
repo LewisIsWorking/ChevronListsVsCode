@@ -3,9 +3,9 @@ import { parseCheck } from './checkParser';
 import type { LineReader } from './types';
 import { TAG_RE } from './tagParser';
 
-/** Escapes HTML special characters */
+/** Escapes HTML special characters, quotes included so the result is also safe inside an attribute */
 export function escHtml(s: string): string {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 /** Renders item content — converts #tags to badges and [[links]] to anchors */

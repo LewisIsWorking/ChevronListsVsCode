@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, incrementFirstNumber } from './patterns';
-import { lineAfter } from './lineEdits';
+import { applyItemCopy, itemCopyBelow } from './lineEdits';
 
 /** Command: duplicates item below itself with the first number in content incremented */
 export async function onDuplicateItemAndIncrement(): Promise<void> {
@@ -20,18 +20,13 @@ export async function onDuplicateItemAndIncrement(): Promise<void> {
         return;
     }
 
-    const chevrons  = bullet?.chevrons ?? numbered!.chevrons;
-    const content   = bullet?.content  ?? numbered!.content;
-    const num       = numbered?.num ?? null;
+    const content    = (numbered ?? bullet)!.content;
     const newContent = incrementFirstNumber(content) ?? content;
-    const newLine    = num !== null
-        ? `${chevrons} ${num}. ${newContent}`
-        : `${chevrons} ${prefix} ${newContent}`;
 
     const character = editor.selection.active.character;
-    const ins       = lineAfter(doc, lineIndex, newLine);
-    await editor.edit(eb => eb.insert(ins.position, ins.text));
+    const copy      = itemCopyBelow(doc, lineIndex, prefix, newContent);
+    await editor.edit(eb => applyItemCopy(eb, doc, copy));
 
-    const pos = new vscode.Position(ins.line, character);
+    const pos = new vscode.Position(copy.insert.line, character);
     editor.selection = new vscode.Selection(pos, pos);
 }

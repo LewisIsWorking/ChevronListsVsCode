@@ -52,7 +52,8 @@ export class ChevronMentionCompletionProvider implements vscode.CompletionItemPr
         const lineText = document.lineAt(position).text;
         const prefix   = lineText.slice(0, position.character);
         // Only trigger for @ that isn't a date pattern
-        if (!prefix.endsWith('@') || /\d$/.test(prefix.slice(0, -1))) { return []; }
+        // ...and only where a mention can start: not in an e-mail address either
+        if (!/(?:^|\s)@$/.test(prefix)) { return []; }
 
         const { prefix: listPrefix } = getConfig();
         const names = uniqueMentions(document, listPrefix);

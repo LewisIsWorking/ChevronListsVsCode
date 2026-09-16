@@ -21,9 +21,8 @@ describe('extractMentions', () => {
         expect(extractMentions('plain item')).toEqual([]);
     });
     it('does not match @daily/@weekly recurrence markers as mentions', () => {
-        // @daily starts with lowercase d, not captured by the mention regex (which requires word chars after @)
-        // Actually @daily WOULD match since d is a word char — this is expected behaviour
-        expect(extractMentions('task @daily').length).toBeGreaterThanOrEqual(0);
+        // This test used to assert length >= 0, which is always true, while @daily was matched.
+        expect(extractMentions('task @daily @weekly @monthly @created:2026-01-01 @expires:2026-02-01')).toEqual([]);
     });
 });
 

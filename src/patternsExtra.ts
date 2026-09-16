@@ -4,6 +4,7 @@
  * Re-exported by patterns.ts so callers use a single import.
  */
 import { extractTags } from './tagParser';
+import { extractMentions } from './mentionParser';
 
 /** Pure: extracts due date string from content for sorting, or high sentinel for undated */
 export function extractSortDate(content: string): string {
@@ -71,15 +72,13 @@ export function groupLinesByMention(
     items: Array<{ text: string; index: number }>,
     prefix: string
 ): Map<string, Array<{ text: string; index: number }>> {
-    const DATE_RE    = /@\d{4}-\d{2}-\d{2}/g;
-    const MENTION_RE = /@([A-Z][A-Za-z]+)/;
     const groups     = new Map<string, Array<{ text: string; index: number }>>();
     const untagged:  Array<{ text: string; index: number }> = [];
     for (const item of items) {
-        const m = item.text.replace(DATE_RE, '').match(MENTION_RE);
-        if (m) {
-            if (!groups.has(m[1])) { groups.set(m[1], []); }
-            groups.get(m[1])!.push(item);
+        const [name] = extractMentions(item.text);
+        if (name) {
+            if (!groups.has(name)) { groups.set(name, []); }
+            groups.get(name)!.push(item);
         } else {
             untagged.push(item);
         }
@@ -164,8 +163,6 @@ export function collectMentionStats(
     lines: Array<{ text: string }>,
     prefix: string
 ): MentionStat[] {
-    const MENTION_RE = /@([A-Z][A-Za-z]+)/g;
-    const DATE_RE    = /@\d{4}-\d{2}-\d{2}/g;
     const CHECK_DONE = /^\[x\] /i;
     const CHECK_ANY  = /^\[(x| ?)\] /i;
     const BULLET_RE  = new RegExp(`^(>{2,}) ${prefix === '-' ? '-' : prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} (.*)$`);
@@ -176,8 +173,8 @@ export function collectMentionStats(
         const nm = text.match(NUM_RE);
         const content = bm?.[2] ?? nm?.[2] ?? null;
         if (!content) { continue; }
-        const stripped  = content.replace(DATE_RE, '');
-        const mentions  = [...stripped.matchAll(MENTION_RE)].map(m => m[1]);
+        // Each person once per item: an item naming @Sam twice is one item for Sam.
+        const mentions  = extractMentions(content);
         if (mentions.length === 0) { continue; }
         const done = CHECK_ANY.test(content) && CHECK_DONE.test(content);
         for (const name of mentions) {
