@@ -61,10 +61,10 @@
     "the moment it is fixed. They are covered code, not exclusions."
   ],
   "floor": {
-    "statements": 47.6,
-    "branches": 43.4,
-    "functions": 52.4,
-    "lines": 48.7
+    "statements": 50.5,
+    "branches": 47,
+    "functions": 55,
+    "lines": 51.8
   },
   "target": {
     "statements": 100,

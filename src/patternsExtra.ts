@@ -5,6 +5,10 @@
  */
 import { extractTags } from './tagParser';
 import { extractMentions } from './mentionParser';
+import { CHECK_RE } from './checkParser';
+import { PRIORITY_RE } from './priorityParser';
+import { parseEstimate } from './estimateParser';
+import { parseVote } from './voteParser';
 
 /** Pure: extracts due date string from content for sorting, or high sentinel for undated */
 export function extractSortDate(content: string): string {
@@ -92,13 +96,17 @@ export function scoreItemComplexity(content: string): {
     priority: number; tags: number; estimate: number;
     dueDate: number; expiry: number; vote: number; label: number; total: number;
 } {
-    const priority = content.match(/^!!!/) ? 3 : content.match(/^!!/) ? 2 : content.match(/^!/) ? 1 : 0;
+    // Each marker as its own parser reads it. These used to be loose regexes:
+    // "!important" had priority, a priority after a checkbox did not,
+    // "~~done~~" had an estimate, "C++11" a vote, and "[X] done" a label.
+    const body     = content.replace(CHECK_RE, '');
+    const priority = PRIORITY_RE.exec(body)?.[1].length ?? 0;
     const tags     = extractTags(content).length;
-    const estimate = /~\w+/.test(content) ? 1 : 0;
+    const estimate = parseEstimate(content) ? 1 : 0;
     const dueDate  = /@\d{4}-\d{2}-\d{2}/.test(content) ? 1 : 0;
     const expiry   = /@expires:\d{4}-\d{2}-\d{2}/.test(content) ? 1 : 0;
-    const vote     = /\+\d+/.test(content) ? 1 : 0;
-    const label    = /\[[A-Z][^\]]*\]/.test(content) ? 1 : 0;
+    const vote     = parseVote(content) ? 1 : 0;
+    const label    = /\[[A-Z][^\]]*\]/.test(body) ? 1 : 0;
     const total    = priority + tags + estimate + dueDate + expiry + vote + label;
     return { priority, tags, estimate, dueDate, expiry, vote, label, total };
 }
@@ -152,7 +160,9 @@ export function evaluateExpression(content: string): { original: string; result:
         // eslint-disable-next-line no-new-func
         const result = new Function(`return (${expr})`)() as number;
         if (typeof result !== 'number' || !isFinite(result)) { return null; }
-        return { original: match[0], result: Math.round(result * 10000) / 10000 };
+        // Without the spaces the match ran on into: replacing "=2+2 " glued the
+        // result to the next word ("=4more").
+        return { original: match[0].trimEnd(), result: Math.round(result * 10000) / 10000 };
     } catch { return null; }
 }
 

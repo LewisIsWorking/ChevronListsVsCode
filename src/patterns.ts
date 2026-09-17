@@ -1,4 +1,5 @@
 import type { BulletMatch, NumberedMatch } from './types';
+import { joinItem, splitItem } from './itemParts';
 
 /** Matches a >> 1. numbered item at any depth — captures chevrons, number, content */
 export const NUMBERED_ITEM_RE = /^(>{2,}) (\d+)\. (.*)$/;
@@ -54,10 +55,23 @@ export function toTitleCase(s: string): string {
 
 /** Toggles ~~strikethrough~~ on a content string */
 export function toggleStrikethrough(content: string): string {
-    if (content.startsWith('~~') && content.endsWith('~~') && content.length > 4) {
-        return content.slice(2, -2);
-    }
-    return `~~${content}~~`;
+    // Only the words: wrapping the whole content put the checkbox and priority
+    // inside "~~", where they stopped being recognised ("~~[x] done~~"), and a
+    // vote or comment went with them.
+    const parts = splitItem(content);
+    if (isStruck(parts.body)) { return joinItem({ ...parts, body: parts.body.slice(2, -2) }); }
+    if (parts.body === '') { return content; }
+    return joinItem({ ...parts, body: `~~${parts.body}~~` });
+}
+
+/** Pure: removes ~~strikethrough~~ from the item's words, leaving its markers alone */
+export function removeStrikethrough(content: string): string {
+    const parts = splitItem(content);
+    return isStruck(parts.body) ? joinItem({ ...parts, body: parts.body.slice(2, -2) }) : content;
+}
+
+function isStruck(body: string): boolean {
+    return body.startsWith('~~') && body.endsWith('~~') && body.length > 4;
 }
 
 /** Replaces @YYYY-MM-DD in item content with a new date string */

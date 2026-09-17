@@ -2,6 +2,10 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { stripAllMetadata } from './metadataStripper';
+import { joinItem, splitItem } from './itemParts';
+
+/** The metadata stripAllMetadata hides from among an item's words */
+const INLINE_METADATA = /(?<!\S)(?:#\w[\w-]*|@\d{4}-\d{2}-\d{2}|@created:\d{4}-\d{2}-\d{2}|@(?:daily|weekly|monthly)|~\d+h(?:\d+m)?|~\d+m|\{(?:red|green|blue|yellow|orange|purple)\}|\[\[[^\]]+\]\])(?!\S)/g;
 
 /**
  * Command: opens an input box with the item's plain content (markers hidden).
@@ -35,10 +39,18 @@ export async function onEditItemContent(): Promise<void> {
         value:       plainText,
         placeHolder: 'Item text (markers will be preserved)',
     });
-    if (newPlain === undefined || newPlain === plainText) { return; }
+    if (newPlain === undefined || newPlain === plainText || !newPlain.trim()) { return; }
 
-    // Rebuild: replace only the plain-text portion, keep all markers intact
-    const newContent = content.replace(plainText, newPlain.trim());
+    // Rebuild from the item's parts: the new words, then the metadata that sat among
+    // the old ones. This used to be content.replace(plainText, newPlain), but the
+    // plain text is not a substring once metadata sits between words, so the edit
+    // was silently dropped; and when it was, the first match could be inside a tag
+    // ("#milk milk" edited to "bread" became "#bread milk").
+    const parts  = splitItem(content);
+    const kept   = parts.body.match(INLINE_METADATA) ?? [];
+    const struck = /^~~.+~~$/.test(parts.body.replace(INLINE_METADATA, '').replace(/\s{2,}/g, ' ').trim());
+    const words  = struck ? `~~${newPlain.trim()}~~` : newPlain.trim();
+    const newContent = joinItem({ ...parts, body: [words, ...kept].join(' ') });
     const newLine    = num !== null
         ? `${chevrons} ${num}. ${newContent}`
         : `${chevrons} ${prefix} ${newContent}`;

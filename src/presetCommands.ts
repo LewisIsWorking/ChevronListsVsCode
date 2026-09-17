@@ -22,18 +22,21 @@ async function applyPreset(preset: ColourPreset): Promise<void> {
         }
     }
 
-    // Always enable semantic tokens for markdown — many themes disable them by default
-    const markdownScope = (current['[markdown]'] as Record<string, unknown>) ?? {};
-
+    // A "[...]" key inside semanticTokenColorCustomizations scopes to a colour THEME,
+    // so the "[markdown]": { enabled: true } this used to write did nothing (and was
+    // left in the user's settings). It is removed here.
+    const { ['[markdown]']: _staleScope, ...customizations } = current;
+    void _staleScope;
     await cfg.update(
         'semanticTokenColorCustomizations',
-        {
-            ...current,
-            '[markdown]': { ...markdownScope, enabled: true },
-            rules: newRules,
-        },
+        { ...customizations, rules: newRules },
         vscode.ConfigurationTarget.Global
     );
+
+    // Always enable semantic tokens for markdown — many themes disable them by default.
+    // This is the setting that does it, as a markdown language override.
+    await vscode.workspace.getConfiguration('editor', { languageId: 'markdown' })
+        .update('semanticHighlighting.enabled', true, vscode.ConfigurationTarget.Global, true);
 }
 
 /** Command: shows a quick pick of colour presets and applies the selected one */

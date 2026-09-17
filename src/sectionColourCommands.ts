@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { isHeader, parseSectionColour, setSectionColour } from './patterns';
+import { parseSectionColour, setSectionColour } from './patterns';
 import { findHeaderAbove } from './documentUtils';
 
 const VALID_COLOURS = ['red','green','blue','yellow','orange','purple'] as const;
@@ -13,7 +13,7 @@ export async function onSetSectionColour(): Promise<void> {
     if (!editor || editor.document.languageId !== 'markdown') { return; }
     const doc        = editor.document;
     const headerLine = findHeaderAbove(doc, editor.selection.active.line);
-    if (headerLine < 0 || !isHeader(doc.lineAt(headerLine).text)) {
+    if (headerLine < 0) {
         vscode.window.showInformationMessage('CL: No section header found at cursor'); return;
     }
     const current = parseSectionColour(doc.lineAt(headerLine).text);

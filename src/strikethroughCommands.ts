@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { parseBullet, parseNumbered, toggleStrikethrough } from './patterns';
+import { parseBullet, parseNumbered, removeStrikethrough, toggleStrikethrough } from './patterns';
 
 async function transformContent(transform: (s: string) => string): Promise<void> {
     const editor = vscode.window.activeTextEditor;
@@ -29,8 +29,4 @@ async function transformContent(transform: (s: string) => string): Promise<void>
 export const onStrikethroughItem   = () => transformContent(toggleStrikethrough);
 
 /** Command: removes ~~strikethrough~~ markers from item content */
-export const onRemoveStrikethrough = () => transformContent(content =>
-    content.startsWith('~~') && content.endsWith('~~') && content.length > 4
-        ? content.slice(2, -2)
-        : content
-);
+export const onRemoveStrikethrough = () => transformContent(removeStrikethrough);

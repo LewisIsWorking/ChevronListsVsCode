@@ -95,10 +95,10 @@ describe('stripAllMetadata agrees with the parsers', () => {
         });
     }
 
-    it('keeps a vote that a trailing comment hides from parseVote', () => {
-        // "+5" is not at the end, so parseVote ignores it; the comment is still stripped.
-        expect(parseVote('idea +5 // note')).toBeNull();
-        expect(stripAllMetadata('idea +5 // note')).toBe('idea +5');
+    it('strips a vote followed by a comment, which parseVote reads as a vote', () => {
+        // A comment used to hide the vote from parseVote, so both kept "+5".
+        expect(parseVote('idea +5 // note')?.count).toBe(5);
+        expect(stripAllMetadata('idea +5 // note')).toBe('idea');
     });
 });
 

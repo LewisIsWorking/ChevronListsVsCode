@@ -15,8 +15,9 @@ describe('toggleStrikethrough', () => {
     it('removes ~~ when already struck through', () => {
         expect(toggleStrikethrough('~~item text~~')).toBe('item text');
     });
-    it('wraps empty string', () => {
-        expect(toggleStrikethrough('')).toBe('~~~~');
+    it('leaves an empty item alone', () => {
+        // It used to become "~~~~", which toggling again turned into "~~~~~~~~".
+        expect(toggleStrikethrough('')).toBe('');
     });
 });
 
