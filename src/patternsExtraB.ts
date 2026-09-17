@@ -48,7 +48,7 @@ export function itemToMarkdown(content: string, num: number | null = null): stri
     const priority = /^(!{1,3}) +/.exec(rest);
     if (priority) { marks += `${['🟡', '🟠', '🔴'][priority[1].length - 1]} `; rest = rest.slice(priority[0].length); }
     rest = stripComment(rest)
-        .replace(/\s*\+\d+\s*$/, '')
+        .replace(/(?:^|\s+)\+\d+\s*$/, '')
         .replace(/\{(?:red|green|blue|yellow|orange|purple)\}\s*/g, '')
         .replace(tagRegex(), '**#$1**');
     return `${num !== null ? `${num}.` : '-'} ${marks}${rest}`.trim();

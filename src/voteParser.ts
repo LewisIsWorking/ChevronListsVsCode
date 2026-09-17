@@ -1,28 +1,31 @@
 import type { LineReader } from './types';
 import { parseBullet, parseNumbered } from './patterns';
+import { joinItem, splitItem } from './itemParts';
 
 /** Regex matching +N vote count at end of item content */
-export const VOTE_RE = /\+(\d+)(?=\s*$)/;
+export const VOTE_RE = /(?<!\S)\+(\d+)(?=\s*$)/;
 
 export interface VoteMatch {
     count:          number;
     contentWithout: string;
 }
 
-/** Parses a vote count from item content */
+/**
+ * Parses a vote count from item content: the +N at the end of the text before
+ * any // comment. A comment after the vote used to hide it ("idea +5 // why").
+ */
 export function parseVote(content: string): VoteMatch | null {
-    const match = content.match(VOTE_RE);
-    if (!match) { return null; }
-    return {
-        count:          parseInt(match[1], 10),
-        contentWithout: content.replace(match[0], '').trimEnd(),
-    };
+    const parts = splitItem(content);
+    if (parts.vote === null) { return null; }
+    return { count: parts.vote, contentWithout: joinItem({ ...parts, vote: null }) };
 }
 
-/** Sets or updates the vote count on item content */
+/**
+ * Sets or updates the vote count on item content, before any comment. It used to
+ * append "+N" after the comment, where it became part of the comment.
+ */
 export function setVoteCount(content: string, count: number): string {
-    const stripped = parseVote(content)?.contentWithout ?? content;
-    return count > 0 ? `${stripped} +${count}` : stripped;
+    return joinItem({ ...splitItem(content), vote: count > 0 ? count : null });
 }
 
 export interface VotedItem {

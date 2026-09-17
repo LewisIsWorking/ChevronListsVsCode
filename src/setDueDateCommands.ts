@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, parseNaturalDate } from './patterns';
+import { joinItem, splitItem } from './itemParts';
 
 /** Command: sets or replaces the @YYYY-MM-DD due date on the item at the cursor */
 export async function onSetDueDate(): Promise<void> {
@@ -28,7 +29,10 @@ export async function onSetDueDate(): Promise<void> {
     const chevrons = bullet?.chevrons ?? numbered!.chevrons;
     const content  = bullet?.content  ?? numbered!.content;
     const num      = numbered?.num ?? null;
-    const newContent = content.replace(/@\d{4}-\d{2}-\d{2}/, '') .trim() + ` @${dateStr}`;
+    // The date goes at the end of the words, before any vote or comment: appended
+    // after them it hid the vote ("idea +5 @date") or went inside the comment.
+    const parts      = splitItem(content);
+    const newContent = joinItem({ ...parts, body: `${parts.body.replace(/@\d{4}-\d{2}-\d{2}/, '')} @${dateStr}` });
     const newLine    = num !== null
         ? `${chevrons} ${num}. ${newContent}`
         : `${chevrons} ${prefix} ${newContent}`;
