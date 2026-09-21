@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, incrementFirstNumber } from './patterns';
+import { lineAfter } from './lineEdits';
 
 /** Command: duplicates item below itself with the first number in content incremented */
 export async function onDuplicateItemAndIncrement(): Promise<void> {
@@ -27,10 +28,10 @@ export async function onDuplicateItemAndIncrement(): Promise<void> {
         ? `${chevrons} ${num}. ${newContent}`
         : `${chevrons} ${prefix} ${newContent}`;
 
-    await editor.edit(eb =>
-        eb.insert(new vscode.Position(lineIndex + 1, 0), newLine + '\n')
-    );
+    const character = editor.selection.active.character;
+    const ins       = lineAfter(doc, lineIndex, newLine);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
 
-    const pos = new vscode.Position(lineIndex + 1, editor.selection.active.character);
+    const pos = new vscode.Position(ins.line, character);
     editor.selection = new vscode.Selection(pos, pos);
 }

@@ -3,7 +3,7 @@ import { getConfig } from './config';
 import { parseBullet, parseNumbered, isHeader } from './patterns';
 import { getSectionRange } from './documentUtils';
 import { parseWordCountGoal } from './wordGoalParser';
-import { stripAllMetadata } from './metadataStripper';
+import { itemWordCount } from './metadataStripper';
 
 let nudgeBar: vscode.StatusBarItem | undefined;
 
@@ -33,7 +33,7 @@ export function updateWordGoalNudge(editor: vscode.TextEditor | undefined): void
     for (let i = headerLine + 1; i <= end; i++) {
         const t = doc.lineAt(i).text;
         const content = parseBullet(t, prefix)?.content ?? parseNumbered(t)?.content ?? null;
-        if (content) { words += stripAllMetadata(content).trim().split(/\s+/).filter(Boolean).length; }
+        if (content) { words += itemWordCount(content); }
     }
 
     const remaining = goal - words;

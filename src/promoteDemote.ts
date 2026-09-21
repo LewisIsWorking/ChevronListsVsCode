@@ -1,8 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, isHeader } from './patterns';
-import { findHeaderAbove } from './documentUtils';
-import { getSectionRange } from './documentUtils';
 
 /** Command: converts the item at the cursor into a new section header */
 export async function onPromoteItemToHeader(): Promise<void> {
@@ -51,13 +49,7 @@ export async function onDemoteHeaderToItem(): Promise<void> {
     if (prevHeader < 0) { vscode.window.showInformationMessage('CL: No section above to demote into'); return; }
 
     const name         = doc.lineAt(headerLine).text.replace(/^> /, '');
-    const [, prevEnd]  = getSectionRange(doc, prevHeader);
-    const insertLine   = headerLine <= prevEnd ? prevEnd : prevEnd;
-
-    await editor.edit(eb => {
-        // Delete the header line
-        eb.delete(doc.lineAt(headerLine).rangeIncludingLineBreak);
-        // Insert as a bullet at the end of the previous section
-        eb.insert(new vscode.Position(insertLine + 1, 0), `>> ${prefix} ${name}\n`);
-    });
+    // The header becomes a bullet in place. Its section's items follow it, so they
+    // now belong to the previous section.
+    await editor.edit(eb => eb.replace(doc.lineAt(headerLine).range, `>> ${prefix} ${name}`));
 }

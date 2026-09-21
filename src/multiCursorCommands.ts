@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { parseCheck } from './checkParser';
-import { parsePriority } from './priorityParser';
 
 type EditBuilder = vscode.TextEditorEdit;
 

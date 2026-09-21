@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
+import { extractTags, hasTag, renameTagInText } from './tagParser';
 
 /** Command: renames a #tag within the current section only */
 export async function onRenameTagSection(): Promise<void> {
@@ -13,13 +14,15 @@ export async function onRenameTagSection(): Promise<void> {
     if (headerLine < 0) { vscode.window.showInformationMessage('CL: No section found at cursor'); return; }
     const [, end]     = getSectionRange(doc, headerLine);
 
+    const itemContent = (i: number): string | null => {
+        const text = doc.lineAt(i).text;
+        return parseBullet(text, prefix)?.content ?? parseNumbered(text)?.content ?? null;
+    };
+
     // Collect tags in section
     const tagsInSection = new Set<string>();
     for (let i = headerLine + 1; i <= end; i++) {
-        const text    = doc.lineAt(i).text;
-        const content = parseBullet(text, prefix)?.content ?? parseNumbered(text)?.content ?? null;
-        if (!content) { continue; }
-        for (const m of content.matchAll(/#(\w+)/g)) { tagsInSection.add(m[1]); }
+        for (const tag of extractTags(itemContent(i) ?? '')) { tagsInSection.add(tag); }
     }
 
     if (tagsInSection.size === 0) {
@@ -36,21 +39,27 @@ export async function onRenameTagSection(): Promise<void> {
     const newName = await vscode.window.showInputBox({
         prompt:       `Rename ${oldTag} to`,
         placeHolder:  'new-tag-name (no # needed)',
-        validateInput: v => /^\w+$/.test(v.trim()) ? null : 'Tag names can only contain letters, numbers and underscores',
+        validateInput: v => /^#?\w[\w-]*$/.test(v.trim())
+            ? null
+            : 'Tag names can only contain letters, numbers, underscores and hyphens',
     });
     if (!newName?.trim()) { return; }
+    const newTag = newName.trim().replace(/^#/, '');
 
-    const re     = new RegExp(`#${oldTag.slice(1)}\\b`, 'g');
-    let   changed = 0;
+    // Only item lines, and only the tag itself. The old regex ended in \b, so
+    // renaming #to also rewrote #to-do; and as a global regex tested line after
+    // line it carried lastIndex over, silently skipping matching items.
+    let changed = 0;
     await editor.edit(eb => {
         for (let i = headerLine + 1; i <= end; i++) {
+            const content = itemContent(i);
+            if (content === null || !hasTag(content, oldTag)) { continue; }
             const text = doc.lineAt(i).text;
-            if (!re.test(text)) { continue; }
-            eb.replace(doc.lineAt(i).range, text.replace(re, `#${newName.trim()}`));
+            eb.replace(doc.lineAt(i).range, text.slice(0, text.length - content.length) + renameTagInText(content, oldTag, newTag));
             changed++;
         }
     });
     vscode.window.showInformationMessage(
-        `CL: Renamed ${oldTag} → #${newName.trim()} in ${changed} item${changed === 1 ? '' : 's'}`
+        `CL: Renamed ${oldTag} → #${newTag} in ${changed} item${changed === 1 ? '' : 's'}`
     );
 }

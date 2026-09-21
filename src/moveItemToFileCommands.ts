@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, isHeader } from './patterns';
-import { findHeaderAbove, getSectionRange } from './documentUtils';
+import { lineAfter, sectionContentEnd, wholeLineRange } from './lineEdits';
 
 interface SectionPickItem extends vscode.QuickPickItem { headerLine: number; }
 
@@ -46,14 +46,17 @@ export async function onMoveItemToFile(): Promise<void> {
     if (!sectionPick) { return; }
 
     // Insert at end of destination section, delete from source
-    const [, dstEnd] = getSectionRange(destDoc, sectionPick.headerLine);
-    const insertPos  = new vscode.Position(dstEnd + 1, 0);
-    const srcRange   = doc.lineAt(lineIndex).rangeIncludingLineBreak;
-    const itemText   = text;
+    const ins        = lineAfter(destDoc, sectionContentEnd(destDoc, sectionPick.headerLine), text);
+    const srcRange   = wholeLineRange(doc, lineIndex);
 
     const destEdit = new vscode.WorkspaceEdit();
-    destEdit.insert(filePick.uri, insertPos, itemText + '\n');
-    await vscode.workspace.applyEdit(destEdit);
+    destEdit.insert(filePick.uri, ins.position, ins.text);
+    // Only delete the source once the item is safely in the destination; deleting
+    // it regardless lost the item whenever the destination edit was rejected.
+    if (!await vscode.workspace.applyEdit(destEdit)) {
+        vscode.window.showErrorMessage(`CL: Could not add the item to ${filePick.label}; nothing was moved`);
+        return;
+    }
 
     await editor.edit(eb => eb.delete(srcRange));
     vscode.window.showInformationMessage(`CL: Moved item to "${sectionPick.label}" in ${filePick.label}`);

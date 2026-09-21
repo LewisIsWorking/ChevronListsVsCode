@@ -1,5 +1,6 @@
 import type { LineReader } from './types';
 import { isHeader, parseBullet, parseNumbered } from './patterns';
+import { NumberingRuns } from './numberingRuns';
 
 export interface DiagnosticIssue {
     line:    number;
@@ -15,8 +16,9 @@ export function collectIssues(doc: LineReader, prefix: string): DiagnosticIssue[
     let lastHeaderLine     = -1;
     let lastHeaderHasItems = false;
 
-    // Per-depth: track {line, num} of the previous numbered item
-    const prevItem = new Map<string, { line: number; num: number }>();
+    // Per list: track {line, num} of the previous numbered item
+    const prevItem = new Map<number, { line: number; num: number }>();
+    const runs     = new NumberingRuns();
 
     for (let i = 0; i < doc.lineCount; i++) {
         const text = doc.lineAt(i).text;
@@ -46,13 +48,15 @@ export function collectIssues(doc: LineReader, prefix: string): DiagnosticIssue[
             lastHeaderLine     = i;
             lastHeaderHasItems = false;
             prevItem.clear();
+            runs.visit(text);
             continue;
         }
 
+        const run      = runs.visit(text);
         const numbered = parseNumbered(text);
         if (numbered) {
             lastHeaderHasItems = true;
-            const key  = numbered.chevrons;
+            const key  = run!;
             const prev = prevItem.get(key);
 
             if (prev !== undefined) {

@@ -2,9 +2,6 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { extractTags } from './tagParser';
-import * as path from 'path';
-
-interface TagEntry { tag: string; files: Map<string, number[]>; }
 
 /** Command: opens a side panel with a workspace-wide tag report */
 export async function onShowTagReportWorkspace(): Promise<void> {
@@ -17,7 +14,9 @@ export async function onShowTagReportWorkspace(): Promise<void> {
         async () => {
             for (const uri of files) {
                 const doc      = await vscode.workspace.openTextDocument(uri);
-                const fileName = path.basename(uri.fsPath);
+                // The workspace-relative path, not the base name: two notes.md files in
+                // different folders used to be reported as one file with both counts.
+                const fileName = vscode.workspace.asRelativePath(uri);
                 for (let i = 0; i < doc.lineCount; i++) {
                     const t = doc.lineAt(i).text;
                     const bullet  = parseBullet(t, prefix);

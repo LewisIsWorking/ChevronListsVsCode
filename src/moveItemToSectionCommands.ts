@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, isHeader } from './patterns';
-import { findHeaderAbove, getSectionRange } from './documentUtils';
+import { findHeaderAbove } from './documentUtils';
+import { lineAfter, sectionContentEnd, wholeLineRange } from './lineEdits';
 
 interface SectionPickItem extends vscode.QuickPickItem { headerLine: number; }
 
@@ -39,14 +40,11 @@ export async function onMoveItemToSection(): Promise<void> {
     const picked = await vscode.window.showQuickPick(sections, { placeHolder: 'Move item to section…' });
     if (!picked) { return; }
 
-    const itemText   = text;
-    const [, dstEnd] = getSectionRange(doc, picked.headerLine);
-    const insertPos  = new vscode.Position(dstEnd + 1, 0);
-    const srcLine    = doc.lineAt(lineIndex);
+    const ins        = lineAfter(doc, sectionContentEnd(doc, picked.headerLine), text);
 
     await editor.edit(eb => {
-        eb.delete(srcLine.rangeIncludingLineBreak);
-        eb.insert(insertPos, itemText + '\n');
+        eb.delete(wholeLineRange(doc, lineIndex));
+        eb.insert(ins.position, ins.text);
     });
 
     vscode.window.showInformationMessage(`CL: Moved item to "${picked.label}"`);

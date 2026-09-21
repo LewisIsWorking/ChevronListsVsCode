@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { parseBullet, parseNumbered, isHeader, countWords, formatReadingTime } from './patterns';
+import { parseBullet, parseNumbered, countWords, formatReadingTime } from './patterns';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
 import { stripAllMetadata } from './metadataStripper';
 

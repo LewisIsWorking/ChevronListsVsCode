@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { getSectionRange, findHeaderAbove } from './documentUtils';
+import { findHeaderAbove } from './documentUtils';
+import { lineAfter, sectionContentEnd } from './lineEdits';
 
 /** Command: duplicates the current section immediately below itself with (copy) suffix */
 export async function onCloneSection(): Promise<void> {
@@ -11,24 +12,23 @@ export async function onCloneSection(): Promise<void> {
 
     const headerText  = doc.lineAt(headerLine).text;
     const name        = headerText.replace(/^> /, '').trim();
-    const [, end]     = getSectionRange(doc, headerLine);
-
-    // Collect the entire section
+    // The header and its content, without the blank lines that separate the
+    // section from whatever follows it
+    const contentEnd  = sectionContentEnd(doc, headerLine);
     const sectionLines: string[] = [];
-    for (let i = headerLine; i <= end; i++) {
+    for (let i = headerLine; i <= contentEnd; i++) {
         sectionLines.push(doc.lineAt(i).text);
     }
 
-    // Build clone with (copy) suffix on header
+    // Build clone with (copy) suffix on header, after one blank separator line
     const cloneHeader    = `> ${name} (copy)`;
-    const cloneLines     = [cloneHeader, ...sectionLines.slice(1)];
-    const insertText     = '\n' + cloneLines.join('\n');
-    const insertPos      = new vscode.Position(end + 1, 0);
+    const cloneLines     = ['', cloneHeader, ...sectionLines.slice(1)];
+    const ins            = lineAfter(doc, contentEnd, cloneLines.join('\n'));
 
-    await editor.edit(eb => eb.insert(insertPos, insertText + '\n'));
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
 
-    // Jump to the cloned header
-    const newHeaderLine = end + 2;
+    // Jump to the cloned header, which follows the separator line
+    const newHeaderLine = ins.line + 1;
     const pos = new vscode.Position(newHeaderLine, 0);
     editor.selection = new vscode.Selection(pos, pos);
     editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenterIfOutsideViewport);

@@ -7,6 +7,7 @@
         "sourceMap": true,
         "rootDir": "src",
         "strict": true,
+        "noUnusedLocals": true,
         "skipLibCheck": true
     },
     "exclude": ["node_modules", ".vscode-test", "src/__tests__", "src/__mocks__", "scripts", "test-shims", "coverage"]

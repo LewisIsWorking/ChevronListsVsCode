@@ -2,7 +2,8 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { collectRecurringItems, nextOccurrence } from './recurrenceParser';
 import { extractDate } from './dueDateParser';
-import { parseBullet, parseNumbered } from './patterns';
+import { parseBullet, parseNumbered, todayDate } from './patterns';
+import { lineAfter } from './lineEdits';
 
 interface RecurPickItem extends vscode.QuickPickItem {
     lineIndex: number;
@@ -79,13 +80,21 @@ export async function onGenerateNextOccurrence(): Promise<void> {
 
     const type      = recMatch[1].toLowerCase() as 'daily' | 'weekly' | 'monthly';
     const dateMatch = extractDate(content);
-    const baseDate  = dateMatch?.dateStr ?? new Date().toISOString().slice(0, 10);
+    const baseDate  = dateMatch?.dateStr ?? todayDate();
     const newDate   = nextOccurrence(baseDate, type);
-    const chevrons  = bullet?.chevrons ?? numbered?.chevrons ?? '>>';
+    // `content` only exists when the line parsed as a bullet or a numbered item,
+    // so exactly one of them is set here.
+    const source    = (numbered ?? bullet)!;
+    // Keep the item's own kind. This used to write `${prefix}` unconditionally,
+    // turning `>> 3. Review` into `>> - Review`. A numbered item continues the
+    // sequence the same way the Enter handler does.
+    const marker    = numbered ? `${numbered.num + 1}.` : prefix;
     const cleanText = content.replace(dateMatch ? `@${dateMatch.dateStr}` : '', '').trim();
-    const newLine   = `${chevrons} ${prefix} ${cleanText} @${newDate}\n`;
+    const newItem   = `${source.chevrons} ${marker} ${cleanText} @${newDate}`;
 
-    await editor.edit(eb =>
-        eb.insert(new vscode.Position(lineIndex + 1, 0), newLine)
-    );
+    // lineAfter, not Position(lineIndex + 1, 0): on the last line of a file with no
+    // trailing newline that position resolves to the end of the same line and
+    // glued the new item onto the old one.
+    const ins = lineAfter(doc, lineIndex, newItem);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
 }

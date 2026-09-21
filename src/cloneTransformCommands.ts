@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { stripAllMetadata } from './metadataStripper';
+import { lineAfter } from './lineEdits';
 
 /** Command: clones the item below itself with [x] prepended */
 export async function onCloneItemAsDone(): Promise<void> {
@@ -26,7 +27,8 @@ export async function onCloneItemAsDone(): Promise<void> {
     const newLine = num !== null
         ? `${chevrons} ${num}. ${newContent}`
         : `${chevrons} ${prefix} ${newContent}`;
-    await editor.edit(eb => eb.insert(new vscode.Position(lineIndex + 1, 0), newLine + '\n'));
+    const ins = lineAfter(doc, lineIndex, newLine);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
 }
 
 /** Command: clones the item below itself with all markers stripped */
@@ -50,5 +52,6 @@ export async function onCloneItemStripped(): Promise<void> {
     const newLine    = num !== null
         ? `${chevrons} ${num}. ${stripped}`
         : `${chevrons} ${prefix} ${stripped}`;
-    await editor.edit(eb => eb.insert(new vscode.Position(lineIndex + 1, 0), newLine + '\n'));
+    const ins = lineAfter(doc, lineIndex, newLine);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
 }

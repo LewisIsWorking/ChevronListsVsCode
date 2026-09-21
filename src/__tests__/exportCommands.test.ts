@@ -1,90 +1,151 @@
-import { describe, it, expect } from 'bun:test';
+/**
+ * Covers src/exportCommands.ts.
+ *
+ * The previous version of this file rebuilt the chevron-to-markdown conversion
+ * locally and tested that copy, so the real module sat at 0%. These tests drive
+ * the actual commands and assert on what lands on the clipboard, which is the
+ * only thing a user of these commands ever sees.
+ */
+import { describe, it, expect, beforeEach } from 'bun:test';
+import * as vscode from 'vscode';
+import { openEditor, deactivate } from './helpers/editorHarness';
+import { onCopySectionAsMarkdown, onCopySectionAsPlainText } from '../exportCommands';
 
-// Pure helper functions extracted for testing without VS Code dependency
-function bulletToMarkdown(text: string, prefix: string): string | null {
-    const re    = new RegExp(`^(>{2,}) ${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} (.*)$`);
-    const match = text.match(re);
-    if (!match) { return null; }
-    const depth  = match[1].length - 2;
-    const indent = '  '.repeat(depth);
-    return `${indent}- ${match[2]}`;
-}
+const LF = String.fromCharCode(10);
 
-function numberedToMarkdown(text: string): string | null {
-    const match = text.match(/^(>{2,}) (\d+)\. (.*)$/);
-    if (!match) { return null; }
-    const depth  = match[1].length - 2;
-    const indent = '  '.repeat(depth);
-    return `${indent}${match[2]}. ${match[3]}`;
-}
+const mock = vscode as unknown as {
+    __reset(): void;
+    recorded: { info: string[]; clipboard: string };
+};
 
-function bulletToPlain(text: string, prefix: string): string | null {
-    const re    = new RegExp(`^(>{2,}) ${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} (.*)$`);
-    const match = text.match(re);
-    return match ? match[2] : null;
-}
+/** What the command put on the clipboard, split back into lines. */
+const clipboardLines = (): string[] => mock.recorded.clipboard.split(LF);
 
-function numberedToPlain(text: string): string | null {
-    const match = text.match(/^(>{2,}) (\d+)\. (.*)$/);
-    return match ? match[3] : null;
-}
+beforeEach(() => {
+    mock.__reset();
+    deactivate();
+});
 
-describe('bulletToMarkdown', () => {
-    it('converts a >> - line to a markdown bullet', () => {
-        expect(bulletToMarkdown('>> - hello', '-')).toBe('- hello');
+const DOC = [
+    '> Shopping',
+    '>> - apples',
+    '>> 2. bananas',
+    '>>> - nested cherries',
+    'stray prose',
+    '> Other',
+    '>> - not included',
+];
+
+describe('onCopySectionAsMarkdown', () => {
+    it('does nothing without an active editor', async () => {
+        await onCopySectionAsMarkdown();
+        expect(mock.recorded.clipboard).toBe('');
     });
-    it('indents deeper nesting correctly', () => {
-        expect(bulletToMarkdown('>>> - nested', '-')).toBe('  - nested');
-        expect(bulletToMarkdown('>>>> - deep', '-')).toBe('    - deep');
+
+    it('does nothing when the cursor is above any header', async () => {
+        openEditor(['prose only'], { cursor: 0 });
+        await onCopySectionAsMarkdown();
+        expect(mock.recorded.clipboard).toBe('');
     });
-    it('returns null for non-bullet lines', () => {
-        expect(bulletToMarkdown('> Header', '-')).toBeNull();
-        expect(bulletToMarkdown('plain text', '-')).toBeNull();
+
+    it('writes the header as a level-two heading followed by a blank line', async () => {
+        openEditor(DOC, { cursor: 1 });
+        await onCopySectionAsMarkdown();
+        expect(clipboardLines().slice(0, 2)).toEqual(['## Shopping', '']);
     });
-    it('works with a custom prefix', () => {
-        expect(bulletToMarkdown('>> * item', '*')).toBe('- item');
+
+    it('converts bullets to markdown dashes', async () => {
+        openEditor(['> S', '>> - apples'], { cursor: 1 });
+        await onCopySectionAsMarkdown();
+        expect(clipboardLines()).toEqual(['## S', '', '- apples']);
     });
-    it('preserves empty content', () => {
-        expect(bulletToMarkdown('>> - ', '-')).toBe('- ');
+
+    it('converts numbered items keeping their number', async () => {
+        openEditor(['> S', '>> 3. bananas'], { cursor: 1 });
+        await onCopySectionAsMarkdown();
+        expect(clipboardLines()).toEqual(['## S', '', '3. bananas']);
+    });
+
+    it('indents nested items by two spaces per depth', async () => {
+        openEditor(['> S', '>>> - deep', '>>>> 1. deeper'], { cursor: 1 });
+        await onCopySectionAsMarkdown();
+        expect(clipboardLines()).toEqual(['## S', '', '  - deep', '    1. deeper']);
+    });
+
+    it('drops lines that are neither bullet nor numbered', async () => {
+        openEditor(DOC, { cursor: 1 });
+        await onCopySectionAsMarkdown();
+        expect(clipboardLines()).toEqual(
+            ['## Shopping', '', '- apples', '2. bananas', '  - nested cherries']
+        );
+    });
+
+    it('stops at the next section', async () => {
+        openEditor(DOC, { cursor: 1 });
+        await onCopySectionAsMarkdown();
+        expect(mock.recorded.clipboard).not.toContain('not included');
+    });
+
+    it('confirms to the user', async () => {
+        openEditor(DOC, { cursor: 1 });
+        await onCopySectionAsMarkdown();
+        expect(mock.recorded.info).toContain('Chevron Lists: Section copied as Markdown');
+    });
+
+    it('copies an empty section as just its heading', async () => {
+        openEditor(['> Empty'], { cursor: 0 });
+        await onCopySectionAsMarkdown();
+        expect(clipboardLines()).toEqual(['## Empty', '']);
     });
 });
 
-describe('numberedToMarkdown', () => {
-    it('converts a >> 1. line to a markdown numbered item', () => {
-        expect(numberedToMarkdown('>> 1. first')).toBe('1. first');
+describe('onCopySectionAsPlainText', () => {
+    it('does nothing without an active editor', async () => {
+        await onCopySectionAsPlainText();
+        expect(mock.recorded.clipboard).toBe('');
     });
-    it('indents deeper nesting correctly', () => {
-        expect(numberedToMarkdown('>>> 2. nested')).toBe('  2. nested');
-    });
-    it('returns null for non-numbered lines', () => {
-        expect(numberedToMarkdown('>> - item')).toBeNull();
-        expect(numberedToMarkdown('> header')).toBeNull();
-    });
-    it('preserves higher numbers', () => {
-        expect(numberedToMarkdown('>> 42. item')).toBe('42. item');
-    });
-});
 
-describe('bulletToPlain', () => {
-    it('extracts just the content', () => {
-        expect(bulletToPlain('>> - hello world', '-')).toBe('hello world');
+    it('does nothing when the cursor is above any header', async () => {
+        openEditor(['prose only'], { cursor: 0 });
+        await onCopySectionAsPlainText();
+        expect(mock.recorded.clipboard).toBe('');
     });
-    it('returns null for non-bullet lines', () => {
-        expect(bulletToPlain('> Header', '-')).toBeNull();
-    });
-    it('works with custom prefix', () => {
-        expect(bulletToPlain('>> * item', '*')).toBe('item');
-    });
-});
 
-describe('numberedToPlain', () => {
-    it('extracts just the content', () => {
-        expect(numberedToPlain('>> 3. hello world')).toBe('hello world');
+    it('writes the bare header followed by a blank line', async () => {
+        openEditor(DOC, { cursor: 1 });
+        await onCopySectionAsPlainText();
+        expect(clipboardLines().slice(0, 2)).toEqual(['Shopping', '']);
     });
-    it('returns null for non-numbered lines', () => {
-        expect(numberedToPlain('>> - item')).toBeNull();
+
+    it('strips all markers, leaving only the content', async () => {
+        openEditor(DOC, { cursor: 1 });
+        await onCopySectionAsPlainText();
+        expect(clipboardLines()).toEqual(
+            ['Shopping', '', 'apples', 'bananas', 'nested cherries']
+        );
     });
-    it('returns empty string for empty item', () => {
-        expect(numberedToPlain('>> 1. ')).toBe('');
+
+    it('does not indent nested items', async () => {
+        openEditor(['> S', '>>> - deep'], { cursor: 1 });
+        await onCopySectionAsPlainText();
+        expect(clipboardLines()).toEqual(['S', '', 'deep']);
+    });
+
+    it('stops at the next section', async () => {
+        openEditor(DOC, { cursor: 1 });
+        await onCopySectionAsPlainText();
+        expect(mock.recorded.clipboard).not.toContain('not included');
+    });
+
+    it('confirms to the user', async () => {
+        openEditor(DOC, { cursor: 1 });
+        await onCopySectionAsPlainText();
+        expect(mock.recorded.info).toContain('Chevron Lists: Section copied as plain text');
+    });
+
+    it('copies an empty section as just its header', async () => {
+        openEditor(['> Empty'], { cursor: 0 });
+        await onCopySectionAsPlainText();
+        expect(clipboardLines()).toEqual(['Empty', '']);
     });
 });

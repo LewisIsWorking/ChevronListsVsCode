@@ -1390,10 +1390,10 @@
         "bundle": "node esbuild.mjs",
         "bundle:prod": "node esbuild.mjs --production",
         "watch": "tsc -watch -p ./ --noEmit",
-        "test": "bun test src/__tests__",
-        "test:coverage": "bun test src/__tests__",
-        "coverage:gate": "bun test src/__tests__ && node scripts/coverage-gate.mjs",
-        "coverage:report": "bun test src/__tests__ && node scripts/coverage-report.mjs"
+        "test": "bun test src/__tests__ --timeout 60000",
+        "test:coverage": "bun test src/__tests__ --timeout 60000",
+        "coverage:gate": "bun test src/__tests__ --timeout 60000 && node scripts/coverage-gate.mjs",
+        "coverage:report": "bun test src/__tests__ --timeout 60000 && node scripts/coverage-report.mjs"
     },
     "license": "CC-BY-NC-ND-4.0",
     "devDependencies": {

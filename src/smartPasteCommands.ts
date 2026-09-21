@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { smartPasteLines } from './patterns';
 import { prevNumberAtDepth } from './documentUtils';
+import { lineAfter } from './lineEdits';
 
 /** Command: pastes clipboard content as chevron items, detecting list format */
 export async function onSmartPaste(): Promise<void> {
@@ -20,8 +21,8 @@ export async function onSmartPaste(): Promise<void> {
     const chevrons   = '>>'; // default depth
     const startNum   = prevNumberAtDepth(doc, lineIndex, chevrons) + 1;
     const lines      = smartPasteLines(clipText, prefix, chevrons, startNum);
-    const insertPos  = new vscode.Position(lineIndex + 1, 0);
+    const ins        = lineAfter(doc, lineIndex, lines.join('\n'));
 
-    await editor.edit(eb => eb.insert(insertPos, lines.join('\n') + '\n'));
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
     vscode.window.showInformationMessage(`CL: Pasted ${lines.length} item${lines.length === 1 ? '' : 's'}`);
 }

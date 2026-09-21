@@ -3,6 +3,7 @@ import { getConfig } from './config';
 import { isHeader, parseBullet, parseNumbered } from './patterns';
 import { parseWordCountGoal, headerNameWithoutGoal } from './wordGoalParser';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
+import { itemWordCount } from './metadataStripper';
 
 interface WordCountPickItem extends vscode.QuickPickItem { lineIndex: number; }
 
@@ -28,7 +29,7 @@ export async function onShowWordCount(): Promise<void> {
             const bullet  = parseBullet(line, prefix);
             const numbered = parseNumbered(line);
             const content  = bullet?.content ?? numbered?.content ?? null;
-            if (content) { words += content.trim().split(/\s+/).filter(Boolean).length; }
+            if (content) { words += itemWordCount(content); }
         }
 
         const description = goal !== null

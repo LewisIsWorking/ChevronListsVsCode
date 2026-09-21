@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { collectMentions, uniqueMentions } from './mentionParser';
+import { collectMentions } from './mentionParser';
 
 interface MentionPickItem extends vscode.QuickPickItem { tag: string; }
 interface ItemPickItem extends vscode.QuickPickItem { uri: vscode.Uri; lineIndex: number; }

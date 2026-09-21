@@ -3,7 +3,7 @@ import { getConfig } from './config';
 import { isHeader, parseBullet, parseNumbered } from './patterns';
 import { parseWordCountGoal, headerNameWithoutGoal } from './wordGoalParser';
 import { getSectionRange } from './documentUtils';
-import { stripAllMetadata } from './metadataStripper';
+import { itemWordCount } from './metadataStripper';
 
 interface GoalItem extends vscode.QuickPickItem {
     lineIndex: number;
@@ -30,7 +30,7 @@ export async function onShowWordCountGoals(): Promise<void> {
         for (let j = i + 1; j <= end; j++) {
             const t       = doc.lineAt(j).text;
             const content = parseBullet(t, prefix)?.content ?? parseNumbered(t)?.content ?? null;
-            if (content) { words += stripAllMetadata(content).trim().split(/\s+/).filter(Boolean).length; }
+            if (content) { words += itemWordCount(content); }
         }
         results.push({ name, words, goal, line: i });
     }

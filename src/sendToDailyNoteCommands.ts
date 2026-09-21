@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, formatDate } from './patterns';
+import { lineAfter } from './lineEdits';
 
 /** Command: copies the cursor item to today's daily note under > Inbox */
 export async function onSendToDailyNote(): Promise<void> {
@@ -49,13 +50,12 @@ export async function onSendToDailyNote(): Promise<void> {
     for (let i = 0; i < noteDoc.lineCount; i++) {
         if (noteDoc.lineAt(i).text.trim().toLowerCase() === inbox_hdr_lower) { inboxLine = i; break; }
     }
-    const insertPos = inboxLine >= 0
-        ? new vscode.Position(inboxLine + 1, 0)
-        : new vscode.Position(noteDoc.lineCount, 0);
-    const insertText = inboxLine >= 0 ? itemLine + '\n' : `\n${INBOX_HDR}\n${itemLine}\n`;
+    const ins = inboxLine >= 0
+        ? lineAfter(noteDoc, inboxLine, itemLine)
+        : { position: new vscode.Position(noteDoc.lineCount, 0), text: `\n${INBOX_HDR}\n${itemLine}\n` };
 
     const we = new vscode.WorkspaceEdit();
-    we.insert(noteUri, insertPos, insertText);
+    we.insert(noteUri, ins.position, ins.text);
     await vscode.workspace.applyEdit(we);
     vscode.window.showInformationMessage(`CL: Sent to ${fileName} › Inbox`);
 }

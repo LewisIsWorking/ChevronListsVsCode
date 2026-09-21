@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseNumbered } from './patterns';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
+import { lineAfter } from './lineEdits';
 
 /** Finds the highest existing number at `>>` depth in a section */
 function findHighestNumber(document: vscode.TextDocument, headerLine: number): number {
@@ -28,9 +29,8 @@ export async function onPasteAsBullets(): Promise<void> {
         return;
     }
 
-    const insertPos  = new vscode.Position(editor.selection.active.line + 1, 0);
-    const newContent = lines.map(l => `>> ${prefix} ${l}`).join('\n') + '\n';
-    await editor.edit(eb => eb.insert(insertPos, newContent));
+    const ins = lineAfter(editor.document, editor.selection.active.line, lines.map(l => `>> ${prefix} ${l}`).join('\n'));
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
     vscode.window.showInformationMessage(`CL: Pasted ${lines.length} bullet item${lines.length === 1 ? '' : 's'}`);
 }
 
@@ -51,8 +51,7 @@ export async function onPasteAsNumbered(): Promise<void> {
     const headerLine = findHeaderAbove(doc, editor.selection.active.line);
     let startNum     = (headerLine >= 0 ? findHighestNumber(doc, headerLine) : 0) + 1;
 
-    const insertPos  = new vscode.Position(editor.selection.active.line + 1, 0);
-    const newContent = lines.map(l => `>> ${startNum++}. ${l}`).join('\n') + '\n';
-    await editor.edit(eb => eb.insert(insertPos, newContent));
+    const ins = lineAfter(doc, editor.selection.active.line, lines.map(l => `>> ${startNum++}. ${l}`).join('\n'));
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
     vscode.window.showInformationMessage(`CL: Pasted ${lines.length} numbered item${lines.length === 1 ? '' : 's'}`);
 }

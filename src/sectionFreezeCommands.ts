@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
-import { parseBullet, parseNumbered } from './patterns';
-import { getConfig } from './config';
 import { findHeaderAbove, getSectionRange } from './documentUtils';
+import { lineAfter, wholeLineRange } from './lineEdits';
 
 const FROZEN_MARKER = '>> [frozen]';
 
@@ -20,7 +19,8 @@ export async function onFreezeSection(): Promise<void> {
             return;
         }
     }
-    await editor.edit(eb => eb.insert(new vscode.Position(headerLine + 1, 0), FROZEN_MARKER + '\n'));
+    const ins = lineAfter(doc, headerLine, FROZEN_MARKER);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
     vscode.window.showInformationMessage('CL: Section frozen — edits will show a warning');
 }
 
@@ -34,7 +34,7 @@ export async function onUnfreezeSection(): Promise<void> {
     const [, end] = getSectionRange(doc, headerLine);
     for (let i = headerLine + 1; i <= end; i++) {
         if (doc.lineAt(i).text === FROZEN_MARKER) {
-            await editor.edit(eb => eb.delete(doc.lineAt(i).rangeIncludingLineBreak));
+            await editor.edit(eb => eb.delete(wholeLineRange(doc, i)));
             vscode.window.showInformationMessage('CL: Section unfrozen');
             return;
         }

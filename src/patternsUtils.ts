@@ -4,10 +4,39 @@
  * All functions here are re-exported by patterns.ts so callers use a single import.
  */
 import { parseBullet, parseNumbered } from './patterns';
+import { NumberingRuns } from './numberingRuns';
 
-/** Formats a Date as YYYY-MM-DD */
+/**
+ * Formats a Date as YYYY-MM-DD using its LOCAL calendar date.
+ *
+ * This deliberately does not use toISOString(), which reports the UTC date.
+ * Dates across the extension are built at local midnight (new Date(y, m, d)),
+ * and anywhere east of UTC local midnight is still the previous day in UTC --
+ * so toISOString() put every result one day early. In the UK that meant every
+ * date operation was off by one for the whole of British Summer Time.
+ */
 export function formatDate(d: Date): string {
-    return d.toISOString().slice(0, 10);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** Today's local calendar date as YYYY-MM-DD. */
+export function todayDate(): string {
+    return formatDate(new Date());
+}
+
+/**
+ * Adds whole calendar months, clamping the day to the target month's length.
+ *
+ * Date#setMonth overflows instead: 31 January + 1 month is "31 February", which
+ * rolls on to 3 March, skipping February entirely. The same happens from any
+ * 29th-31st into a shorter month (31 March -> 1 May skips April).
+ */
+export function addMonths(d: Date, months: number): Date {
+    const target = new Date(d.getFullYear(), d.getMonth() + months, 1);
+    const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    target.setDate(Math.min(d.getDate(), lastDay));
+    return target;
 }
 
 /** Returns the next occurrence of a given day of week (0=Sun, 5=Fri etc.) */
@@ -41,7 +70,7 @@ export function parseNaturalDate(input: string, from: Date = new Date()): string
     if (s === 'today')      { return formatDate(today); }
     if (s === 'tomorrow')   { const d = new Date(today); d.setDate(d.getDate() + 1); return formatDate(d); }
     if (s === 'next week')  { const d = new Date(today); d.setDate(d.getDate() + 7); return formatDate(d); }
-    if (s === 'next month') { const d = new Date(today); d.setMonth(d.getMonth() + 1); return formatDate(d); }
+    if (s === 'next month') { return formatDate(addMonths(today, 1)); }
     return null;
 }
 
@@ -172,17 +201,16 @@ export function getFirstItemPrefix(listPrefix: string, defaultNewListType: strin
 export function computeAutoFixEdits(
     lines: Array<{ text: string; lineIndex: number }>
 ): Array<{ lineIndex: number; newText: string }> {
-    // Group by section (last header seen) + chevron depth so lists in different
-    // sections are never compared against each other.
-    const byDepth = new Map<string, Array<{ lineIndex: number; num: number; text: string }>>();
-    let currentSection = -1;
+    // Group by list, so items are only compared with the items of their own list:
+    // not across sections, and not across the child lists of different parents.
+    const byDepth = new Map<number, Array<{ lineIndex: number; num: number; text: string }>>();
+    const runs    = new NumberingRuns();
     for (const { text, lineIndex } of lines) {
-        if (/^> /.test(text)) { currentSection = lineIndex; continue; }
-        const m = parseNumbered(text);
-        if (!m) { continue; }
-        const key = `${currentSection}::${m.chevrons}`;
-        if (!byDepth.has(key)) { byDepth.set(key, []); }
-        byDepth.get(key)!.push({ lineIndex, num: m.num, text });
+        const run = runs.visit(text);
+        if (run === null) { continue; }
+        const m = parseNumbered(text)!;
+        if (!byDepth.has(run)) { byDepth.set(run, []); }
+        byDepth.get(run)!.push({ lineIndex, num: m.num, text });
     }
     const edits: Array<{ lineIndex: number; newText: string }> = [];
     for (const items of byDepth.values()) {

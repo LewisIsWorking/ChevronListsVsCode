@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { findHeaderAbove } from './documentUtils';
+import { lineAfter, wholeLineRange } from './lineEdits';
 
 const LOCK_MARKER = '>> [locked]';
 
@@ -20,9 +21,8 @@ export async function onLockSection(): Promise<void> {
         vscode.window.showInformationMessage('CL: Section is already locked');
         return;
     }
-    await editor.edit(eb =>
-        eb.insert(new vscode.Position(headerLine + 1, 0), `${LOCK_MARKER}\n`)
-    );
+    const ins = lineAfter(doc, headerLine, LOCK_MARKER);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
     vscode.window.showInformationMessage('CL: Section locked — bulk operations will skip this section');
 }
 
@@ -38,7 +38,7 @@ export async function onUnlockSection(): Promise<void> {
         return;
     }
     await editor.edit(eb =>
-        eb.delete(doc.lineAt(headerLine + 1).rangeIncludingLineBreak)
+        eb.delete(wholeLineRange(doc, headerLine + 1))
     );
     vscode.window.showInformationMessage('CL: Section unlocked');
 }

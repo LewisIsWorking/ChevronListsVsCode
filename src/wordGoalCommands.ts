@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { getConfig } from './config';
 import { isHeader, parseBullet, parseNumbered } from './patterns';
 import { parseWordCountGoal, headerNameWithoutGoal } from './wordGoalParser';
 import { getSectionRange } from './documentUtils';
 import { findHeaderAbove } from './documentUtils';
+import { itemWordCount } from './metadataStripper';
 
 const wordGoalDiagCollection = vscode.languages.createDiagnosticCollection('chevron-lists-wordgoals');
 
@@ -25,7 +25,7 @@ export function updateWordGoalDiagnostics(document: vscode.TextDocument, prefix:
             const bullet  = parseBullet(line, prefix);
             const numbered = parseNumbered(line);
             const content  = bullet?.content ?? numbered?.content ?? null;
-            if (content) { words += content.trim().split(/\s+/).filter(Boolean).length; }
+            if (content) { words += itemWordCount(content); }
         }
 
         if (words < goal) {

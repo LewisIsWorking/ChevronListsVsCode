@@ -3,6 +3,7 @@ import { isHeader, parseBullet, parseNumbered } from './patterns';
 import { getConfig } from './config';
 import { getSectionRange } from './documentUtils';
 import { parseCheck } from './checkParser';
+import { itemWordCount } from './metadataStripper';
 
 const SECTION_LINK_RE = /\[\[([^\]#:]+?)(?:#([^\]]+))?\]\]/g;
 const MAX_PREVIEW_ITEMS = 5;
@@ -64,7 +65,7 @@ export class ChevronHoverProvider implements vscode.HoverProvider {
             const content = parseBullet(t, prefix)?.content ?? parseNumbered(t)?.content ?? null;
             if (!content) { continue; }
             itemCount++;
-            wordCount += content.trim().split(/\s+/).filter(Boolean).length;
+            wordCount += itemWordCount(content);
             const check = parseCheck(content);
             if (check) { totalChecks++; if (check.state === 'done') { doneCount++; } }
         }

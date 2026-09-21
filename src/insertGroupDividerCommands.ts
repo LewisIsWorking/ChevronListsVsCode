@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { findHeaderAbove } from './documentUtils';
+import { lineAfter } from './lineEdits';
 
 /** Command: inserts a >> -- Name group divider below the cursor line */
 export async function onInsertGroupDivider(): Promise<void> {
@@ -12,13 +12,16 @@ export async function onInsertGroupDivider(): Promise<void> {
     });
     if (!name?.trim()) { return; }
 
-    const cursor     = editor.selection.active;
-    const insertLine = cursor.line + 1;
-    const insertPos  = new vscode.Position(insertLine, 0);
-    await editor.edit(eb => eb.insert(insertPos, `>> -- ${name.trim()}\n`));
+    const doc     = editor.document;
+    const divider = `>> -- ${name.trim()}`;
+    const ins     = lineAfter(doc, editor.selection.active.line, divider);
+    await editor.edit(eb => eb.insert(ins.position, ins.text));
 
-    // Place cursor after the inserted divider
-    const newPos = new vscode.Position(insertLine + 1, 0);
+    // Place cursor after the inserted divider: the start of the following line,
+    // or the end of the divider when it is now the last line
+    const newPos = ins.line + 1 < doc.lineCount
+        ? new vscode.Position(ins.line + 1, 0)
+        : new vscode.Position(ins.line, divider.length);
     editor.selection = new vscode.Selection(newPos, newPos);
     vscode.window.showInformationMessage(`CL: Inserted group "-- ${name.trim()}"`);
 }

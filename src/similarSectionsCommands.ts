@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { isHeader, levenshtein, similarity } from './patterns';
+import { isHeader, similarity } from './patterns';
 
 interface SimilarPair extends vscode.QuickPickItem { lineA: number; lineB: number; }
 

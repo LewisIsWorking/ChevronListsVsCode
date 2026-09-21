@@ -4,6 +4,7 @@ import { isHeader, parseBullet, parseNumbered } from './patterns';
 import { extractTags } from './tagParser';
 import { parseCheck } from './checkParser';
 import { getSectionRange } from './documentUtils';
+import { itemWordCount } from './metadataStripper';
 
 interface SectionStats {
     name:    string;
@@ -26,7 +27,7 @@ function computeSectionStats(document: vscode.TextDocument, prefix: string, head
         const content  = bullet?.content ?? numbered?.content ?? null;
         if (!content) { continue; }
         items++;
-        words += content.trim().split(/\s+/).filter(Boolean).length;
+        words += itemWordCount(content);
         tags  += extractTags(content).length;
         const check = parseCheck(content);
         if (check) { total++; if (check.state === 'done') { done++; } }

@@ -73,8 +73,21 @@ describe('nextOccurrence', () => {
     it('advances monthly by 1 month', () => {
         expect(nextOccurrence('2026-03-20', 'monthly')).toBe('2026-04-20');
     });
-    it('handles end-of-month correctly', () => {
-        expect(nextOccurrence('2026-01-31', 'monthly')).toBe('2026-03-03');
+    // This test previously asserted '2026-03-03' -- it had pinned the Date#setMonth
+    // overflow bug as "correct" under a title claiming the opposite. A monthly item
+    // due on the 31st skipped February entirely. The day now clamps to the target
+    // month's length.
+    it('clamps the 31st to the end of a shorter month', () => {
+        expect(nextOccurrence('2026-01-31', 'monthly')).toBe('2026-02-28');
+    });
+    it('clamps to 29 February in a leap year', () => {
+        expect(nextOccurrence('2024-01-31', 'monthly')).toBe('2024-02-29');
+    });
+    it('clamps into a 30-day month instead of skipping it', () => {
+        expect(nextOccurrence('2026-03-31', 'monthly')).toBe('2026-04-30');
+    });
+    it('rolls into the next year', () => {
+        expect(nextOccurrence('2026-12-31', 'monthly')).toBe('2027-01-31');
     });
 });
 

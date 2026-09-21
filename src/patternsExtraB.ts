@@ -5,6 +5,7 @@
  */
 import { isHeader, parseBullet, parseNumbered } from './patterns';
 import { parseCreatedDate, ageInDays } from './itemAgeParser';
+import { tagRegex } from './tagParser';
 
 export interface AgedItem { content: string; section: string; age: number; line: number; }
 
@@ -38,7 +39,7 @@ export function itemToMarkdown(content: string): string {
     md = md.replace(/^- !!!\s*/, '- 🔴 ');
     md = md.replace(/^- !!\s*/,  '- 🟠 ');
     md = md.replace(/^- !\s*/,   '- 🟡 ');
-    md = md.replace(/#(\w+)/g, '**#$1**');
+    md = md.replace(tagRegex(), '**#$1**');
     md = md.replace(/\{(?:red|green|blue|yellow|orange|purple)\}\s*/g, '');
     md = md.replace(/\s*\/\/.*$/, '');
     md = md.replace(/\s*\+\d+/, '');

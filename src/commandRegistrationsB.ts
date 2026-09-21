@@ -17,7 +17,7 @@ import { onToggleNote }                                      from './noteCommand
 import { ChevronLinkHoverProvider, ChevronLinkDefinitionProvider,
          ChevronDocumentLinkProvider, onGoToLinkedSection }  from './linkProvider';
 import { onExportAsHtml }                                    from './htmlExportCommands';
-import { onShowUpcoming, updateDueDateDiagnostics }          from './dueDateCommands';
+import { onShowUpcoming }                                    from './dueDateCommands';
 import { onSuggestItems, onSummariseSection, onExpandItem }  from './aiCommands';
 import { onQuickCapture }                                    from './quickCapture';
 import { onSaveSectionAsTemplate }                           from './saveTemplate';

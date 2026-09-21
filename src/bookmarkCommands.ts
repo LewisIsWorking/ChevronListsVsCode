@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { collectBookmarks, parseBookmark } from './bookmarkParser';
+import { wholeLineRange } from './lineEdits';
 
 interface BookmarkPickItem extends vscode.QuickPickItem { lineIndex: number; }
 
@@ -64,6 +65,6 @@ export async function onRemoveBookmark(): Promise<void> {
     }
 
     await editor.edit(eb =>
-        eb.delete(editor.document.lineAt(lineIndex).rangeIncludingLineBreak)
+        eb.delete(wholeLineRange(editor.document, lineIndex))
     );
 }
