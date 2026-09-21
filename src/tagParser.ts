@@ -17,7 +17,11 @@ export interface TagOccurrence {
  * here, "#(\w+)" in exports, stats, complexity and rename, none of them anchored,
  * so "#to-do" was the tag "to" in some features and "to-do" in others, and a URL
  * like "example.com/guide#setup" had a tag "setup" (and lost "#setup" when
- * metadata was stripped). It matches the JetBrains plugin's definition.
+ * metadata was stripped).
+ *
+ * Deliberately NOT the JetBrains plugin's rule: there a tag must start with a
+ * letter, so "#123" is plain text; here any word character may start one. Each
+ * editor keeps its own convention (Lewis, 2026-09-21).
  */
 export const TAG_RE = /(?<!\S)#(\w[\w-]*)/g;
 
