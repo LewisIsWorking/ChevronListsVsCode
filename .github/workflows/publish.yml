@@ -74,22 +74,31 @@ jobs:
           path: '*.vsix'
 
       # Publishes only for a real tag push, or a manual run with dry_run unticked.
+      # Without VSCE_PAT a tag push still succeeds: releases are uploaded by hand
+      # (docs/publishing.md), and the tag only records what shipped. A manual
+      # non-dry run without the secret is a mistake, so that one fails.
       - name: Publish to Marketplace
+        id: publish
         if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.dry_run == 'false'
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           if [ -z "$VSCE_PAT" ]; then
+            if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+              echo "::notice::VSCE_PAT is not set; not publishing. Upload the .vsix artifact by hand."
+              exit 0
+            fi
             echo "::error::VSCE_PAT secret is not set. See docs/publishing.md."
             exit 1
           fi
           bunx @vscode/vsce publish --packagePath *.vsix --pat "$VSCE_PAT"
+          echo "published=true" >> "$GITHUB_OUTPUT"
 
       - name: Summary
         run: |
           echo "### Chevron Lists $(node -p "require('./package.json').version")" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.dry_run == 'false' }}" = "true" ]; then
+          if [ "${{ steps.publish.outputs.published }}" = "true" ]; then
             echo "Published to the Visual Studio Marketplace." >> $GITHUB_STEP_SUMMARY
           else
-            echo "Dry run - .vsix built and attached as an artifact, nothing published." >> $GITHUB_STEP_SUMMARY
+            echo "Not published - .vsix built and attached as an artifact." >> $GITHUB_STEP_SUMMARY
           fi
