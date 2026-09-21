@@ -4,8 +4,10 @@
  * The command inserts two lines at the cursor line and then read the cursor
  * line again to decide where the new item line is. By then VS Code had already
  * moved the cursor down past the inserted lines, so the cursor landed two lines
- * below the blank item, inside whatever followed. The regression tests below
- * were checked against that code.
+ * below the blank item, inside whatever followed. It also inserted the new
+ * header in the middle of the cursor's section, so the items below the cursor
+ * silently moved into the new section. The regression tests below were checked
+ * against that code.
  */
 import { describe, it, expect, beforeEach } from 'bun:test';
 import * as vscode from 'vscode';
@@ -52,29 +54,47 @@ describe('onNewSection', () => {
         expect(h.lines()).toEqual(['text']);
     });
 
-    it('inserts the section and a blank item, leaving the cursor ready to type the item', async () => {
-        const h = openEditor(['> Old', '>> - kept', 'after'], { cursor: 2, character: 3 });
+    it('inside a section, adds the new section after it rather than taking over the items below the cursor', async () => {
+        // Inserting at the cursor line used to split the section: "after" became
+        // an item of the new section.
+        const h = openEditor(['> Old', '>> - kept', 'after', '', '> Next'], { cursor: 1, character: 3 });
         mock.queued.inputBox.push('  Ideas ');
         await onNewSection();
-        expect(h.lines()).toEqual(['> Old', '>> - kept', '> Ideas', '>> - ', 'after']);
-        expect(cursorOf(h.editor)).toEqual([3, '>> - '.length]);
-        expect(h.revealed.at(-1)).toEqual({ start: [3, 5], end: [3, 5] });
+        expect(h.lines()).toEqual(['> Old', '>> - kept', 'after', '', '> Ideas', '>> - ', '', '> Next']);
+        expect(cursorOf(h.editor)).toEqual([5, '>> - '.length]);
+        expect(h.revealed.at(-1)).toEqual({ start: [5, 5], end: [5, 5] });
     });
 
-    it('puts the cursor on the item line when the cursor started at column 0', async () => {
-        const h = openEditor(['first', 'second'], { cursor: 1, character: 0 });
+    it('on a header, adds the new section above it with a blank line between', async () => {
+        const h = openEditor(['first', '> Next', '>> - n'], { cursor: 1, character: 2 });
         mock.queued.inputBox.push('New');
         await onNewSection();
-        expect(h.lines()).toEqual(['first', '> New', '>> - ', 'second']);
+        expect(h.lines()).toEqual(['first', '> New', '>> - ', '', '> Next', '>> - n']);
         expect(cursorOf(h.editor)).toEqual([2, 5]);
     });
 
-    it('uses the configured bullet prefix', async () => {
+    it('outside any section, adds it at the cursor line', async () => {
+        const h = openEditor(['first', 'second'], { cursor: 1, character: 0 });
+        mock.queued.inputBox.push('New');
+        await onNewSection();
+        expect(h.lines()).toEqual(['first', '> New', '>> - ', '', 'second']);
+        expect(cursorOf(h.editor)).toEqual([2, 5]);
+    });
+
+    it('uses the configured bullet prefix, without a second blank line before a blank line', async () => {
         mock.__setConfig('chevron-lists.listPrefix', '*');
         const h = openEditor(['']);
         mock.queued.inputBox.push('Starred');
         await onNewSection();
         expect(h.lines()).toEqual(['> Starred', '>> * ', '']);
         expect(cursorOf(h.editor)).toEqual([1, 5]);
+    });
+
+    it('at the end of a section that ends the file, adds it on its own lines', async () => {
+        const h = openEditor(['> Old', '>> - kept'], { cursor: 1 });
+        mock.queued.inputBox.push('Tail');
+        await onNewSection();
+        expect(h.lines()).toEqual(['> Old', '>> - kept', '', '> Tail', '>> - ']);
+        expect(cursorOf(h.editor)).toEqual([4, 5]);
     });
 });

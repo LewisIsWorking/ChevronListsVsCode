@@ -16,7 +16,8 @@ export async function onCopyItemAsMarkdown(): Promise<void> {
 
     const depth  = (bullet?.chevrons ?? numbered!.chevrons).length - 2;
     const indent = '  '.repeat(depth);
-    const md     = indent + itemToMarkdown(content);
+    // Numbered items stay numbered; they used to be copied as "- " bullets.
+    const md     = indent + itemToMarkdown(content, numbered?.num ?? null);
 
     await vscode.env.clipboard.writeText(md);
     vscode.window.showInformationMessage('CL: Copied as markdown');

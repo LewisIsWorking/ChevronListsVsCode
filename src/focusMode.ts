@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { findHeaderAbove } from './documentUtils';
-import { getSectionRange } from './documentUtils';
 
 /** Command: folds all sections except the one under the cursor */
 export async function onFocusSection(): Promise<void> {
@@ -12,17 +11,16 @@ export async function onFocusSection(): Promise<void> {
     if (headerLine < 0) { vscode.window.showInformationMessage('CL: No section found at cursor'); return; }
 
     // Fold all — then unfold the current section
+    const original = editor.selection;
     await vscode.commands.executeCommand('editor.foldAll');
     const pos = new vscode.Position(headerLine, 0);
     editor.selection = new vscode.Selection(pos, pos);
     await vscode.commands.executeCommand('editor.unfold');
 
-    // Move cursor back to original content area
-    const [, end] = getSectionRange(doc, headerLine);
-    const targetLine = Math.min(headerLine + 1, end);
-    const targetPos  = new vscode.Position(targetLine, 0);
-    editor.selection = new vscode.Selection(targetPos, targetPos);
-    editor.revealRange(new vscode.Range(new vscode.Position(headerLine, 0), targetPos), vscode.TextEditorRevealType.InCenter);
+    // Put the cursor back where it was. It used to be moved to the start of the
+    // section's first line, losing the user's place.
+    editor.selection = original;
+    editor.revealRange(new vscode.Range(pos, original.active), vscode.TextEditorRevealType.InCenter);
 }
 
 /** Command: restores all folded sections */

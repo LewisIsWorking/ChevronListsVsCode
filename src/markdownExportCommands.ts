@@ -15,7 +15,9 @@ export async function onExportAsMarkdownDoc(): Promise<void> {
     const fileName   = path.basename(doc.fileName, path.extname(doc.fileName));
     const content    = toMarkdownDocument(doc, prefix);
 
-    const defaultUri = vscode.Uri.file(
+    // An untitled document has no folder, so its default would be a bare relative
+    // path such as "Untitled-1-export.md"; leave the dialog to choose instead.
+    const defaultUri = doc.isUntitled ? undefined : vscode.Uri.file(
         path.join(path.dirname(doc.fileName), `${fileName}-export.md`)
     );
     const saveUri = await vscode.window.showSaveDialog({
