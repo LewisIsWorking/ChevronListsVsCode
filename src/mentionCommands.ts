@@ -24,13 +24,18 @@ export async function onFilterByMention(): Promise<void> {
         return;
     }
 
+    const all      = collectMentions(editor.document, prefix);
+    const countOf  = (n: string) => all.filter(m => m.name === n).length;
     const namePick = await vscode.window.showQuickPick(
-        names.map(n => ({ label: `$(person) @${n}`, description: `${collectMentions(editor.document, prefix).filter(m => m.name === n).length} items`, tag: n })) as MentionPickItem[],
+        names.map(n => {
+            const count = countOf(n);
+            return { label: `$(person) @${n}`, description: `${count} item${count === 1 ? '' : 's'}`, tag: n };
+        }) as MentionPickItem[],
         { placeHolder: 'Select a person to filter items...' }
     );
     if (!namePick) { return; }
 
-    const matches = collectMentions(editor.document, prefix).filter(m => m.name === namePick.tag);
+    const matches = all.filter(m => m.name === namePick.tag);
     const pick    = vscode.window.createQuickPick<ItemPickItem>();
     pick.items = matches.map(m => ({ label: m.itemText, description: m.section, lineIndex: m.line }));
     pick.placeholder = `Items mentioning @${namePick.tag}`;

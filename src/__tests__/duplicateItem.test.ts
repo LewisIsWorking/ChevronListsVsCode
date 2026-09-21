@@ -46,10 +46,12 @@ describe('onDuplicateItem', () => {
         expect(cursorOf(h.editor)).toEqual([2, 3]);
     });
 
-    it('duplicates a numbered item', async () => {
-        const h = openEditor(['> S', '>> 1. first', ''], { cursor: 1 });
+    it('duplicates a numbered item after its children, as the next number, moving later items up', async () => {
+        // The copy used to repeat the number and go between the item and its children,
+        // which then belonged to the copy: '1. first', '1. first', '>>> 1. child', '2. second'.
+        const h = openEditor(['> S', '>> 1. first', '>>> 1. child', '>> 2. second', ''], { cursor: 1 });
         await onDuplicateItem();
-        expect(h.lines()).toEqual(['> S', '>> 1. first', '>> 1. first', '']);
+        expect(h.lines()).toEqual(['> S', '>> 1. first', '>>> 1. child', '>> 2. first', '>> 3. second', '']);
     });
 
     it('duplicates the last line of a file with no trailing newline onto its own line', async () => {

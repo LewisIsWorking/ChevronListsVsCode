@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
-import { nextInRun } from './numberingRuns';
+import { renumberFollowing } from './numberingRuns';
 import type { LineReader } from './types';
 
 /** What pasting multi-line text into an item turns into */
@@ -50,13 +50,7 @@ export function itemsFromPaste(lineText: string, start: number, clip: string, pr
  */
 export function renumberAfterPaste(doc: LineReader, lineIndex: number, added: number): { line: number; text: string }[] {
     const numbered = parseNumbered(doc.lineAt(lineIndex).text);
-    if (!numbered || added === 0) { return []; }
-    const edits: { line: number; text: string }[] = [];
-    for (let i = nextInRun(doc, lineIndex, numbered.chevrons); i >= 0; i = nextInRun(doc, i, numbered.chevrons)) {
-        const n = parseNumbered(doc.lineAt(i).text)!;
-        edits.push({ line: i, text: `${n.chevrons} ${n.num + added}. ${n.content}` });
-    }
-    return edits;
+    return numbered ? renumberFollowing(doc, lineIndex, numbered.chevrons, added) : [];
 }
 
 export const PASTE_ITEMS_KIND = vscode.DocumentDropOrPasteEditKind?.Text?.append('chevronItems');

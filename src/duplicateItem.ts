@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
-import { lineAfter } from './lineEdits';
+import { applyItemCopy, itemCopyBelow } from './lineEdits';
 
 /** Command: duplicates the item at the cursor directly below itself */
 export async function onDuplicateItem(): Promise<void> {
@@ -21,10 +21,10 @@ export async function onDuplicateItem(): Promise<void> {
         return;
     }
 
-    const ins = lineAfter(doc, lineIndex, text);
-    await editor.edit(eb => eb.insert(ins.position, ins.text));
+    const copy = itemCopyBelow(doc, lineIndex, prefix, (numbered ?? bullet)!.content);
+    await editor.edit(eb => applyItemCopy(eb, doc, copy));
 
     // Move cursor to the duplicate, keeping the column it was in before the edit
-    const pos = new vscode.Position(ins.line, character);
+    const pos = new vscode.Position(copy.insert.line, character);
     editor.selection = new vscode.Selection(pos, pos);
 }

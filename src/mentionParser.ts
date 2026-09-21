@@ -9,8 +9,17 @@ export interface MentionOccurrence {
     line:      number;
 }
 
-/** Regex matching @Name tokens (starts with capital letter or word char after @) */
-export const MENTION_RE = /@([A-Za-z][\w-]*)/g;
+/**
+ * A @Name mention: "@" at the start or after whitespace, then a capital letter,
+ * then word characters or hyphens. Group 1 is the name.
+ *
+ * The ONE definition of a mention, as documented ("@Name"). There used to be
+ * two: this parser took any letter, so the metadata markers "@daily", "@weekly",
+ * "@monthly", "@created:" and "@expires:" were people and "bob@example.com"
+ * mentioned "example"; the report and grouping took only letters, so
+ * "@Mary-Jane" was "Mary". Filter by Mention and the Mentions Report disagreed.
+ */
+export const MENTION_RE = /(?<!\S)@([A-Z][\w-]*)/g;
 
 /** Extracts all @mentions from item content */
 export function extractMentions(content: string): string[] {

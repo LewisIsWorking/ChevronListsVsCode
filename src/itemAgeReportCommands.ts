@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { getConfig } from './config';
 import { collectAgedItems } from './patterns';
 import type { AgedItem } from './patterns';
+import { escHtml } from './htmlExporter';
 
 function buildAgeReportHtml(items: AgedItem[], fileName: string): string {
     const rows = items.slice(0, 50).map(item => {
@@ -9,8 +11,8 @@ function buildAgeReportHtml(items: AgedItem[], fileName: string): string {
         const colour   = item.age >= 90 ? '#E06C75' : item.age >= 30 ? '#E5C07B' : '#98C379';
         return `<tr>
             <td style="color:${colour};font-weight:bold">${ageLabel}</td>
-            <td style="opacity:.6">${item.section}</td>
-            <td>${item.content.slice(0, 80)}${item.content.length > 80 ? '…' : ''}</td>
+            <td style="opacity:.6">${escHtml(item.section)}</td>
+            <td>${escHtml(item.content.slice(0, 80))}${item.content.length > 80 ? '…' : ''}</td>
         </tr>`;
     }).join('');
     return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Age Report</title>
@@ -21,7 +23,7 @@ table{border-collapse:collapse;width:100%;font-size:.82rem}
 th{text-align:left;padding:.3rem .6rem;opacity:.5;font-weight:normal;border-bottom:1px solid var(--vscode-widget-border,#333)}
 td{padding:.3rem .6rem;border-bottom:1px solid var(--vscode-widget-border,#222);vertical-align:top}
 </style></head><body>
-<h1>🕰 Item Age Report — ${fileName} (oldest ${Math.min(items.length,50)} of ${items.length})</h1>
+<h1>🕰 Item Age Report — ${escHtml(fileName)} (oldest ${Math.min(items.length,50)} of ${items.length})</h1>
 ${items.length === 0
     ? '<p style="opacity:.5">No items with @created: dates found</p>'
     : `<table><thead><tr><th>Age</th><th>Section</th><th>Content</th></tr></thead><tbody>${rows}</tbody></table>`}
@@ -36,7 +38,7 @@ export async function onShowItemAgeReport(): Promise<void> {
     if (!editor || editor.document.languageId !== 'markdown') { return; }
     const { prefix } = getConfig();
     const doc        = editor.document;
-    const fileName   = doc.fileName.split(/[\\/]/).pop() ?? 'file';
+    const fileName   = path.basename(doc.fileName);
     const lines      = Array.from({ length: doc.lineCount }, (_, i) => ({ text: doc.lineAt(i).text }));
     const items      = collectAgedItems(lines, prefix, new Date());
 
