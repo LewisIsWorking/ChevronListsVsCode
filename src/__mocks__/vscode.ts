@@ -236,6 +236,20 @@ export class SemanticTokensBuilder {
 
 interface EditOp { kind: 'replace' | 'insert' | 'delete'; uri: Uri; range?: Range; position?: Position; text?: string; }
 
+export class DocumentDropOrPasteEditKind {
+    static readonly Empty = new DocumentDropOrPasteEditKind('');
+    static readonly Text = new DocumentDropOrPasteEditKind('text');
+    constructor(public readonly value: string) {}
+    append(...parts: string[]): DocumentDropOrPasteEditKind {
+        return new DocumentDropOrPasteEditKind([this.value, ...parts].filter(Boolean).join('.'));
+    }
+}
+
+export class DocumentPasteEdit {
+    additionalEdit?: WorkspaceEdit;
+    constructor(public insertText: string, public title: string, public kind: DocumentDropOrPasteEditKind) {}
+}
+
 export class WorkspaceEdit {
     /** Recorded operations, in order -- assert against these instead of a real document. */
     readonly operations: EditOp[] = [];
@@ -531,6 +545,7 @@ export const languages = {
     registerDocumentSymbolProvider:         (_s: unknown, _p: unknown) => noopDisposable(),
     registerCodeActionsProvider:            (_s: unknown, _p: unknown, _m?: unknown) => noopDisposable(),
     registerCompletionItemProvider:         (_s: unknown, _p: unknown, ..._t: string[]) => noopDisposable(),
+    registerDocumentPasteEditProvider:      (_s: unknown, _p: unknown, _m: unknown) => noopDisposable(),
     registerDefinitionProvider:             (_s: unknown, _p: unknown) => noopDisposable(),
     registerDocumentLinkProvider:           (_s: unknown, _p: unknown) => noopDisposable(),
     registerDocumentSemanticTokensProvider: (_s: unknown, _p: unknown, _l?: unknown) => noopDisposable(),

@@ -36,4 +36,5 @@ export interface ChevronConfig {
     defaultNewListType:  string;
     colourPreset:        string;
     anthropicApiKey:     string;
+    pasteLinesAsItems:   boolean;
 }
