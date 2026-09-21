@@ -22,3 +22,5 @@ test-shims/
 scripts/
 coverage/
 coverage-policy.json
+docs/marketing/
+docs/contributing.md
