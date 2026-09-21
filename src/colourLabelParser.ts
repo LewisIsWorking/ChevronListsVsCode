@@ -1,5 +1,6 @@
 import type { LineReader } from './types';
 import { parseBullet, parseNumbered } from './patterns';
+import { joinItem, splitItem } from './itemParts';
 
 /** All supported colour label names */
 export const COLOUR_LABELS = ['red', 'green', 'blue', 'yellow', 'orange', 'purple'] as const;
@@ -14,15 +15,20 @@ export function parseColourLabel(content: string): ColourLabel | null {
     return match ? match[1] as ColourLabel : null;
 }
 
-/** Sets (or replaces) the colour label on item content */
+/**
+ * Sets (or replaces) the colour label on item content, after the checkbox,
+ * priority and star or flag. It used to go first ("{red} [x] done"), which hid
+ * the checkbox and priority from their parsers.
+ */
 export function setColourLabel(content: string, label: ColourLabel): string {
-    const stripped = content.replace(COLOUR_LABEL_RE, '').replace(/\s{2,}/g, ' ').trim();
-    return `{${label}} ${stripped}`;
+    const parts = splitItem(content);
+    return joinItem({ ...parts, colour: `{${label}}`, body: parts.body.replace(COLOUR_LABEL_RE, '') });
 }
 
 /** Removes any colour label from item content */
 export function removeColourLabel(content: string): string {
-    return content.replace(COLOUR_LABEL_RE, '').replace(/\s{2,}/g, ' ').trim();
+    const parts = splitItem(content);
+    return joinItem({ ...parts, colour: '', body: parts.body.replace(COLOUR_LABEL_RE, '') });
 }
 
 export interface ColourLabelOccurrence {

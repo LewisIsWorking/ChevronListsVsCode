@@ -10,7 +10,8 @@ async function saveFile(
     label: string
 ): Promise<void> {
     const baseName  = path.basename(document.fileName, path.extname(document.fileName));
-    const defaultUri = vscode.Uri.file(
+    // An untitled document has no folder, so its default would be a bare relative path.
+    const defaultUri = document.isUntitled ? undefined : vscode.Uri.file(
         path.join(path.dirname(document.fileName), `${baseName}.${ext}`)
     );
     const saveUri = await vscode.window.showSaveDialog({

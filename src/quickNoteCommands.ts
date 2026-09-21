@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
+import { joinItem, splitItem } from './itemParts';
 
 /** Command: prompts for a note and appends it as // comment to the item at cursor */
 export async function onAddQuickNote(): Promise<void> {
@@ -26,9 +27,9 @@ export async function onAddQuickNote(): Promise<void> {
     const chevrons = bullet?.chevrons ?? numbered!.chevrons;
     const content  = bullet?.content  ?? numbered!.content;
     const num      = numbered?.num ?? null;
-    // Remove any existing comment, then append new one
-    const stripped    = content.replace(/\s*\/\/.*$/, '').trim();
-    const newContent  = `${stripped} // ${note.trim()}`;
+    // Replace any existing comment. The old one was cut at the first "//", so a URL
+    // lost everything after "https:".
+    const newContent  = joinItem({ ...splitItem(content), comment: note.trim() });
     const newLine     = num !== null
         ? `${chevrons} ${num}. ${newContent}`
         : `${chevrons} ${prefix} ${newContent}`;

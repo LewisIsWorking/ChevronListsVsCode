@@ -34,10 +34,10 @@ export function stripAllMetadata(content: string): string {
     s = s.replace(/^!{1,3} +/, '');                 // priority      (PRIORITY_RE, start)
     s = s.replace(/^\* +/, '');                     // star marker   (STAR_RE, start)
     s = s.replace(/^\? +/, '');                     // flag marker   (FLAG_RE, start)
-    // Votes are only recognised at the very end, so strip them before the comment:
-    // in "idea +5 // note" the +5 is not at the end and parseVote ignores it.
-    s = s.replace(/\s*\+\d+\s*$/, '');              // votes         (VOTE_RE, end)
+    // A vote is the +N at the end of the text before any comment (parseVote), so
+    // the comment goes first: "idea +5 // note" has the vote 5.
     s = s.replace(/(?:^|\s+)\/\/.*$/, '');          // inline comment (COMMENT_RE; not URLs)
+    s = s.replace(/(?:^|\s+)\+\d+\s*$/, '');        // votes         (parseVote; not C++11)
     // These parsers match anywhere in the content.
     s = s.replace(tagRegex(), '');                  // tags (not URL fragments)
     s = s.replace(/@\d{4}-\d{2}-\d{2}/g, '');       // due dates
