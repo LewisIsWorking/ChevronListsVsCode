@@ -1,8 +1,43 @@
 # Changelog
 
-## [Unreleased]
+## [26.7.0] - 2026-09-21
+A large bug-fix release. Every fix below has a regression test that fails on the old code.
+
 ### Added
 - **Pasting several lines into an item puts each line on its own item.** Paste a chat log or an e-mail into `>> 1. ` and every non-blank line becomes an item at the same depth: numbered items keep counting (and the items after them are renumbered), bullets use your prefix. Indentation is trimmed and a line that is already a chevron item keeps only its text. It is the default paste inside an item; the paste widget still offers plain text, and `chevron-lists.pasteLinesAsItems` turns it off. Needs VS Code 1.97 or later; older versions paste as before.
+
+### Fixed
+**Editing items and sections**
+- Commands that add a line after an item (clone, duplicate, notes, paste, lock/freeze/hide markers, AI suggestions and more) glued the new text onto the last line of a file with no trailing newline. The lock, freeze and hide markers renamed the section header.
+- "Add to the end of the section" commands (quick capture, clone or move to section, move to bottom, archive) put the item after the blank line before the next header, detached from its list.
+- Deleting the last line of a file left an empty line behind.
+- New Section, Insert Table of Contents and Paste as Section inserted a header at the cursor, so the items below the cursor silently moved into the new section.
+- Several commands lost the cursor's place after an edit; Focus Section moved the cursor away from where it was.
+- Move Item to File deleted the item even when adding it to the other file failed.
+- Edit Item Content silently discarded the edit whenever a tag or date sat among the words, and could rename a tag instead of a word.
+- Set Item Colour, Strikethrough, Set Due Date, Quick Note and voting moved each other's markers: a colour label before the checkbox hid it, strikethrough wrapped the checkbox, a date or note after a vote hid the vote, and a vote on an item with a comment went inside the comment.
+
+**Numbered lists**
+- The children of two different items were numbered as one list. Numbering warnings flagged correctly restarted sub-lists, and auto-fix numbering (on by default) renumbered them as you typed; Renumber, Rebase, Set List Start and Convert Bullets did the same.
+- The numbering quick fix changed the wrong item ("change 2 to 2") and fixed nothing.
+- Duplicating or cloning a numbered item repeated its number, and put the copy between the item and its children.
+- Offset List Numbers applied an offset to some items and skipped the rest; Duplicate and Increment could change a date instead of a step number.
+
+**Tags, mentions, words and dates**
+- Dates were a day early outside UTC; a monthly recurrence from the 31st skipped a month; item age was off by one across a clock change.
+- A URL fragment (`page#section`) was treated as a tag and cut out of the URL, and a URL's `//` was treated as a comment. `#to-do` was the tag "to" in several features.
+- `@daily`, `@weekly`, `@monthly`, `@created:` and e-mail addresses were listed as people; `@Mary-Jane` was cut to "Mary".
+- Word counts included markup such as `[ ]` and `#tags`, differed between features, and said "1 words". "1 days", "1 items" and similar are fixed throughout.
+- Rename Tag (section) skipped items and rewrote longer tags; Bulk Tag skipped items containing a longer tag.
+
+**Exports, reports and views**
+- Obsidian, Markdown and Copy Section As exports dropped item numbers; the Obsidian export wrote `- - [x]` and put its frontmatter mid-file.
+- Template import dropped nested items and broke on `$` or `}`; template export wrote headers twice.
+- Tag Stats, Mentions Report, Item Age Report and Section Growth displayed `<`, `&` and quotes as markup; the statistics CSV broke on quotes in section names.
+- Colour presets never switched semantic highlighting on for markdown, and left a stray key in your settings.
+- The Template Gallery could insert the wrong template, or nothing, when a card was clicked.
+- Reading Mode, reused for another file, jumped back to the first file whenever that one was edited.
+- Item snippets defaulted to a due date in the past.
 
 ## [26.6.0] - 2026-09-06
 ### Fixed
