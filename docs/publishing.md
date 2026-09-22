@@ -1,8 +1,31 @@
 # Publishing Chevron Lists (VS Code)
 
-Two ways to ship: the automated workflow (preferred) or a manual upload.
+Releases are uploaded **by hand**. There is no `VSCE_PAT` secret, by choice: the
+token route needs an Azure DevOps organisation, and after 2026-12-01 a paid Azure
+subscription (see the deadline below). The automated workflow still runs on every
+tag, but without the secret it only builds and attaches the `.vsix`.
 
-## Automated (GitHub Actions)
+## Release checklist
+
+1. On a branch: bump `version` in `package.json`, add the CHANGELOG entry, run
+   `bun run bundle:prod` and commit the rebuilt `dist/extension.js`. PR, green CI,
+   squash-merge.
+2. From an up-to-date `master`, package it:
+
+   ```powershell
+   .\node_modules\.bin\vsce.exe package --no-dependencies --out chevron-lists-X.Y.Z.vsix
+   ```
+
+3. **List the package before uploading** (`unzip -l`): the manifest version must
+   be X.Y.Z, and nothing but user-facing files may be in it. `.vscodeignore` once
+   let draft marketing posts ship to every user.
+4. Upload at <https://marketplace.visualstudio.com/manage/publishers/lewisisworking>:
+   *⋯ → Update*, pick the `.vsix`, answer the captcha.
+5. Confirm the marketplace shows X.Y.Z, then tag the commit that shipped:
+   `git tag -a vX.Y.Z -m "Chevron Lists X.Y.Z" && git push origin vX.Y.Z`.
+   The Publish workflow then passes without publishing.
+
+## Automated (GitHub Actions), if a token is ever added
 
 `.github/workflows/publish.yml` builds, tests, type-checks, packages and publishes.
 
@@ -47,19 +70,6 @@ git push origin master --tags
 ```
 
 The workflow refuses to publish if the tag and `package.json` version disagree.
-
-## Manual upload
-
-Still supported, and what `release.ps1` does. Build the `.vsix`:
-
-```powershell
-bun run bundle:prod
-bunx @vscode/vsce package
-```
-
-Then upload at
-<https://marketplace.visualstudio.com/manage/publishers/lewisisworking>.
-Browser upload uses your normal sign-in, so it needs no PAT at all.
 
 ## ⚠️ The 2026-12-01 PAT deadline
 
