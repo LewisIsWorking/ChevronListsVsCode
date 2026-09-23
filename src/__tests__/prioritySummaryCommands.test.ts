@@ -102,13 +102,13 @@ describe('onShowPrioritySummary', () => {
     it('uses the singular placeholder for one item', async () => {
         openEditor(['> S', '>> - ! a']);
         await onShowPrioritySummary();
-        expect(mock.lastQuickPick().placeholder).toBe('1 priority item — press Enter to jump');
+        expect(mock.lastQuickPick().placeholder).toBe('1 priority item - press Enter to jump');
     });
 
     it('uses the plural placeholder for several', async () => {
         openEditor(['> S', '>> - ! a', '>> - !! b']);
         await onShowPrioritySummary();
-        expect(mock.lastQuickPick().placeholder).toBe('2 priority items — press Enter to jump');
+        expect(mock.lastQuickPick().placeholder).toBe('2 priority items - press Enter to jump');
     });
 
     it('previews a highlighted item', async () => {

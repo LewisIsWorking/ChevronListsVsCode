@@ -25,14 +25,14 @@ export async function onSectionHealthCheck(): Promise<void> {
     const issues = checkLinesHealth(lines, prefix, stripAllMetadata, extractTags);
 
     if (issues.length === 0) {
-        vscode.window.showInformationMessage(`CL: "${sectionName}" — no health issues found ✅`);
+        vscode.window.showInformationMessage(`CL: "${sectionName}" - no health issues found ✅`);
         return;
     }
 
     interface IssueItem extends vscode.QuickPickItem { lineIndex: number; }
     const pick = vscode.window.createQuickPick<IssueItem>();
     pick.items = issues.map(i => ({
-        label:       `$(warning) Line ${i.line + 1} — ${i.message}`,
+        label:       `$(warning) Line ${i.line + 1} - ${i.message}`,
         description: i.kind,
         lineIndex:   i.line,
     }));

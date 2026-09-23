@@ -29,7 +29,7 @@ export async function onFilterByMultipleTags(): Promise<void> {
     if (!pickedTags?.length) { return; }
 
     const mode = await vscode.window.showQuickPick(
-        [{ label: 'AND — items must have ALL selected tags' }, { label: 'OR — items with ANY selected tag' }],
+        [{ label: 'AND - items must have ALL selected tags' }, { label: 'OR - items with ANY selected tag' }],
         { placeHolder: 'Match mode…' }
     );
     if (!mode) { return; }

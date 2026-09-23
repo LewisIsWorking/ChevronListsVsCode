@@ -42,20 +42,20 @@ describe('onShowSectionSummary', () => {
     it('summarises an empty section', async () => {
         openEditor(['> Empty'], { cursor: 0 });
         await onShowSectionSummary();
-        expect(lastInfo()).toBe('"Empty" — 0 items, 0 words');
+        expect(lastInfo()).toBe('"Empty" - 0 items, 0 words');
     });
 
     it('summarises items and words with no checkboxes or tags', async () => {
         openEditor(['> S', '>> - one two', '>> - three'], { cursor: 1 });
         await onShowSectionSummary();
-        expect(lastInfo()).toBe('"S" — 2 items, 3 words');
+        expect(lastInfo()).toBe('"S" - 2 items, 3 words');
     });
 
     it('uses the singular for one item', async () => {
         openEditor(['> S', '>> - solo'], { cursor: 1 });
         await onShowSectionSummary();
         // "1 word", not "1 words": the word count used to be the only unpluralised noun.
-        expect(lastInfo()).toBe('"S" — 1 item, 1 word');
+        expect(lastInfo()).toBe('"S" - 1 item, 1 word');
     });
 
     it('adds the done count when there are completed items but no tags', async () => {
@@ -63,31 +63,31 @@ describe('onShowSectionSummary', () => {
         await onShowSectionSummary();
         // 2: checkbox markup is not prose. This used to report 5, because words
         // were split on raw whitespace and an unchecked "[ ]" is two tokens.
-        expect(lastInfo()).toBe('"S" — 2 items, 2 words  Done: 1/2');
+        expect(lastInfo()).toBe('"S" - 2 items, 2 words  Done: 1/2');
     });
 
     it('adds the done count alongside tags', async () => {
         openEditor(['> S', '>> - [x] a #t'], { cursor: 1 });
         await onShowSectionSummary();
-        expect(lastInfo()).toBe('"S" — 1 item, 1 word  Done: 1/1  Tags: #t×1');
+        expect(lastInfo()).toBe('"S" - 1 item, 1 word  Done: 1/1  Tags: #t×1');
     });
 
     it('tallies each tag across the section', async () => {
         openEditor(['> S', '>> - a #x #y', '>> - b #x'], { cursor: 1 });
         await onShowSectionSummary();
-        expect(lastInfo()).toBe('"S" — 2 items, 2 words  Tags: #x×2, #y×1');
+        expect(lastInfo()).toBe('"S" - 2 items, 2 words  Tags: #x×2, #y×1');
     });
 
     it('counts numbered items and skips non-item lines', async () => {
         openEditor(['> S', '>> 1. counted', 'loose prose line'], { cursor: 1 });
         await onShowSectionSummary();
-        expect(lastInfo()).toBe('"S" — 1 item, 1 word');
+        expect(lastInfo()).toBe('"S" - 1 item, 1 word');
     });
 
     it('stops at the next section', async () => {
         openEditor(['> One', '>> - a', '> Two', '>> - b', '>> - c'], { cursor: 1 });
         await onShowSectionSummary();
-        expect(lastInfo()).toBe('"One" — 1 item, 1 word');
+        expect(lastInfo()).toBe('"One" - 1 item, 1 word');
     });
 });
 

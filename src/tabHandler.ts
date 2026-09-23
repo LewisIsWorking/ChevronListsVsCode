@@ -5,7 +5,7 @@ import { prevNumberAtDepth } from './documentUtils';
 
 type EditBuilder = vscode.TextEditorEdit;
 
-// Snippet definitions — must stay in sync with snippets/chevron-lists.code-snippets
+// Snippet definitions - must stay in sync with snippets/chevron-lists.code-snippets
 export const SNIPPETS: Record<string, string> = {
     'chl': '> ${1:Section Header}\n>> - ${2:First item}\n>> - ${3:Second item}\n>> - $0',
     'chn': '> ${1:Section Header}\n>> 1. ${2:First item}\n>> 2. ${3:Second item}\n>> 3. $0',
@@ -127,7 +127,7 @@ function collectChildLines(doc: vscode.TextDocument, lineIndex: number, itemChev
     return children;
 }
 
-/** Handles Tab — accepts autocomplete suggestion if open, expands snippet if trigger=tab, promotes chevron items, or falls through */
+/** Handles Tab - accepts autocomplete suggestion if open, expands snippet if trigger=tab, promotes chevron items, or falls through */
 export async function onTab(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) { return; }
@@ -168,7 +168,7 @@ export async function onTab(): Promise<void> {
     });
 }
 
-/** Handles Shift+Tab — demotes chevron items across all cursors and range selections */
+/** Handles Shift+Tab - demotes chevron items across all cursors and range selections */
 export async function onShiftTab(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) { return; }

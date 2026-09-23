@@ -21,7 +21,7 @@ export async function onFreezeSection(): Promise<void> {
     }
     const ins = lineAfter(doc, headerLine, FROZEN_MARKER);
     await editor.edit(eb => eb.insert(ins.position, ins.text));
-    vscode.window.showInformationMessage('CL: Section frozen — edits will show a warning');
+    vscode.window.showInformationMessage('CL: Section frozen - edits will show a warning');
 }
 
 /** Command: removes the frozen marker from the current section */

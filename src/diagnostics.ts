@@ -37,7 +37,7 @@ export function collectIssues(doc: LineReader, prefix: string): DiagnosticIssue[
 
         if (isHeader(text)) {
             if (lastHeaderLine >= 0 && !lastHeaderHasItems) {
-                issues.push({ line: lastHeaderLine, message: `Empty section — no items under this header`, kind: 'empty-section' });
+                issues.push({ line: lastHeaderLine, message: `Empty section - no items under this header`, kind: 'empty-section' });
             }
             const name = text.replace(/^> /, '').trim().toLowerCase();
             if (seenHeaders.has(name)) {
@@ -62,7 +62,7 @@ export function collectIssues(doc: LineReader, prefix: string): DiagnosticIssue[
             if (prev !== undefined) {
                 const expected = prev.num + 1;
                 if (numbered.num !== expected) {
-                    // Flag the PREVIOUS item — it's the one that created
+                    // Flag the PREVIOUS item - it's the one that created
                     // the unexpected gap, not the current one.
                     issues.push({
                         line:    prev.line,
@@ -80,7 +80,7 @@ export function collectIssues(doc: LineReader, prefix: string): DiagnosticIssue[
     }
 
     if (lastHeaderLine >= 0 && !lastHeaderHasItems) {
-        issues.push({ line: lastHeaderLine, message: `Empty section — no items under this header`, kind: 'empty-section' });
+        issues.push({ line: lastHeaderLine, message: `Empty section - no items under this header`, kind: 'empty-section' });
     }
 
     return issues;

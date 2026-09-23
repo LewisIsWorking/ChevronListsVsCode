@@ -38,7 +38,7 @@ export async function onStartSectionTimer(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== 'markdown') { return; }
     if (activeTimer) {
-        vscode.window.showInformationMessage(`CL: Timer already running for "${activeTimer.sectionName}" — stop it first`);
+        vscode.window.showInformationMessage(`CL: Timer already running for "${activeTimer.sectionName}" - stop it first`);
         return;
     }
     const headerLine = findHeaderAbove(editor.document, editor.selection.active.line);
@@ -67,5 +67,5 @@ export async function onStopSectionTimer(): Promise<void> {
     activeTimer = null;
     const editor = vscode.window.activeTextEditor;
     if (editor) { editor.setDecorations(TIMER_DECORATION, []); }
-    vscode.window.showInformationMessage(`CL: Timer stopped — "${sectionName}" ran for ${formatElapsed(elapsed)}`);
+    vscode.window.showInformationMessage(`CL: Timer stopped - "${sectionName}" ran for ${formatElapsed(elapsed)}`);
 }

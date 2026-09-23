@@ -1,4 +1,4 @@
-# Chevron Lists — Full Command Reference
+# Chevron Lists - Full Command Reference
 
 All 250+ commands, grouped by area. Access any command via `CL:` in the Command Palette (`Ctrl+Shift+P`).
 
@@ -8,16 +8,16 @@ All 250+ commands, grouped by area. Access any command via `CL:` in the Command 
 |---|---|---|
 | Next Header | `Ctrl+Alt+Down` | Jump to the next `> Header` |
 | Previous Header | `Ctrl+Alt+Up` | Jump to the previous `> Header` |
-| `CL: Filter Sections` | — | Fuzzy-search jump to any section in the current file |
-| `CL: Filter Sections (Workspace)` | — | Same across all workspace markdown files |
-| `CL: Jump Back` | — | Return to previous cursor position |
-| `CL: Show Jump History` | — | Quick pick of 10 stored positions |
-| `CL: Filter Groups` | — | Jump to a named `>> --` group divider |
-| `CL: Jump to Bookmark` | — | Quick pick of all `[bookmark:Name]` markers |
-| `CL: Focus on Section` | — | Folds all other sections |
-| `CL: Unfocus` | — | Restores all folded sections |
-| `CL: Fold All Sections` | — | Folds every section |
-| `CL: Unfold All Sections` | — | Unfolds all sections |
+| `CL: Filter Sections` | - | Fuzzy-search jump to any section in the current file |
+| `CL: Filter Sections (Workspace)` | - | Same across all workspace markdown files |
+| `CL: Jump Back` | - | Return to previous cursor position |
+| `CL: Show Jump History` | - | Quick pick of 10 stored positions |
+| `CL: Filter Groups` | - | Jump to a named `>> --` group divider |
+| `CL: Jump to Bookmark` | - | Quick pick of all `[bookmark:Name]` markers |
+| `CL: Focus on Section` | - | Folds all other sections |
+| `CL: Unfocus` | - | Restores all folded sections |
+| `CL: Fold All Sections` | - | Folds every section |
+| `CL: Unfold All Sections` | - | Unfolds all sections |
 
 ## Search & Filter
 

@@ -16,13 +16,13 @@ export async function onSnapshotItem(): Promise<void> {
     const content    = bullet?.content ?? numbered?.content ?? null;
     if (!content) { vscode.window.showInformationMessage('CL: Place cursor on a chevron item'); return; }
     itemSnapshot = content;
-    vscode.window.showInformationMessage(`CL: Snapshot saved — "${content.slice(0, 50)}"`);
+    vscode.window.showInformationMessage(`CL: Snapshot saved - "${content.slice(0, 50)}"`);
 }
 
 /** Command: shows a diff between the current item and the stored snapshot */
 export async function onDiffItemWithSnapshot(): Promise<void> {
     if (!itemSnapshot) {
-        vscode.window.showInformationMessage('CL: No snapshot stored — use CL: Snapshot Item first');
+        vscode.window.showInformationMessage('CL: No snapshot stored - use CL: Snapshot Item first');
         return;
     }
     const editor = vscode.window.activeTextEditor;

@@ -33,7 +33,7 @@ async function applyPreset(preset: ColourPreset): Promise<void> {
         vscode.ConfigurationTarget.Global
     );
 
-    // Always enable semantic tokens for markdown — many themes disable them by default.
+    // Always enable semantic tokens for markdown - many themes disable them by default.
     // This is the setting that does it, as a markdown language override.
     await vscode.workspace.getConfiguration('editor', { languageId: 'markdown' })
         .update('semanticHighlighting.enabled', true, vscode.ConfigurationTarget.Global, true);
@@ -53,7 +53,7 @@ export async function onSwitchColourPreset(): Promise<void> {
     }));
 
     const pick = await vscode.window.showQuickPick(items, {
-        placeHolder: 'CL: Colour Theme — select a preset',
+        placeHolder: 'CL: Colour Theme - select a preset',
         matchOnDescription: true,
     });
 

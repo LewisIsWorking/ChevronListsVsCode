@@ -47,7 +47,7 @@ export async function onFilterByColourLabelWorkspace(): Promise<void> {
         uri:         m.uri,
         lineIndex:   m.line,
     }));
-    pick.placeholder = `Items labelled {${colourPick.colour}} — workspace`;
+    pick.placeholder = `Items labelled {${colourPick.colour}} - workspace`;
     pick.onDidAccept(() => {
         if (pick.activeItems[0]) {
             vscode.workspace.openTextDocument(pick.activeItems[0].uri).then(doc =>

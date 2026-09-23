@@ -97,6 +97,6 @@ describe('section summary wording', () => {
     it('says "1 word", not "1 words"', async () => {
         openEditor(['> S', '>> - solo'], { cursor: 1 });
         await onShowSectionSummary();
-        expect(mock.recorded.info.at(-1)).toBe('"S" — 1 item, 1 word');
+        expect(mock.recorded.info.at(-1)).toBe('"S" - 1 item, 1 word');
     });
 });

@@ -19,9 +19,9 @@ export async function onSetDueDate(): Promise<void> {
     }
 
     const input = await vscode.window.showInputBox({
-        prompt:      'Set due date — ISO (2026-12-31), weekday (friday), relative (+7), or shorthand (today, tomorrow, next week)',
+        prompt:      'Set due date - ISO (2026-12-31), weekday (friday), relative (+7), or shorthand (today, tomorrow, next week)',
         placeHolder: 'e.g. friday or +14 or 2026-06-01',
-        validateInput: v => parseNaturalDate(v.trim()) ? null : 'Unrecognised date — try: 2026-12-31, friday, +7, today',
+        validateInput: v => parseNaturalDate(v.trim()) ? null : 'Unrecognised date - try: 2026-12-31, friday, +7, today',
     });
     if (!input?.trim()) { return; }
 

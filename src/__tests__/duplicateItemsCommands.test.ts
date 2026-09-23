@@ -60,7 +60,7 @@ describe('onShowDuplicateItems', () => {
         openEditor(['> Home', '>> - buy milk', '> Work', '>> - buy milk']);
         await onShowDuplicateItems();
         expect(mock.lastQuickPick().items.map((i) => i.description))
-            .toEqual(['Home — line 2', 'Work — line 4']);
+            .toEqual(['Home - line 2', 'Work - line 4']);
     });
 
     it('treats items differing only by case as duplicates', async () => {

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 const MAX_HISTORY = 10;
 
-/** Per-file jump history stack — stores positions before each navigation */
+/** Per-file jump history stack - stores positions before each navigation */
 const history = new Map<string, vscode.Position[]>();
 
 /** Pushes the current cursor position onto the history stack for this file */

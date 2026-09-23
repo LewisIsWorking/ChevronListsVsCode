@@ -17,7 +17,7 @@ function getApiKey(): string | undefined {
 async function callClaude(system: string, user: string): Promise<string> {
     const apiKey = getApiKey();
     if (!apiKey) {
-        throw new Error('No API key — set chevron-lists.anthropicApiKey in settings');
+        throw new Error('No API key - set chevron-lists.anthropicApiKey in settings');
     }
 
     const response = await fetch(API_URL, {

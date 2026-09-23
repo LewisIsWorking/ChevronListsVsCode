@@ -9,7 +9,7 @@ let activeTimer: ActiveTimer | undefined;
 /** Command: starts a timer on the item at the cursor */
 export async function onStartItemTimer(): Promise<void> {
     if (activeTimer) {
-        vscode.window.showWarningMessage('CL: A timer is already running — stop it first with CL: Stop Item Timer');
+        vscode.window.showWarningMessage('CL: A timer is already running - stop it first with CL: Stop Item Timer');
         return;
     }
     const editor = vscode.window.activeTextEditor;
@@ -26,7 +26,7 @@ export async function onStartItemTimer(): Promise<void> {
     const content = bullet?.content ?? numbered!.content;
     const label   = content.slice(0, 30) + (content.length > 30 ? '…' : '');
     const bar     = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, -100);
-    bar.tooltip   = `CL: Item timer — click to stop`;
+    bar.tooltip   = `CL: Item timer - click to stop`;
     bar.command   = 'chevron-lists.stopItemTimer';
     bar.show();
 
@@ -35,7 +35,7 @@ export async function onStartItemTimer(): Promise<void> {
         bar.text = `$(clock) ${elapsed}  "${label}"`;
     }, 1000) };
     bar.text = `$(clock) 0s  "${label}"`;
-    vscode.window.showInformationMessage(`CL: Timer started — click the status bar to stop`);
+    vscode.window.showInformationMessage(`CL: Timer started - click the status bar to stop`);
 }
 
 /** Command: stops the running timer and stamps the item with ~elapsed */
@@ -57,7 +57,7 @@ export async function onStopItemTimer(): Promise<void> {
     const bullet      = parseBullet(text, prefix);
     const numbered    = parseNumbered(text);
     if (!bullet && !numbered) {
-        vscode.window.showInformationMessage(`CL: Timer stopped — ${elapsed} elapsed`);
+        vscode.window.showInformationMessage(`CL: Timer stopped - ${elapsed} elapsed`);
         return;
     }
     const chevrons   = bullet?.chevrons ?? numbered!.chevrons;
@@ -69,5 +69,5 @@ export async function onStopItemTimer(): Promise<void> {
     const edit = new vscode.WorkspaceEdit();
     edit.replace(doc.uri, doc.lineAt(timer.lineIndex).range, newLine);
     await vscode.workspace.applyEdit(edit);
-    vscode.window.showInformationMessage(`CL: Timer stopped — ${elapsed} stamped on item`);
+    vscode.window.showInformationMessage(`CL: Timer stopped - ${elapsed} stamped on item`);
 }

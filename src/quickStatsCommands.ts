@@ -41,5 +41,5 @@ export async function onQuickStats(): Promise<void> {
         overdue > 0 ? `⚠ ${overdue} overdue` : null,
     ].filter(Boolean);
 
-    vscode.window.showInformationMessage(`CL: "${name}" — ${parts.join(' · ')}`);
+    vscode.window.showInformationMessage(`CL: "${name}" - ${parts.join(' · ')}`);
 }

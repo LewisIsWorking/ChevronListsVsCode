@@ -26,7 +26,7 @@ export async function onShowUpcoming(): Promise<void> {
     }
 
     const pickItems: DueDatePickItem[] = items.map(item => ({
-        label:       `$(calendar) ${item.dateStr}${item.overdue ? ' ⚠️ OVERDUE' : ''} — ${item.content}`,
+        label:       `$(calendar) ${item.dateStr}${item.overdue ? ' ⚠️ OVERDUE' : ''} - ${item.content}`,
         description: item.section,
         detail:      item.overdue ? 'Overdue' : undefined,
         lineIndex:   item.line,
@@ -34,7 +34,7 @@ export async function onShowUpcoming(): Promise<void> {
 
     const pick = vscode.window.createQuickPick<DueDatePickItem>();
     pick.items       = pickItems;
-    pick.placeholder = 'Items with due dates — sorted chronologically';
+    pick.placeholder = 'Items with due dates - sorted chronologically';
 
     const originalPos = editor.selection.active;
     pick.onDidChangeActive(active => {

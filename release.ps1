@@ -1,4 +1,4 @@
-# release.ps1 — Chevron Lists release helper
+# release.ps1 - Chevron Lists release helper
 # Usage: .\release.ps1 -Version 0.0.2
 
 param (
@@ -26,7 +26,7 @@ if ($Version -eq $currentVersion) {
 }
 
 Write-Host ""
-Write-Host "  Chevron Lists — Release Script" -ForegroundColor Cyan
+Write-Host "  Chevron Lists - Release Script" -ForegroundColor Cyan
 Write-Host "  $currentVersion  →  $Version" -ForegroundColor Cyan
 Write-Host ""
 
@@ -45,7 +45,7 @@ Write-Host "  [1/5] Running tests..." -ForegroundColor Gray
 Push-Location $ProjectRoot
 $testResult = & bun test src/__tests__ 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Tests failed — release aborted:`n$testResult"
+    Write-Error "Tests failed - release aborted:`n$testResult"
     Pop-Location
     exit 1
 }
@@ -95,11 +95,11 @@ Write-Host "        Done." -ForegroundColor Green
 
 Pop-Location
 
-# ── 9. Done — open Marketplace upload page ───────────────────────────────────
+# ── 9. Done - open Marketplace upload page ───────────────────────────────────
 Write-Host ""
 Write-Host "  ✅ Release $Version ready!" -ForegroundColor Green
 Write-Host ""
-Write-Host "  Next step — upload the .vsix to the Marketplace:" -ForegroundColor White
+Write-Host "  Next step - upload the .vsix to the Marketplace:" -ForegroundColor White
 Write-Host "  https://marketplace.visualstudio.com/manage/publishers/lewisisworking" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  File to upload:" -ForegroundColor White

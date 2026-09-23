@@ -27,8 +27,8 @@ const mock = vscode as unknown as {
     };
 };
 
-const AND = { label: 'AND — items must have ALL selected tags' };
-const OR  = { label: 'OR — items with ANY selected tag' };
+const AND = { label: 'AND - items must have ALL selected tags' };
+const OR  = { label: 'OR - items with ANY selected tag' };
 const tag = (t: string) => ({ label: `#${t}`, tag: t });
 
 const DOC = [

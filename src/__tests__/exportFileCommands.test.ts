@@ -145,6 +145,6 @@ describe('onExportToObsidian', () => {
         expect(docs[0].language).toBe('markdown');
         expect(docs[0].content).toContain('## S\n2. b');
         expect(shown[0]).toEqual([docs[0], vscode.ViewColumn.Beside]);
-        expect(mock.recorded.info.at(-1)).toBe('CL: Obsidian export ready — save the file to use in Obsidian');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Obsidian export ready - save the file to use in Obsidian');
     });
 });

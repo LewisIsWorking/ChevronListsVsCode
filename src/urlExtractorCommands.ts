@@ -33,12 +33,12 @@ export async function onExtractUrlsFromSection(): Promise<void> {
     }
 
     if (urls.length === 0) {
-        vscode.window.showInformationMessage(`CL: "${name}" — no URLs found`);
+        vscode.window.showInformationMessage(`CL: "${name}" - no URLs found`);
         return;
     }
 
     const pick = await vscode.window.showQuickPick(urls, {
-        placeHolder: `${urls.length} URL${urls.length === 1 ? '' : 's'} in "${name}" — select to open`,
+        placeHolder: `${urls.length} URL${urls.length === 1 ? '' : 's'} in "${name}" - select to open`,
     });
     if (!pick) { return; }
     await vscode.env.openExternal(vscode.Uri.parse(pick.url));

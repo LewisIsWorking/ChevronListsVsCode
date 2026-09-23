@@ -22,7 +22,7 @@ td:first-child{color:#84CC16;font-weight:bold}
 .bar-wrap{background:var(--vscode-editor-inactiveSelectionBackground);border-radius:3px;height:8px;width:120px}
 .bar{background:#A855F7;border-radius:3px;height:8px}
 </style></head><body>
-<h1>👤 Mentions Report — ${escHtml(fileName)}</h1>
+<h1>👤 Mentions Report - ${escHtml(fileName)}</h1>
 ${stats.length === 0 ? '<p style="opacity:.5">No @Mentions found</p>' : `
 <table><thead><tr><th>Person</th><th>Items</th><th>Done</th><th>Progress</th><th>%</th></tr></thead>
 <tbody>${rows}</tbody></table>`}

@@ -74,7 +74,7 @@ export async function onOffsetListNumbers(): Promise<void> {
     const tooLow = numberedLines.filter(i => parseNumbered(doc.lineAt(i).text)!.num + offset < 1).length;
     if (tooLow > 0) {
         vscode.window.showInformationMessage(
-            `CL: Offsetting by ${offset} would take ${tooLow} item${tooLow === 1 ? '' : 's'} below 1 — nothing changed`
+            `CL: Offsetting by ${offset} would take ${tooLow} item${tooLow === 1 ? '' : 's'} below 1 - nothing changed`
         );
         return;
     }

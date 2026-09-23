@@ -70,7 +70,7 @@ export class ChevronSemanticTokensProvider
             if (bullet) {
                 // Colour ">> " (chevrons + space) as prefix (slate)
                 const chevronsAndSpace = bullet.chevrons.length + 1;
-                // Colour "- " (prefix char + space) as number (lime) — same role as "1."
+                // Colour "- " (prefix char + space) as number (lime) - same role as "1."
                 const prefixAndSpace   = prefix.length + 1;
                 this.push(builder, i, 0, chevronsAndSpace, 'chevronPrefix');
                 this.push(builder, i, chevronsAndSpace, prefixAndSpace, 'chevronNumber');

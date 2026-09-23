@@ -8,7 +8,7 @@ export function escHtml(s: string): string {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-/** Renders item content — converts #tags to badges and [[links]] to anchors */
+/** Renders item content - converts #tags to badges and [[links]] to anchors */
 export function renderContent(content: string): string {
     // Split on [[links]] and #tags, escape everything else. A "#" or "[" that
     // starts neither is plain text, so a URL fragment is not turned into a badge.

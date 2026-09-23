@@ -1,7 +1,7 @@
 # awesome-vscode PR
 
 ## PR Title
-Add Chevron Lists — markdown task manager with 300+ commands
+Add Chevron Lists - markdown task manager with 300+ commands
 
 ## PR Description
 
@@ -16,7 +16,7 @@ Adding **Chevron Lists** to the Productivity section.
 Chevron Lists turns VS Code into a full task, notes, and project management system using a simple markdown blockquote syntax (`>> -` items under `> ` section headers). Everything stays in plain readable markdown with no lock-in.
 
 Key features:
-- Smart keyboard shortcuts — Enter continues lists, Tab nests/unnests with children
+- Smart keyboard shortcuts - Enter continues lists, Tab nests/unnests with children
 - 300+ commands: kanban, today view, tag filtering, sort by due date, export to Obsidian
 - Live decorations: progress bars, priority backgrounds, due-soon ghost text, sparklines
 - Autocomplete for `#tags`, `@mentions`, `[[section links]]`, `~estimates`

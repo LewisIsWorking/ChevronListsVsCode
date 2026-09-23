@@ -30,7 +30,7 @@ function pushDecoration(
     else                 { red.push(opt); }
 }
 
-/** Returns the chevron string one depth deeper — ">>" → ">>>" */
+/** Returns the chevron string one depth deeper - ">>" → ">>>" */
 function oneDeeper(chevrons: string): string {
     return chevrons + '>';
 }
@@ -39,7 +39,7 @@ function oneDeeper(chevrons: string): string {
  *
  * Sub-group rule: a >> N. item gets a 6-block mini bar only when the items
  * immediately following it are at exactly one depth level deeper (>>> -).
- * This is opt-in — you choose the sub-group structure by indenting with Tab.
+ * This is opt-in - you choose the sub-group structure by indenting with Tab.
  */
 export function updateChecklistProgressDecorations(editor: vscode.TextEditor | undefined): void {
     if (!editor || editor.document.languageId !== 'markdown') { return; }
@@ -82,7 +82,7 @@ export function updateChecklistProgressDecorations(editor: vscode.TextEditor | u
 
             const childChevrons = oneDeeper(numbered.chevrons);
 
-            // Peek at the next non-blank line — if it isn't at childChevrons depth, skip
+            // Peek at the next non-blank line - if it isn't at childChevrons depth, skip
             let firstChild = -1;
             for (let k = j + 1; k <= sectionEnd; k++) {
                 const t = doc.lineAt(k).text.trim();
@@ -94,7 +94,7 @@ export function updateChecklistProgressDecorations(editor: vscode.TextEditor | u
                 }
                 break; // only peek one line
             }
-            if (firstChild < 0) { continue; } // no deeper children — no bar
+            if (firstChild < 0) { continue; } // no deeper children - no bar
 
             // Count checkboxes that are exactly at childChevrons depth
             let gDone = 0, gTotal = 0;

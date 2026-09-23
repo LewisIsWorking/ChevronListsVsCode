@@ -46,7 +46,7 @@ function buildGraphHtml(edges: DepEdge[], fileName: string): string {
     return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <title>Dependency Graph</title>
 <style>body{background:var(--vscode-editor-background);font-family:var(--vscode-font-family)}h1{font-size:1rem;color:var(--vscode-textLink-foreground);padding:0.75rem}</style>
-</head><body><h1>🔗 ${fileName} — Dependency Graph</h1>
+</head><body><h1>🔗 ${fileName} - Dependency Graph</h1>
 ${edges.length === 0
     ? '<p style="padding:1rem;opacity:0.6">No <code>&gt;&gt;depends:</code> markers found in this file.</p>'
     : `<svg viewBox="0 0 680 480" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:680px">

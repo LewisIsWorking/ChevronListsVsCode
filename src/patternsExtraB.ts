@@ -1,6 +1,6 @@
 /**
  * patternsExtraB.ts
- * Additional pure utilities — overflow from patternsExtra.ts.
+ * Additional pure utilities - overflow from patternsExtra.ts.
  * Re-exported by patterns.ts so callers use a single import.
  */
 import { isHeader, parseBullet, parseNumbered } from './patterns';

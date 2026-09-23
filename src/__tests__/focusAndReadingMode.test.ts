@@ -100,7 +100,7 @@ describe('onEnterReadingMode', () => {
         const h = openEditor(['> Shopping', '>> - milk'], { fileName: 'C:/notes/list.md' });
         await enter();
         expect(panels).toHaveLength(1);
-        expect(panels[0].title).toBe('list — Reading Mode');
+        expect(panels[0].title).toBe('list - Reading Mode');
         expect(panels[0].webview.html).toContain('milk');
         await (h.editor as { edit(cb: (eb: { insert(p: vscode.Position, t: string): void }) => void): Promise<boolean> })
             .edit(eb => eb.insert(new vscode.Position(1, 9), ' and eggs'));
@@ -118,7 +118,7 @@ describe('onEnterReadingMode', () => {
         await enter();
         expect(panels).toHaveLength(1);
         expect(panels[0].revealed).toBe(1);
-        expect(panels[0].title).toBe('second — Reading Mode');
+        expect(panels[0].title).toBe('second - Reading Mode');
         expect(panels[0].webview.html).toContain('yak');
         fire(first.document);
         expect(panels[0].webview.html).toContain('yak');

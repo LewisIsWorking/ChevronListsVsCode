@@ -23,7 +23,7 @@ export async function onLockSection(): Promise<void> {
     }
     const ins = lineAfter(doc, headerLine, LOCK_MARKER);
     await editor.edit(eb => eb.insert(ins.position, ins.text));
-    vscode.window.showInformationMessage('CL: Section locked — bulk operations will skip this section');
+    vscode.window.showInformationMessage('CL: Section locked - bulk operations will skip this section');
 }
 
 /** Command: unlocks the current section */

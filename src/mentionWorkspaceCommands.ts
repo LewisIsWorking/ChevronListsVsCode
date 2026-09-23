@@ -50,7 +50,7 @@ export async function onFilterByMentionWorkspace(): Promise<void> {
     const matches = mentionMap.get(namePick.tag)!;
     const pick    = vscode.window.createQuickPick<ItemPickItem>();
     pick.items = matches.map(m => ({ label: m.itemText, description: `${m.fileName} › ${m.section}`, uri: m.uri, lineIndex: m.line }));
-    pick.placeholder = `Items mentioning @${namePick.tag} — workspace`;
+    pick.placeholder = `Items mentioning @${namePick.tag} - workspace`;
     pick.onDidAccept(() => { if (pick.activeItems[0]) { revealEntry(pick.activeItems[0].uri, pick.activeItems[0].lineIndex); } pick.hide(); });
     pick.onDidHide(() => pick.dispose());
     pick.show();

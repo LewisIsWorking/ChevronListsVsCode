@@ -30,7 +30,7 @@ export async function onShowRecurring(): Promise<void> {
 
     const pick = vscode.window.createQuickPick<RecurPickItem>();
     pick.items = items.map(item => ({
-        label:       `$(sync) @${item.type} — ${item.content}`,
+        label:       `$(sync) @${item.type} - ${item.content}`,
         description: item.section,
         lineIndex:   item.line,
     }));

@@ -10,7 +10,7 @@ export async function onFocusSection(): Promise<void> {
     const headerLine = findHeaderAbove(doc, editor.selection.active.line);
     if (headerLine < 0) { vscode.window.showInformationMessage('CL: No section found at cursor'); return; }
 
-    // Fold all — then unfold the current section
+    // Fold all - then unfold the current section
     const original = editor.selection;
     await vscode.commands.executeCommand('editor.foldAll');
     const pos = new vscode.Position(headerLine, 0);

@@ -32,7 +32,7 @@ export async function onShowCompletionStreak(): Promise<void> {
         if (total > 0 && done === total) {
             completed.push({
                 label:       `$(pass-filled) ${name}`,
-                description: `${total} item${total === 1 ? '' : 's'} — all done`,
+                description: `${total} item${total === 1 ? '' : 's'} - all done`,
                 lineIndex:   i,
                 total,
             });

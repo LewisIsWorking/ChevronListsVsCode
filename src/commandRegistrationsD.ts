@@ -1,6 +1,6 @@
 /**
  * commandRegistrationsD.ts
- * Phase 40+ commands — split from commandRegistrationsC.ts to stay under 200 lines.
+ * Phase 40+ commands - split from commandRegistrationsC.ts to stay under 200 lines.
  * Exported and spread into registerPhase12to32Commands() in commandRegistrationsC.ts.
  */
 import * as vscode from 'vscode';

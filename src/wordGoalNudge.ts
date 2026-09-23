@@ -41,7 +41,7 @@ export function updateWordGoalNudge(editor: vscode.TextEditor | undefined): void
 
     if (!nudgeBar) {
         nudgeBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, -50);
-        nudgeBar.tooltip = 'Word goal progress — CL: Set Word Count Goal to change';
+        nudgeBar.tooltip = 'Word goal progress - CL: Set Word Count Goal to change';
     }
     nudgeBar.text = `📝 ${remaining} word${remaining === 1 ? '' : 's'} to go`;
     nudgeBar.show();

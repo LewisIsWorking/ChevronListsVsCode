@@ -76,7 +76,7 @@ export async function onFilterByTagWorkspace(): Promise<void> {
         uri:         m.uri,
         lineIndex:   m.line,
     }));
-    pick.placeholder = `Items tagged #${tagPick.tag} — workspace`;
+    pick.placeholder = `Items tagged #${tagPick.tag} - workspace`;
 
     pick.onDidAccept(() => {
         if (pick.activeItems[0]) { revealEntry(pick.activeItems[0].uri, pick.activeItems[0].lineIndex); }

@@ -156,18 +156,18 @@ describe('onShowNestingSummary', () => {
     it('breaks items down by depth, shallowest first', async () => {
         openEditor(['> S', '>>> - deep', '>> - top', '>> 2. top two', '>>> - deep two'], { cursor: 1 });
         await onShowNestingSummary();
-        expect(lastInfo()).toBe('"S" — Depth 0: 2 items, Depth 1: 2 items');
+        expect(lastInfo()).toBe('"S" - Depth 0: 2 items, Depth 1: 2 items');
     });
 
     it('uses the singular for a single item at a depth', async () => {
         openEditor(['> S', '>> - top', '>>>> - very deep'], { cursor: 1 });
         await onShowNestingSummary();
-        expect(lastInfo()).toBe('"S" — Depth 0: 1 item, Depth 2: 1 item');
+        expect(lastInfo()).toBe('"S" - Depth 0: 1 item, Depth 2: 1 item');
     });
 
     it('stops at the next section', async () => {
         openEditor(['> One', '>> - a', '> Two', '>>> - b'], { cursor: 1 });
         await onShowNestingSummary();
-        expect(lastInfo()).toBe('"One" — Depth 0: 1 item');
+        expect(lastInfo()).toBe('"One" - Depth 0: 1 item');
     });
 });

@@ -8,7 +8,7 @@ const OLD_ITEM_DECORATION = vscode.window.createTextEditorDecorationType({
     fontStyle: 'italic',
 });
 
-/** Updates the age-highlight decorations — items older than 30 days are muted */
+/** Updates the age-highlight decorations - items older than 30 days are muted */
 export function updateAgeDecorations(editor: vscode.TextEditor | undefined): void {
     if (!editor || editor.document.languageId !== 'markdown') { return; }
     const { prefix } = getConfig();

@@ -38,6 +38,6 @@ export async function onRenameSection(): Promise<void> {
     });
 
     vscode.window.showInformationMessage(
-        `CL: Renamed to "${cleanNew}"${linkUpdates > 0 ? ` — updated ${linkUpdates} link${linkUpdates === 1 ? '' : 's'}` : ''}`
+        `CL: Renamed to "${cleanNew}"${linkUpdates > 0 ? ` - updated ${linkUpdates} link${linkUpdates === 1 ? '' : 's'}` : ''}`
     );
 }

@@ -53,7 +53,7 @@ export async function onShowTagReportWorkspace(): Promise<void> {
         return `## #${tag} (${total} total)\n\n${fileList}`;
     }).join('\n\n');
 
-    const content = `# Tag Report — Workspace\n\n${tagMap.size} unique tags across ${files.length} files\n\n${lines}`;
+    const content = `# Tag Report - Workspace\n\n${tagMap.size} unique tags across ${files.length} files\n\n${lines}`;
     const mdDoc   = await vscode.workspace.openTextDocument({ content, language: 'markdown' });
     await vscode.window.showTextDocument(mdDoc, vscode.ViewColumn.Beside);
 }

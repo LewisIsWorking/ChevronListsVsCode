@@ -24,7 +24,7 @@ export function onEnterReadingMode(): void {
     } else {
         readingPanel = vscode.window.createWebviewPanel(
             'chevron-lists.reading',
-            `${fileName} — Reading Mode`,
+            `${fileName} - Reading Mode`,
             vscode.ViewColumn.Beside,
             { enableScripts: false }
         );
@@ -38,7 +38,7 @@ export function onEnterReadingMode(): void {
     // Reusing the panel for another file: retitle it and stop listening to the
     // previous file. Every call used to add a listener that lived as long as
     // the panel, so edits to the first file flipped the panel back to it.
-    readingPanel.title = `${fileName} — Reading Mode`;
+    readingPanel.title = `${fileName} - Reading Mode`;
     readingPanel.webview.html = buildHtml(doc, prefix, fileName);
 
     // Live-update when the document changes

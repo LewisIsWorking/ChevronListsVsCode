@@ -1,7 +1,7 @@
 import type { BulletMatch, NumberedMatch } from './types';
 import { joinItem, splitItem } from './itemParts';
 
-/** Matches a >> 1. numbered item at any depth — captures chevrons, number, content */
+/** Matches a >> 1. numbered item at any depth - captures chevrons, number, content */
 export const NUMBERED_ITEM_RE = /^(>{2,}) (\d+)\. (.*)$/;
 
 /** Matches a > header line (single >, not >>) */
@@ -48,7 +48,7 @@ export function extractLabels(content: string): Array<{ text: string; start: num
     return results;
 }
 
-/** Title-cases a string — first letter of each word capitalised */
+/** Title-cases a string - first letter of each word capitalised */
 export function toTitleCase(s: string): string {
     return s.replace(/\b\w/g, c => c.toUpperCase());
 }

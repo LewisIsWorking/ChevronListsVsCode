@@ -5,7 +5,7 @@ import { parseWordCountGoal } from './wordGoalParser';
 import { getSectionRange } from './documentUtils';
 import { itemWordCount } from './metadataStripper';
 
-// Three decoration types — one per progress band
+// Three decoration types - one per progress band
 const makeDecoration = (color: string) => vscode.window.createTextEditorDecorationType({
     after: { margin: '0 0 0 0.5em', color },
     borderStyle: 'none',

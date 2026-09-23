@@ -36,7 +36,7 @@ export async function onShowWordCountGoals(): Promise<void> {
     }
 
     if (results.length === 0) {
-        vscode.window.showInformationMessage('CL: No word count goals found — add `==N` to a section header');
+        vscode.window.showInformationMessage('CL: No word count goals found - add `==N` to a section header');
         return;
     }
 
@@ -65,7 +65,7 @@ export async function onShowWordCountGoals(): Promise<void> {
     const originalPos = editor.selection.active;
     const pick        = vscode.window.createQuickPick<GoalItem>();
     pick.items        = items;
-    pick.placeholder  = `${results.length} word goal section${results.length === 1 ? '' : 's'} — press Enter to jump`;
+    pick.placeholder  = `${results.length} word goal section${results.length === 1 ? '' : 's'} - press Enter to jump`;
     pick.onDidChangeActive(active => {
         if (!active[0]) { return; }
         const pos = new vscode.Position(active[0].lineIndex, 0);

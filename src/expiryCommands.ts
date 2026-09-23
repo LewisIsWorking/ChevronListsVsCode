@@ -17,7 +17,7 @@ export async function onShowExpiredItems(): Promise<void> {
     const pick        = vscode.window.createQuickPick<ExpiredPickItem>();
     pick.items        = expired.map(e => ({
         label:       `$(warning) ${e.content}`,
-        description: `${e.section} — expired ${e.dateStr}`,
+        description: `${e.section} - expired ${e.dateStr}`,
         lineIndex:   e.line,
     }));
     pick.placeholder  = `${expired.length} expired item${expired.length === 1 ? '' : 's'}`;

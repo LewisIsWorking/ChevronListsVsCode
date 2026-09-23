@@ -21,7 +21,7 @@ td:first-child{color:#A855F7;font-weight:bold}
 .bar-wrap{background:var(--vscode-editor-inactiveSelectionBackground);border-radius:3px;height:8px;width:120px}
 .bar{background:#84CC16;border-radius:3px;height:8px;transition:width .3s}
 </style></head><body>
-<h1>🏷 Tag Stats — ${escHtml(fileName)}</h1>
+<h1>🏷 Tag Stats - ${escHtml(fileName)}</h1>
 ${stats.length === 0 ? '<p style="opacity:.5">No tags found in this file</p>' : `
 <table><thead><tr><th>Tag</th><th>Items</th><th>Done</th><th>Progress</th><th>%</th></tr></thead>
 <tbody>${rows}</tbody></table>`}

@@ -73,7 +73,7 @@ function revealLine(editor: vscode.TextEditor, lineIndex: number): void {
 }
 
 /**
- * Search Items — shows a quick pick of every chevron item in the file.
+ * Search Items - shows a quick pick of every chevron item in the file.
  * Supports live filtering. Selecting an item jumps to its line.
  */
 export async function onSearchItems(): Promise<void> {
@@ -93,7 +93,7 @@ export async function onSearchItems(): Promise<void> {
     pick.placeholder = 'Type to filter chevron list items...';
     pick.matchOnDescription = true;
 
-    // Live preview — jump to item as user moves through the list
+    // Live preview - jump to item as user moves through the list
     pick.onDidChangeActive(active => {
         if (active[0]) { revealLine(editor, active[0].lineIndex); }
     });
@@ -119,7 +119,7 @@ export async function onSearchItems(): Promise<void> {
 }
 
 /**
- * Filter Sections — shows a quick pick of all headers in the file.
+ * Filter Sections - shows a quick pick of all headers in the file.
  * Supports live filtering. Selecting a header jumps to that section.
  */
 export async function onFilterSections(): Promise<void> {

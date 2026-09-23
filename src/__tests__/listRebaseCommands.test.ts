@@ -101,14 +101,14 @@ describe('onOffsetListNumbers', () => {
         mock.queued.inputBox.push('-5');
         await onOffsetListNumbers();
         expect(h.lines()).toEqual(['> S', '>> 1. a', '>> 2. b', '>> 10. c']);
-        expect(mock.recorded.info.at(-1)).toBe('CL: Offsetting by -5 would take 2 items below 1 — nothing changed');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Offsetting by -5 would take 2 items below 1 - nothing changed');
     });
 
     it('says "1 item" when one item would go below 1', async () => {
         openEditor(['> S', '>> 1. a', '>> 9. b'], { cursor: 0 });
         mock.queued.inputBox.push('-1');
         await onOffsetListNumbers();
-        expect(mock.recorded.info.at(-1)).toBe('CL: Offsetting by -1 would take 1 item below 1 — nothing changed');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Offsetting by -1 would take 1 item below 1 - nothing changed');
     });
 
     it('reports a section with no numbered items', async () => {

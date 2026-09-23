@@ -15,7 +15,7 @@ A `file:` devDependency named `vscode`, so production modules can be loaded by
 ```
 
 `moduleNameMapper` is a **Jest** key. Bun does not read it, so the mapping never
-happened — and because no test imported a `vscode`-dependent module, nothing ever
+happened - and because no test imported a `vscode`-dependent module, nothing ever
 failed to reveal that. The consequence was severe: of 265 source files, only the
 41 pure-logic ones were reachable from tests. The other 224 were not scored 0%,
 they were **absent from the coverage report entirely**, and Bun's average over the
@@ -25,7 +25,7 @@ Every bug found in the September 2026 audit lived in those 224 files.
 
 ### Why a package rather than a plugin
 
-Bun's runtime `plugin()` / `onResolve` does not intercept **bare specifiers** — a
+Bun's runtime `plugin()` / `onResolve` does not intercept **bare specifiers** - a
 preload plugin filtering `/^vscode$/` registers fine and is simply never called,
 so `import 'vscode'` still fails to resolve. A real package in `node_modules` is
 what Bun's resolver actually honours.
@@ -34,7 +34,7 @@ what Bun's resolver actually honours.
 
 The shim package deliberately ships **no** type declarations and sets no `types`
 field. TypeScript therefore finds no types on the package and falls through to
-`@types/vscode`, which declares the module ambiently — so `tsc --noEmit` checks
+`@types/vscode`, which declares the module ambiently - so `tsc --noEmit` checks
 against the real API while Bun resolves the runtime value to
 `src/__mocks__/vscode.ts`.
 

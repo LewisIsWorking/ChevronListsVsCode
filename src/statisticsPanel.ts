@@ -33,13 +33,13 @@ function buildHtml(stats: ReturnType<typeof computeFileStats>, fileName: string)
         card('Flagged (?)',         stats.totalFlagged),
         card('Commented (//)',     stats.totalCommented),
         card('Stamped (@created)', stats.totalStamped),
-        card('Most Items',         stats.mostPopulated?.itemCount ?? '—', stats.mostPopulated?.name ?? ''),
-        card('Fewest Items',       stats.leastPopulated?.itemCount ?? '—', stats.leastPopulated?.name ?? ''),
+        card('Most Items',         stats.mostPopulated?.itemCount ?? ' - ', stats.mostPopulated?.name ?? ''),
+        card('Fewest Items',       stats.leastPopulated?.itemCount ?? ' - ', stats.leastPopulated?.name ?? ''),
     ].join('');
 
     const rows = stats.sections.map(s => {
-        const done    = s.total > 0 ? `${s.done}/${s.total}` : '—';
-        const goalCell = s.wordGoal !== null ? goalBar(s.wordCount, s.wordGoal) : '—';
+        const done    = s.total > 0 ? `${s.done}/${s.total}` : ' - ';
+        const goalCell = s.wordGoal !== null ? goalBar(s.wordCount, s.wordGoal) : ' - ';
         return `<tr>
             <td>${escHtml(s.name)}</td>
             <td>${s.itemCount}</td>

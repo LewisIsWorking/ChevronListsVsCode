@@ -18,7 +18,7 @@ export function prevNumberAtDepth(
 /**
  * Returns the inclusive [startLine, endLine] range for the chevron section
  * whose header is at headerLine. Ends just before the next header or EOF.
- * Includes blank lines and non-chevron content — used by hover, fold, select.
+ * Includes blank lines and non-chevron content - used by hover, fold, select.
  */
 export function getSectionRange(doc: LineReader, headerLine: number): SectionRange {
     let end = headerLine;
@@ -31,7 +31,7 @@ export function getSectionRange(doc: LineReader, headerLine: number): SectionRan
 
 /**
  * Returns the tight [startLine, endLine] range covering only the header and
- * its immediate chevron items. Stops at the last item line — blank lines,
+ * its immediate chevron items. Stops at the last item line - blank lines,
  * dividers, and non-chevron content are NOT included.
  * Used by Move Section Up/Down so separators stay in place during a swap.
  */
@@ -49,7 +49,7 @@ export function getTightSectionRange(
         } else if (text.trim() !== '') {
             break;   // Non-blank, non-chevron content ends the section
         }
-        // Blank lines are skipped — they don't extend end but don't break either
+        // Blank lines are skipped - they don't extend end but don't break either
     }
     return [headerLine, end];
 }

@@ -84,7 +84,7 @@ describe('report webviews escape what they show', () => {
         openEditor(['> S', '>> - [x] a #work', '>> - b #work'], HOSTILE);
         await onShowTagStats();
         const html = panels[0].webview.html;
-        expect(html).toContain('Tag Stats — a&amp;b &quot;&lt;x&gt;&quot;.md');
+        expect(html).toContain('Tag Stats - a&amp;b &quot;&lt;x&gt;&quot;.md');
         expect(html).toContain('<td>#work</td><td>2</td><td>1</td>');
         expect(html).toContain('50%');
     });
@@ -93,7 +93,7 @@ describe('report webviews escape what they show', () => {
         openEditor(['> S', '>> - ask @Sam'], HOSTILE);
         await onShowMentionsReport();
         const html = panels[0].webview.html;
-        expect(html).toContain('Mentions Report — a&amp;b &quot;&lt;x&gt;&quot;.md');
+        expect(html).toContain('Mentions Report - a&amp;b &quot;&lt;x&gt;&quot;.md');
         expect(html).toContain('<td>@Sam</td>');
     });
 
@@ -102,7 +102,7 @@ describe('report webviews escape what they show', () => {
         openEditor(['> Plans & <Ideas>', `>> - ${long} @created:2020-01-01`, '>> - a < b @created:2020-01-02'], HOSTILE);
         await onShowItemAgeReport();
         const html = panels[0].webview.html;
-        expect(html).toContain('Item Age Report — a&amp;b &quot;&lt;x&gt;&quot;.md (oldest 2 of 2)');
+        expect(html).toContain('Item Age Report - a&amp;b &quot;&lt;x&gt;&quot;.md (oldest 2 of 2)');
         expect(html).toContain('Plans &amp; &lt;Ideas&gt;');
         expect(html).toContain('a &lt; b');
         expect(html).toContain(`&lt;b&gt;${'x'.repeat(77)}…`);
@@ -113,7 +113,7 @@ describe('report webviews escape what they show', () => {
         openEditor(['> Say "hi" & <wave> to everyone in the whole room', '>> - a', '> Short', '>> - b', '>> - c'], HOSTILE);
         await onShowSectionGrowth();
         const html = panels[0].webview.html;
-        expect(html).toContain('Section Growth — a&amp;b &quot;&lt;x&gt;&quot;.md');
+        expect(html).toContain('Section Growth - a&amp;b &quot;&lt;x&gt;&quot;.md');
         expect(html).toContain('title="Say &quot;hi&quot; &amp; &lt;wave&gt; to everyone in the whole room"');
         expect(html).toContain('>Say &quot;hi&quot; &amp; &lt;wave&gt; to everyo…</div>');
         expect(html).toContain('>Short</div>');
@@ -263,19 +263,19 @@ describe('reading time', () => {
     it('names the section without its word goal marker', async () => {
         openEditor(['> Draft ==500', '>> - one two three', '>> 1. four #tag'], { cursor: 1 });
         await onShowReadingTime();
-        expect(mock.recorded.info.at(-1)).toMatch(/^CL: "Draft" — 4 words, ~/);
+        expect(mock.recorded.info.at(-1)).toMatch(/^CL: "Draft" - 4 words, ~/);
     });
 
     it('counts the whole file above the first header, and says "1 word"', async () => {
         openEditor(['>> - solo', '> Later'], { cursor: 0 });
         await onShowReadingTime();
-        expect(mock.recorded.info.at(-1)).toMatch(/^CL: Whole file — 1 word, ~/);
+        expect(mock.recorded.info.at(-1)).toMatch(/^CL: Whole file - 1 word, ~/);
         openEditor(['>> - two words', '> Later', '>> - one'], { cursor: 2 });
         await onShowReadingTime();
-        expect(mock.recorded.info.at(-1)).toMatch(/^CL: "Later" — 1 word, ~/);
+        expect(mock.recorded.info.at(-1)).toMatch(/^CL: "Later" - 1 word, ~/);
         openEditor(['>> - two words', '> Later'], { cursor: 0 });
         await onShowReadingTime();
-        expect(mock.recorded.info.at(-1)).toMatch(/^CL: Whole file — 2 words, ~/);
+        expect(mock.recorded.info.at(-1)).toMatch(/^CL: Whole file - 2 words, ~/);
     });
 
     it('does nothing outside markdown', async () => {

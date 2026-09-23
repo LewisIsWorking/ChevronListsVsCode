@@ -5,7 +5,7 @@ let focusTimer: { end: number; bar: vscode.StatusBarItem; interval: ReturnType<t
 /** Command: starts a configurable countdown focus timer */
 export async function onStartFocusTimer(): Promise<void> {
     if (focusTimer) {
-        vscode.window.showWarningMessage('CL: Focus timer already running — stop it first');
+        vscode.window.showWarningMessage('CL: Focus timer already running - stop it first');
         return;
     }
     const cfg     = vscode.workspace.getConfiguration('chevron-lists');
@@ -13,7 +13,7 @@ export async function onStartFocusTimer(): Promise<void> {
     const ms      = minutes * 60 * 1000;
     const end     = Date.now() + ms;
     const bar     = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, -99);
-    bar.tooltip   = `CL: Focus timer — click to stop`;
+    bar.tooltip   = `CL: Focus timer - click to stop`;
     bar.command   = 'chevron-lists.stopFocusTimer';
     bar.show();
 
@@ -26,7 +26,7 @@ export async function onStartFocusTimer(): Promise<void> {
     };
     tick();
     focusTimer = { end, bar, interval: setInterval(tick, 1000) };
-    vscode.window.showInformationMessage(`CL: Focus timer started — ${minutes} minutes`);
+    vscode.window.showInformationMessage(`CL: Focus timer started - ${minutes} minutes`);
 }
 
 /** Command: stops the focus timer */

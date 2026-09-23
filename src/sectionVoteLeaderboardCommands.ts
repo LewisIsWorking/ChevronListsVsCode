@@ -28,7 +28,7 @@ export async function onShowSectionVoteLeaderboard(): Promise<void> {
     }
 
     if (ranked.length === 0) {
-        vscode.window.showInformationMessage(`CL: "${name}" — no voted items found (use +N)`);
+        vscode.window.showInformationMessage(`CL: "${name}" - no voted items found (use +N)`);
         return;
     }
 
@@ -42,7 +42,7 @@ export async function onShowSectionVoteLeaderboard(): Promise<void> {
     const originalPos = editor.selection.active;
     const pick = vscode.window.createQuickPick<VoteItem>();
     pick.items       = items;
-    pick.placeholder = `"${name}" — ${items.length} voted item${items.length === 1 ? '' : 's'}`;
+    pick.placeholder = `"${name}" - ${items.length} voted item${items.length === 1 ? '' : 's'}`;
     pick.onDidChangeActive(active => {
         if (!active[0]) { return; }
         const pos = new vscode.Position(active[0].lineIndex, 0);

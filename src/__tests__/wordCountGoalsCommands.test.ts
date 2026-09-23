@@ -25,7 +25,7 @@ const mock = vscode as unknown as {
     };
 };
 
-const NONE = 'CL: No word count goals found — add `==N` to a section header';
+const NONE = 'CL: No word count goals found - add `==N` to a section header';
 const cursorLine = (h: Harness) =>
     (h.editor as { selection: { active: { line: number } } }).selection.active.line;
 
@@ -122,13 +122,13 @@ describe('onShowWordCountGoals', () => {
 
     it('uses the singular placeholder for one goal', async () => {
         await row(section('Ch', 10, 1));
-        expect(mock.lastQuickPick().placeholder).toBe('1 word goal section — press Enter to jump');
+        expect(mock.lastQuickPick().placeholder).toBe('1 word goal section - press Enter to jump');
     });
 
     it('uses the plural placeholder for several', async () => {
         openEditor([...section('A', 10, 1), ...section('B', 10, 1)]);
         await onShowWordCountGoals();
-        expect(mock.lastQuickPick().placeholder).toBe('2 word goal sections — press Enter to jump');
+        expect(mock.lastQuickPick().placeholder).toBe('2 word goal sections - press Enter to jump');
     });
 
     it('previews the highlighted section', async () => {

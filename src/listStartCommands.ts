@@ -7,10 +7,10 @@ import { NumberingRuns } from './numberingRuns';
 /**
  * Command: two behaviours depending on cursor position:
  *
- * ON a numbered item — renumbers that item and the rest of its list to start
+ * ON a numbered item - renumbers that item and the rest of its list to start
  * from the entered number. Items above, and other lists, are untouched.
  *
- * NOT on a numbered item — inserts a new ">> N. " item at the cursor
+ * NOT on a numbered item - inserts a new ">> N. " item at the cursor
  * ready to type, with Enter continuing from N+1.
  */
 export async function onSetListStartNumber(): Promise<void> {
@@ -26,7 +26,7 @@ export async function onSetListStartNumber(): Promise<void> {
     const defaultN = existing ? existing.num : 1;
     const input = await vscode.window.showInputBox({
         prompt:      existing
-            ? `Renumber from here — current value is ${existing.num}. New start number:`
+            ? `Renumber from here - current value is ${existing.num}. New start number:`
             : 'Start numbered list at…',
         value:       String(defaultN),
         placeHolder: 'e.g. 69',

@@ -13,7 +13,7 @@ export async function onShowRecentSections(): Promise<void> {
     const history = getJumpHistory(doc.uri.toString());
 
     if (history.length === 0) {
-        vscode.window.showInformationMessage('CL: No navigation history yet — use Ctrl+Alt+Down/Up to build history');
+        vscode.window.showInformationMessage('CL: No navigation history yet - use Ctrl+Alt+Down/Up to build history');
         return;
     }
 

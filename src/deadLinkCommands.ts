@@ -36,7 +36,7 @@ export async function onFindDeadLinks(): Promise<void> {
             if (!sectionNames.has(target.toLowerCase())) {
                 dead.push({
                     label:       `$(link-broken) [[${target}]]`,
-                    description: `Line ${i + 1} — no section named "${target}" in this file`,
+                    description: `Line ${i + 1} - no section named "${target}" in this file`,
                     lineIndex:   i,
                 });
             }
@@ -48,7 +48,7 @@ export async function onFindDeadLinks(): Promise<void> {
             if (!fileNames.has(target)) {
                 dead.push({
                     label:       `$(link-broken) [[file:${match[1].trim()}]]`,
-                    description: `Line ${i + 1} — no file named "${match[1].trim()}" in workspace`,
+                    description: `Line ${i + 1} - no file named "${match[1].trim()}" in workspace`,
                     lineIndex:   i,
                 });
             }

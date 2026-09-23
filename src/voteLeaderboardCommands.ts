@@ -39,7 +39,7 @@ export async function onShowVoteLeaderboard(): Promise<void> {
     items.sort((a, b) => b.votes - a.votes);
     const pick        = vscode.window.createQuickPick<VoteItem>();
     pick.items        = items;
-    pick.placeholder  = `${items.length} voted item${items.length === 1 ? '' : 's'} — sorted by votes`;
+    pick.placeholder  = `${items.length} voted item${items.length === 1 ? '' : 's'} - sorted by votes`;
     const originalPos = editor.selection.active;
     pick.onDidChangeActive(active => {
         if (!active[0]) { return; }

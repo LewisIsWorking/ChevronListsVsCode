@@ -1,7 +1,7 @@
 /**
  * settingsPanelCommands.ts
  * Pure data: command groups for the Settings Panel commands tab.
- * buildCommandGroups() is a pure function — fully testable without VS Code.
+ * buildCommandGroups() is a pure function - fully testable without VS Code.
  */
 
 /** A named group of CL commands shown in the settings panel Commands tab */

@@ -1,6 +1,6 @@
 /**
  * patternsExtra.ts
- * Additional pure utilities — split from patternsExport.ts to stay under 200 lines.
+ * Additional pure utilities - split from patternsExport.ts to stay under 200 lines.
  * Re-exported by patterns.ts so callers use a single import.
  */
 import { extractTags } from './tagParser';

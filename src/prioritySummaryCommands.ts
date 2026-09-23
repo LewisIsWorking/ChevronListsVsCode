@@ -47,7 +47,7 @@ export async function onShowPrioritySummary(): Promise<void> {
     const originalPos = editor.selection.active;
     const pick        = vscode.window.createQuickPick<PriorityItem>();
     pick.items        = items;
-    pick.placeholder  = `${total} priority item${total === 1 ? '' : 's'} — press Enter to jump`;
+    pick.placeholder  = `${total} priority item${total === 1 ? '' : 's'} - press Enter to jump`;
     pick.onDidChangeActive(active => {
         if (!active[0] || active[0].lineIndex < 0) { return; }
         const pos = new vscode.Position(active[0].lineIndex, 0);

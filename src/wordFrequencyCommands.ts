@@ -26,7 +26,7 @@ export async function onCountWordFrequency(): Promise<void> {
 
     const freq = rankWordFrequency(words);
     if (freq.length === 0) {
-        vscode.window.showInformationMessage(`CL: "${name}" — no words found`);
+        vscode.window.showInformationMessage(`CL: "${name}" - no words found`);
         return;
     }
     const top  = freq.slice(0, 10).map(([w, n]) => `"${w}" ×${n}`).join('  ·  ');

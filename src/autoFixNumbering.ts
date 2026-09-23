@@ -3,14 +3,14 @@ import { getConfig } from './config';
 import { computeAutoFixEdits } from './patterns';
 
 /**
- * autoFixNumbering.ts — registers a debounced on-edit listener that
+ * autoFixNumbering.ts - registers a debounced on-edit listener that
  * renumbers broken numbered-list sequences. Pure logic lives in
  * computeAutoFixEdits (patternsUtils.ts).
  *
  * Two robustness measures (added v26.5.0):
- *   1. try/finally around applyEdit — if it throws, isApplyingFix is still
+ *   1. try/finally around applyEdit - if it throws, isApplyingFix is still
  *      reset so the listener stays alive instead of silently dying.
- *   2. 250ms debounce — collapses bursts of keystrokes into a single scan,
+ *   2. 250ms debounce - collapses bursts of keystrokes into a single scan,
  *      eliminating per-keystroke document allocation churn and GC pressure.
  */
 
@@ -69,7 +69,7 @@ async function runAutoFix(doc: vscode.TextDocument): Promise<void> {
         }
         await vscode.workspace.applyEdit(we);
     } catch (err) {
-        // Best-effort fix — log for diagnostics but never let an exception kill the listener
+        // Best-effort fix - log for diagnostics but never let an exception kill the listener
         console.warn('CL: autoFixNumbering applyEdit failed', err);
     } finally {
         isApplyingFix = false;

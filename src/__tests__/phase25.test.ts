@@ -19,7 +19,7 @@ describe('nextWeekday', () => {
         expect(formatDate(friday)).toBe('2026-03-20');
     });
     it('returns NEXT occurrence when today is already that day', () => {
-        // Friday March 20 2026 — next Friday should be March 27
+        // Friday March 20 2026 - next Friday should be March 27
         const friday = new Date(2026, 2, 20);
         const nextFri = nextWeekday(5, friday);
         expect(formatDate(nextFri)).toBe('2026-03-27');

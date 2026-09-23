@@ -50,7 +50,7 @@ export async function onShowOldItems(): Promise<void> {
     const pick = vscode.window.createQuickPick<AgePickItem>();
     pick.items = oldItems.map(i => ({
         label:       `$(history) ${i.content}`,
-        description: `${i.section} — ${i.ageDays} days old (${i.dateStr})`,
+        description: `${i.section} - ${i.ageDays} days old (${i.dateStr})`,
         lineIndex:   i.line,
     }));
     pick.placeholder = `${oldItems.length} item${oldItems.length === 1 ? '' : 's'} older than 30 days`;

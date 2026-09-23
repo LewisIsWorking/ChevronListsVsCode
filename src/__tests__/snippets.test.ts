@@ -5,7 +5,7 @@ import { join } from 'path';
 const snippetsPath = join(import.meta.dir, '../../snippets/chevron-lists.code-snippets');
 const snippets = JSON.parse(readFileSync(snippetsPath, 'utf-8'));
 
-// Mirror of SNIPPETS map in tabHandler.ts — must stay in sync
+// Mirror of SNIPPETS map in tabHandler.ts - must stay in sync
 const SNIPPETS: Record<string, string> = {
     'chl': '> ${1:Section Header}\n>> - ${2:First item}\n>> - ${3:Second item}\n>> - $0',
     'chn': '> ${1:Section Header}\n>> 1. ${2:First item}\n>> 2. ${3:Second item}\n>> 3. $0',
@@ -54,7 +54,7 @@ describe('chevron-lists snippets file', () => {
         expect(snippets).toHaveProperty('Chevron Numbered List');
     });
 
-    describe('chl — Chevron Bullet List', () => {
+    describe('chl - Chevron Bullet List', () => {
         const s = snippets['Chevron Bullet List'];
         it('has prefix chl', ()         => expect(s.prefix).toBe('chl'));
         it('is scoped to markdown', ()  => expect(s.scope).toBe('markdown'));
@@ -64,7 +64,7 @@ describe('chevron-lists snippets file', () => {
         it('has a description', ()      => expect(s.description.length).toBeGreaterThan(0));
     });
 
-    describe('chn — Chevron Numbered List', () => {
+    describe('chn - Chevron Numbered List', () => {
         const s = snippets['Chevron Numbered List'];
         it('has prefix chn', ()              => expect(s.prefix).toBe('chn'));
         it('is scoped to markdown', ()       => expect(s.scope).toBe('markdown'));
