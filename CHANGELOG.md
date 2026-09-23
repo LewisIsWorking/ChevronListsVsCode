@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+- **Move Item Up / Down now carries nested items and keeps to its own depth.** It used to swap single lines with the nearest item of any depth, so moving a parent down put it below its own child, and moving a child up put it above its parent. An item now moves with everything nested under it and swaps with the previous or next item at the same depth; a first or last child stays where it is. Matches the JetBrains plugin.
+
 ## [26.7.0] - 2026-09-21
 A large bug-fix release. Every fix below has a regression test that fails on the old code.
 

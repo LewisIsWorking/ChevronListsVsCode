@@ -1,63 +1,107 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { parseBullet, parseNumbered } from './patterns';
-import { getSectionRange, findHeaderAbove } from './documentUtils';
+import { isHeader, parseBullet, parseNumbered } from './patterns';
 
-/** Swaps two adjacent lines in the document */
-async function swapLines(editor: vscode.TextEditor, lineA: number, lineB: number): Promise<void> {
-    const doc  = editor.document;
-    const textA = doc.lineAt(lineA).text;
-    const textB = doc.lineAt(lineB).text;
-    await editor.edit(eb => {
-        eb.replace(doc.lineAt(lineA).range, textB);
-        eb.replace(doc.lineAt(lineB).range, textA);
-    });
-    const pos = new vscode.Position(lineB + (lineA < lineB ? 0 : 0), editor.selection.active.character);
-    editor.selection = new vscode.Selection(pos, pos);
+/** The document after a move, and the line the moved item now starts on */
+export interface MoveResult { lines: string[]; newIndex: number }
+
+/** The chevron depth of an item line, or null if the line is not an item */
+function depthOf(line: string, prefix: string): number | null {
+    const item = parseNumbered(line) ?? parseBullet(line, prefix);
+    return item ? item.chevrons.length : null;
 }
 
-/** Command: moves the item at the cursor one position up within the section */
-export async function onMoveItemUp(): Promise<void> {
+/** The last line of the block starting at `index`: the item plus anything nested under it */
+function blockEnd(lines: string[], index: number, depth: number, last: number, prefix: string): number {
+    let end = index;
+    for (let i = index + 1; i <= last; i++) {
+        const d = depthOf(lines[i], prefix);
+        if (d === null || d <= depth) { break; }
+        end = i;
+    }
+    return end;
+}
+
+/**
+ * Pure: moves the item at `index` one place up (or down) among its siblings,
+ * carrying anything nested under it. Null when there is nothing to do: the line
+ * is not an item, or it is already the first or last sibling in its section.
+ *
+ * It used to swap single lines with the adjacent item line of any depth, so
+ * moving a parent down put it below its own child. Items never cross a header,
+ * and numbered items keep their numbers for the numbering fixer. Mirrors
+ * computeMoveItem in the JetBrains plugin.
+ */
+export function moveItemBlock(lines: string[], index: number, up: boolean, prefix: string): MoveResult | null {
+    if (index < 0 || index >= lines.length) { return null; }
+    const depth = depthOf(lines[index], prefix);
+    if (depth === null) { return null; }
+
+    let first = 0;
+    for (let i = index; i >= 0; i--) { if (isHeader(lines[i])) { first = i + 1; break; } }
+    let last = lines.length - 1;
+    for (let i = index + 1; i < lines.length; i++) { if (isHeader(lines[i])) { last = i - 1; break; } }
+
+    const end   = blockEnd(lines, index, depth, last, prefix);
+    const block = lines.slice(index, end + 1);
+    const rest  = [...lines.slice(0, index), ...lines.slice(end + 1)];
+
+    if (up) {
+        let sibling = -1;
+        for (let i = index - 1; i >= first; i--) {
+            const d = depthOf(lines[i], prefix);
+            if (d === null) { continue; }
+            if (d < depth) { break; }
+            if (d === depth) { sibling = i; break; }
+        }
+        if (sibling < 0) { return null; }
+        rest.splice(sibling, 0, ...block);
+        return { lines: rest, newIndex: sibling };
+    }
+
+    let sibling = -1;
+    for (let i = end + 1; i <= last; i++) {
+        const d = depthOf(lines[i], prefix);
+        if (d === null) { continue; }
+        if (d < depth) { break; }
+        if (d === depth) { sibling = i; break; }
+    }
+    if (sibling < 0) { return null; }
+    const insertAt = blockEnd(lines, sibling, depth, last, prefix) - block.length + 1;
+    rest.splice(insertAt, 0, ...block);
+    return { lines: rest, newIndex: insertAt };
+}
+
+/** Applies a move: rewrites only the lines that changed, then follows the item with the cursor */
+async function moveItem(up: boolean): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== 'markdown') { return; }
     const { prefix } = getConfig();
     const doc        = editor.document;
     const lineIndex  = editor.selection.active.line;
-    const text       = doc.lineAt(lineIndex).text;
-    if (!parseBullet(text, prefix) && !parseNumbered(text)) {
+    if (depthOf(doc.lineAt(lineIndex).text, prefix) === null) {
         vscode.window.showInformationMessage('CL: Place cursor on a chevron item to move it'); return;
     }
-    const headerLine = findHeaderAbove(doc, lineIndex);
-    if (headerLine < 0 || lineIndex <= headerLine + 1) { return; }
-    // Find previous item line (skip non-item lines)
-    let prev = lineIndex - 1;
-    while (prev > headerLine && !parseBullet(doc.lineAt(prev).text, prefix) && !parseNumbered(doc.lineAt(prev).text)) { prev--; }
-    if (prev <= headerLine) { return; }
-    await swapLines(editor, prev, lineIndex);
-    const pos = new vscode.Position(prev, editor.selection.active.character);
+
+    const before: string[] = [];
+    for (let i = 0; i < doc.lineCount; i++) { before.push(doc.lineAt(i).text); }
+    const result = moveItemBlock(before, lineIndex, up, prefix);
+    if (!result) { return; }
+
+    let first = 0;
+    while (before[first] === result.lines[first]) { first++; }
+    let last = before.length - 1;
+    while (before[last] === result.lines[last]) { last--; }
+
+    const character = editor.selection.active.character;
+    const range = new vscode.Range(doc.lineAt(first).range.start, doc.lineAt(last).range.end);
+    await editor.edit(eb => eb.replace(range, result.lines.slice(first, last + 1).join('\n')));
+    const pos = new vscode.Position(result.newIndex, character);
     editor.selection = new vscode.Selection(pos, pos);
 }
 
-/** Command: moves the item at the cursor one position down within the section */
-export async function onMoveItemDown(): Promise<void> {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor || editor.document.languageId !== 'markdown') { return; }
-    const { prefix } = getConfig();
-    const doc        = editor.document;
-    const lineIndex  = editor.selection.active.line;
-    const text       = doc.lineAt(lineIndex).text;
-    if (!parseBullet(text, prefix) && !parseNumbered(text)) {
-        vscode.window.showInformationMessage('CL: Place cursor on a chevron item to move it'); return;
-    }
-    const headerLine = findHeaderAbove(doc, lineIndex);
-    if (headerLine < 0) { return; }
-    const [, end] = getSectionRange(doc, headerLine);
-    if (lineIndex >= end) { return; }
-    // Find next item line
-    let next = lineIndex + 1;
-    while (next <= end && !parseBullet(doc.lineAt(next).text, prefix) && !parseNumbered(doc.lineAt(next).text)) { next++; }
-    if (next > end) { return; }
-    await swapLines(editor, lineIndex, next);
-    const pos = new vscode.Position(next, editor.selection.active.character);
-    editor.selection = new vscode.Selection(pos, pos);
-}
+/** Command: moves the item at the cursor, with its nested items, above the previous item at its depth */
+export function onMoveItemUp(): Promise<void> { return moveItem(true); }
+
+/** Command: moves the item at the cursor, with its nested items, below the next item at its depth */
+export function onMoveItemDown(): Promise<void> { return moveItem(false); }
