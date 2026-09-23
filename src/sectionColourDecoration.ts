@@ -40,7 +40,7 @@ export function updateSectionColourDecorations(editor: vscode.TextEditor | undef
         rangesByColour.get(colour)!.push(doc.lineAt(i).range);
     }
 
-    // Apply decorations — clear colours that have no ranges
+    // Apply decorations - clear colours that have no ranges
     for (const colour of Object.keys(COLOUR_HEX)) {
         editor.setDecorations(getDecType(colour), rangesByColour.get(colour) ?? []);
     }

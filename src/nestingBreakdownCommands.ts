@@ -26,7 +26,7 @@ export async function onShowNestingBreakdown(): Promise<void> {
     }
 
     if (depthCounts.size === 0) {
-        vscode.window.showInformationMessage(`CL: "${name}" — no items found`);
+        vscode.window.showInformationMessage(`CL: "${name}" - no items found`);
         return;
     }
 

@@ -1,4 +1,4 @@
-# Chevron Lists — Contributing
+# Chevron Lists - Contributing
 
 ## Prerequisites
 
@@ -36,8 +36,8 @@ See [ARCHITECTURE.md](../ARCHITECTURE.md) for the full module boundary rules. Th
 **Pure functions must never live in `*Commands.ts` files.**
 
 If a function does not call `vscode.*`, it belongs in:
-- `src/patterns.ts` — re-exports from `patternsUtils.ts`, `patternsExport.ts`, `patternsExtra.ts`
-- A `*Parser.ts` file — domain-specific parsing
+- `src/patterns.ts` - re-exports from `patternsUtils.ts`, `patternsExport.ts`, `patternsExtra.ts`
+- A `*Parser.ts` file - domain-specific parsing
 
 This keeps all logic unit-testable without a VS Code extension host.
 
@@ -46,7 +46,7 @@ This keeps all logic unit-testable without a VS Code extension host.
 **Maximum 200 lines per source file.** This is enforced in CI. If a file exceeds 200 lines:
 1. Extract pure functions to `patternsExport.ts` or `patternsExtra.ts`
 2. Split command registration into a new `commandRegistrationsX.ts`
-3. **Never remove comments, whitespace, or code to hit the limit** — extract instead
+3. **Never remove comments, whitespace, or code to hit the limit** - extract instead
 
 ## Adding a New Feature
 
@@ -61,12 +61,12 @@ This keeps all logic unit-testable without a VS Code extension host.
 
 - All pure functions must have tests
 - Tests import from `../patterns`, never from `*Commands.ts` files
-- Run `bun test src/__tests__ --coverage` — target 100% line coverage
+- Run `bun test src/__tests__ --coverage` - target 100% line coverage
 
 ## Commit Convention
 
 ```
-v24.1.0 — Phase 52: Feature Name, Another Feature; N tests
+v24.1.0 - Phase 52: Feature Name, Another Feature; N tests
 ```
 
 ## Pull Requests

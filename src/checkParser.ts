@@ -36,7 +36,7 @@ export function toggleCheckLine(line: string, prefix: string): string | null {
         : `${numbered!.chevrons} ${numbered!.num}. `;
 
     if (!check) {
-        // No checkbox — add [ ]
+        // No checkbox - add [ ]
         return `${chevronPart}[ ] ${content}`;
     }
     // Normalise [] → [ ] on first toggle; then cycle [ ] ↔ [x]

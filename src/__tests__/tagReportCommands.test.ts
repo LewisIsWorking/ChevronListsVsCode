@@ -48,7 +48,7 @@ describe('onShowTagReportWorkspace', () => {
         });
         await onShowTagReportWorkspace();
         expect(reports).toEqual([
-            '# Tag Report — Workspace\n\n2 unique tags across 2 files\n\n' +
+            '# Tag Report - Workspace\n\n2 unique tags across 2 files\n\n' +
             '## #work (3 total)\n\n  - a.md: 2 items\n  - b.md: 1 item\n\n' +
             '## #home (1 total)\n\n  - a.md: 1 item',
         ]);

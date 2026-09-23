@@ -125,7 +125,7 @@ describe('item commands keep votes and comments in place', () => {
         mock.queued.inputBox.push('2026-12-31');
         await onSetDueDate();
         expect(h.lines()).toEqual(['>> 2. idea more @2026-12-31 +5 // why']);
-        expect(mock.recorded.inputBoxCalls[0].validateInput!('nonsense')).toBe('Unrecognised date — try: 2026-12-31, friday, +7, today');
+        expect(mock.recorded.inputBoxCalls[0].validateInput!('nonsense')).toBe('Unrecognised date - try: 2026-12-31, friday, +7, today');
         expect(mock.recorded.inputBoxCalls[0].validateInput!('today')).toBeNull();
     });
 

@@ -99,5 +99,5 @@ export async function onShowNestingSummary(): Promise<void> {
         .sort((a, b) => a[0] - b[0])
         .map(([d, n]) => `Depth ${d}: ${n} item${n === 1 ? '' : 's'}`);
 
-    vscode.window.showInformationMessage(`"${name}" — ${lines.join(', ')}`);
+    vscode.window.showInformationMessage(`"${name}" - ${lines.join(', ')}`);
 }

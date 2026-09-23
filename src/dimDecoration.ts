@@ -8,14 +8,14 @@ const DIM_DECORATION = vscode.window.createTextEditorDecorationType({
 
 let focusModeActive = false;
 
-/** Toggles focus mode — dims all sections except the one the cursor is in */
+/** Toggles focus mode - dims all sections except the one the cursor is in */
 export async function onToggleFocusMode(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== 'markdown') { return; }
     focusModeActive = !focusModeActive;
     if (focusModeActive) {
         updateFocusDecoration(editor);
-        vscode.window.showInformationMessage('CL: Focus mode on — other sections dimmed');
+        vscode.window.showInformationMessage('CL: Focus mode on - other sections dimmed');
     } else {
         editor.setDecorations(DIM_DECORATION, []);
         vscode.window.showInformationMessage('CL: Focus mode off');

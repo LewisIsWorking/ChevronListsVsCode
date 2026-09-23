@@ -1,4 +1,4 @@
-# Chevron Lists — Settings Reference
+# Chevron Lists - Settings Reference
 
 All settings are under the `chevron-lists.*` namespace.
 

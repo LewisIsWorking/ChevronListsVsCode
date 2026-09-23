@@ -10,7 +10,7 @@ const BUCKETS = 10;
 
 /**
  * One decoration type per intensity bucket, created ONCE at module load.
- * Reused across every editor and every refresh — no per-keystroke allocation.
+ * Reused across every editor and every refresh - no per-keystroke allocation.
  * Previously these were created inside the update function, leaking 11
  * `TextEditorDecorationType` objects per keystroke (10 buckets + 1 throwaway).
  */

@@ -15,7 +15,7 @@ export async function onShowProgressReport(): Promise<void> {
     const doc        = editor.document;
     const today      = new Date();
     const todayStr   = formatDate(today);
-    const lines: string[] = [`# Progress Report — ${doc.fileName.split(/[\\/]/).pop()}\n`];
+    const lines: string[] = [`# Progress Report - ${doc.fileName.split(/[\\/]/).pop()}\n`];
 
     for (let i = 0; i < doc.lineCount; i++) {
         const text = doc.lineAt(i).text;

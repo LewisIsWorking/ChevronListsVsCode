@@ -47,7 +47,7 @@ export async function onFilterByPriority(): Promise<void> {
 
     const pick = vscode.window.createQuickPick<ItemPickItem>();
     pick.items = filtered.map(item => ({
-        label:       `${PRIORITY_LABELS[item.level]} — ${item.content}`,
+        label:       `${PRIORITY_LABELS[item.level]} - ${item.content}`,
         description: item.section,
         lineIndex:   item.line,
     }));

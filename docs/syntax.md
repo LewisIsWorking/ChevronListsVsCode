@@ -1,4 +1,4 @@
-# Chevron Lists — Syntax Reference
+# Chevron Lists - Syntax Reference
 
 Full reference for all markers, section syntax, and nesting rules.
 

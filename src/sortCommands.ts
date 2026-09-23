@@ -110,7 +110,7 @@ export async function onConvertBulletsToNumbered(): Promise<void> {
 
 /**
  * Converts all >> N. numbered items in the section to bullet items.
- * Sentence order is fully preserved — only the prefix changes.
+ * Sentence order is fully preserved - only the prefix changes.
  */
 export async function onConvertNumberedToBullets(): Promise<void> {
     const editor = vscode.window.activeTextEditor;

@@ -1,7 +1,7 @@
 /**
  * editorRefresh.ts
  * Centralises all per-editor decoration and diagnostic update calls.
- * Called from extension.ts event handlers — one import, one call.
+ * Called from extension.ts event handlers - one import, one call.
  */
 import * as vscode from 'vscode';
 import { getConfig } from './config';

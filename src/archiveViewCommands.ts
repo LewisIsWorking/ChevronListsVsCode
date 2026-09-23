@@ -46,7 +46,7 @@ export async function onShowArchive(): Promise<void> {
 
     const pick        = vscode.window.createQuickPick<ArchiveItem>();
     pick.items        = items;
-    pick.placeholder  = `${items.length} archived item${items.length === 1 ? '' : 's'} — press Enter to jump`;
+    pick.placeholder  = `${items.length} archived item${items.length === 1 ? '' : 's'} - press Enter to jump`;
     const originalPos = editor.selection.active;
     pick.onDidChangeActive(active => {
         if (!active[0]) { return; }

@@ -34,21 +34,21 @@ describe('onFreezeSection', () => {
         const h = openEditor(['> S'], { cursor: 0 });
         await onFreezeSection();
         expect(h.lines()).toEqual(['> S', '>> [frozen]']);
-        expect(mock.recorded.info.at(-1)).toBe('CL: Section frozen — edits will show a warning');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Section frozen - edits will show a warning');
     });
 
     it('inserts the marker directly after the header when the section ends at EOF with no trailing newline', async () => {
         const h = openEditor(['> S', '>> - a'], { cursor: 1 });
         await onFreezeSection();
         expect(h.lines()).toEqual(['> S', '>> [frozen]', '>> - a']);
-        expect(mock.recorded.info.at(-1)).toBe('CL: Section frozen — edits will show a warning');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Section frozen - edits will show a warning');
     });
 
     it('freezes a mid-file section directly after its header', async () => {
         const h = openEditor(['> A', '>> - a', '> B', '>> - b'], { cursor: 1 });
         await onFreezeSection();
         expect(h.lines()).toEqual(['> A', '>> [frozen]', '>> - a', '> B', '>> - b']);
-        expect(mock.recorded.info.at(-1)).toBe('CL: Section frozen — edits will show a warning');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Section frozen - edits will show a warning');
     });
 
     it('finds the header when the cursor is several lines below it', async () => {
@@ -75,14 +75,14 @@ describe('onFreezeSection', () => {
         const h = openEditor(['> S', '>> [frozen] ', '>> - a'], { cursor: 2 });
         await onFreezeSection();
         expect(h.lines()).toEqual(['> S', '>> [frozen]', '>> [frozen] ', '>> - a']);
-        expect(mock.recorded.info.at(-1)).toBe('CL: Section frozen — edits will show a warning');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Section frozen - edits will show a warning');
     });
 
     it('freezes a section when a later section holds the marker', async () => {
         const h = openEditor(['> A', '>> - a', '> B', '>> [frozen]', '>> - b'], { cursor: 1 });
         await onFreezeSection();
         expect(h.lines()).toEqual(['> A', '>> [frozen]', '>> - a', '> B', '>> [frozen]', '>> - b']);
-        expect(mock.recorded.info.at(-1)).toBe('CL: Section frozen — edits will show a warning');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Section frozen - edits will show a warning');
     });
 });
 

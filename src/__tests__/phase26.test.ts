@@ -6,7 +6,7 @@ function makeDoc(lines: string[]): LineReader {
     return { lineCount: lines.length, lineAt: (i: number) => ({ text: lines[i] }) };
 }
 
-describe('computeFileStats — extended markers', () => {
+describe('computeFileStats - extended markers', () => {
     it('counts done items', () => {
         const doc   = makeDoc(['> H', '>> - [x] done', '>> - [ ] todo']);
         const stats = computeFileStats(doc, '-');

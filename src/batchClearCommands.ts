@@ -38,7 +38,7 @@ async function batchTransform(
         }
     });
     vscode.window.showInformationMessage(
-        changed > 0 ? `CL: ${label} — cleared from ${changed} item${changed === 1 ? '' : 's'}` : `CL: No ${label.toLowerCase()} found`
+        changed > 0 ? `CL: ${label} - cleared from ${changed} item${changed === 1 ? '' : 's'}` : `CL: No ${label.toLowerCase()} found`
     );
 }
 

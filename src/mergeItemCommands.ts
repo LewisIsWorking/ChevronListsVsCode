@@ -38,7 +38,7 @@ export async function onMergeItemWithNext(): Promise<void> {
     const contentA    = bullet?.content   ?? numbered!.content;
     const contentB    = nextBullet?.content ?? nextNumbered!.content;
     const num         = numbered?.num ?? null;
-    const mergedContent = `${contentA.trim()} — ${contentB.trim()}`;
+    const mergedContent = `${contentA.trim()} - ${contentB.trim()}`;
     const newLine       = num !== null
         ? `${chevrons} ${num}. ${mergedContent}`
         : `${chevrons} ${prefix} ${mergedContent}`;

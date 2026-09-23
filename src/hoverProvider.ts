@@ -52,7 +52,7 @@ export class ChevronHoverProvider implements vscode.HoverProvider {
                     return new vscode.Hover(md, new vscode.Range(position.line, start, position.line, end));
                 }
             }
-            const md = new vscode.MarkdownString(`**[[${match[1]}]]** — ⚠ Section not found`);
+            const md = new vscode.MarkdownString(`**[[${match[1]}]]** - ⚠ Section not found`);
             return new vscode.Hover(md);
         }
 

@@ -1,7 +1,7 @@
 /**
  * settingsPanelHtml.ts
  * Pure functions that build the HTML for the Chevron Lists settings webview panel.
- * No VS Code imports — fully testable.
+ * No VS Code imports - fully testable.
  */
 import type { ChevronConfig }  from './types';
 import type { CommandGroup }   from './settingsPanelCommands';
@@ -55,7 +55,7 @@ export function buildSettingsPanelHtml(cfg: ChevronConfig, groups: CommandGroup[
         '</section><section><h2>AI Assist</h2>',
         txt('anthropicApiKey', 'Anthropic API Key', 'Required for CL: Suggest Items, Summarise Section, Expand Item, and Rewrite Item. Get one at https://console.anthropic.com', cfg.anthropicApiKey, 'password'),
         '</section><section><h2>Templates</h2>',
-        '<div class="row"><strong>User Templates</strong><p class="desc">Templates are structured objects — best edited directly in settings.json.</p>' +
+        '<div class="row"><strong>User Templates</strong><p class="desc">Templates are structured objects - best edited directly in settings.json.</p>' +
         '<button class="cmd-btn" onclick="post({type:\'openSettings\'})">Edit in settings.json ↗</button></div></section>',
     ].join('');
 
@@ -65,7 +65,7 @@ export function buildSettingsPanelHtml(cfg: ChevronConfig, groups: CommandGroup[
 
     return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Chevron Lists</title><style>${css}</style></head><body>
 <div class="header"><h1>⚡ Chevron Lists</h1>
-<div class="welcome">✨ <strong>Welcome!</strong> A powerful markdown list manager with 300+ commands. All settings update instantly — no restart needed. Use the <strong>Commands</strong> tab to run any CL command by clicking, or keep using the command palette — both work.</div>
+<div class="welcome">✨ <strong>Welcome!</strong> A powerful markdown list manager with 300+ commands. All settings update instantly - no restart needed. Use the <strong>Commands</strong> tab to run any CL command by clicking, or keep using the command palette - both work.</div>
 <div class="tabs"><button class="tab active" onclick="switchTab('settings',this)">⚙️ Settings</button><button class="tab" onclick="switchTab('commands',this)">📋 Commands</button></div></div>
 <div id="tab-settings" class="content">${settings}</div>
 <div id="tab-commands" class="content">${buildCommandGroupsHtml(groups)}</div>

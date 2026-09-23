@@ -31,25 +31,25 @@ describe('onHideSection', () => {
         const h = openEditor(['> S', '>> - a', '> T', '>> - b'], { cursor: 0 });
         await onHideSection();
         expect(h.lines()).toEqual(['> S', '>> [hidden]', '>> - a', '> T', '>> - b']);
-        expect(mock.recorded.info.at(-1)).toBe('CL: Section hidden — use CL: Show Hidden Sections to reveal');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Section hidden - use CL: Show Hidden Sections to reveal');
     });
     it('finds the header above the cursor', async () => {
         const h = openEditor(['> S', '>> - a', '>> - b'], { cursor: 2 });
         await onHideSection();
         expect(h.lines()).toEqual(['> S', '>> [hidden]', '>> - a', '>> - b']);
-        expect(mock.recorded.info.at(-1)).toBe('CL: Section hidden — use CL: Show Hidden Sections to reveal');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Section hidden - use CL: Show Hidden Sections to reveal');
     });
     it('hides a header on the last line of a file with no trailing newline', async () => {
         const h = openEditor(['> S', '>> - a', '> Last'], { cursor: 2 });
         await onHideSection();
         expect(h.lines()).toEqual(['> S', '>> - a', '> Last', '>> [hidden]']);
-        expect(mock.recorded.info.at(-1)).toBe('CL: Section hidden — use CL: Show Hidden Sections to reveal');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Section hidden - use CL: Show Hidden Sections to reveal');
     });
     it('hides a lone header that is the whole file', async () => {
         const h = openEditor(['> Solo'], { cursor: 0 });
         await onHideSection();
         expect(h.lines()).toEqual(['> Solo', '>> [hidden]']);
-        expect(mock.recorded.info.at(-1)).toBe('CL: Section hidden — use CL: Show Hidden Sections to reveal');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Section hidden - use CL: Show Hidden Sections to reveal');
     });
 });
 describe('onShowHiddenSections', () => {

@@ -23,7 +23,7 @@ table{border-collapse:collapse;width:100%;font-size:.82rem}
 th{text-align:left;padding:.3rem .6rem;opacity:.5;font-weight:normal;border-bottom:1px solid var(--vscode-widget-border,#333)}
 td{padding:.3rem .6rem;border-bottom:1px solid var(--vscode-widget-border,#222);vertical-align:top}
 </style></head><body>
-<h1>🕰 Item Age Report — ${escHtml(fileName)} (oldest ${Math.min(items.length,50)} of ${items.length})</h1>
+<h1>🕰 Item Age Report - ${escHtml(fileName)} (oldest ${Math.min(items.length,50)} of ${items.length})</h1>
 ${items.length === 0
     ? '<p style="opacity:.5">No items with @created: dates found</p>'
     : `<table><thead><tr><th>Age</th><th>Section</th><th>Content</th></tr></thead><tbody>${rows}</tbody></table>`}

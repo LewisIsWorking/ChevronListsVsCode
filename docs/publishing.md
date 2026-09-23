@@ -34,7 +34,7 @@ tag, but without the secret it only builds and attaches the `.vsix`.
 1. Sign in to <https://dev.azure.com> with the same Microsoft account that owns the
    **lewisisworking** publisher.
 2. **User settings → Personal access tokens → New Token.**
-   - **Organization:** *All accessible organizations* (required — a token scoped to a
+   - **Organization:** *All accessible organizations* (required - a token scoped to a
      single org is rejected by the Marketplace).
    - **Scopes:** *Custom defined* → **Marketplace → Manage**.
    - **Expiration:** the maximum offered.
@@ -45,7 +45,7 @@ tag, but without the secret it only builds and attaches the `.vsix`.
    ```
 
    `gh` prompts for the value and sends it straight to GitHub. **Do not paste the
-   token into a shell command, a file, or a chat window** — anywhere it lands it can
+   token into a shell command, a file, or a chat window** - anywhere it lands it can
    be read later. If it is ever exposed, revoke it in Azure DevOps and issue a new one.
 
 Verify it registered (this prints only the name and date, never the value):
@@ -56,7 +56,7 @@ gh secret list --repo LewisIsWorking/ChevronListsVsCode
 
 ### Releasing
 
-Test the pipeline first — **Actions → Publish → Run workflow**, leaving
+Test the pipeline first - **Actions → Publish → Run workflow**, leaving
 *"Package only, do not publish"* ticked. That runs everything and attaches the
 `.vsix` as an artifact without touching the Marketplace.
 
@@ -75,7 +75,7 @@ The workflow refuses to publish if the tag and `package.json` version disagree.
 
 Microsoft **retires global Azure DevOps Personal Access Tokens on 1 December 2026.**
 After that date `VSCE_PAT` stops working and the automated workflow needs migrating
-to Microsoft Entra ID — an Azure user-assigned managed identity with workload
+to Microsoft Entra ID - an Azure user-assigned managed identity with workload
 identity federation, authorised as a publisher contributor, published via
 `vsce publish --azure-credential`. See
 <https://code.visualstudio.com/api/working-with-extensions/publishing-extension>.

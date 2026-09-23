@@ -41,7 +41,7 @@ export async function onShowDuplicateItems(): Promise<void> {
     const items: DupItem[] = duplicates.flatMap(([plain, occs]) =>
         occs.map((occ, i) => ({
             label:       i === 0 ? `$(warning) ${plain}` : `  ↪ duplicate`,
-            description: `${occ.section} — line ${occ.line + 1}`,
+            description: `${occ.section} - line ${occ.line + 1}`,
             lineIndex:   occ.line,
         }))
     );

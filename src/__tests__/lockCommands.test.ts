@@ -45,25 +45,25 @@ describe('onLockSection', () => {
         const h = openEditor(['> S', '>> - a', '> T'], { cursor: 1 });
         await onLockSection();
         expect(h.lines()).toEqual(['> S', '>> [locked]', '>> - a', '> T']);
-        expect(mock.recorded.info.at(-1)).toBe('CL: Section locked — bulk operations will skip this section');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Section locked - bulk operations will skip this section');
     });
     it('locks the header at the end of a file with no trailing newline onto its own line', async () => {
         const h = openEditor(['> S'], { cursor: 0 });
         await onLockSection();
         expect(h.lines()).toEqual(['> S', '>> [locked]']);
-        expect(mock.recorded.info.at(-1)).toBe('CL: Section locked — bulk operations will skip this section');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Section locked - bulk operations will skip this section');
     });
     it('locks the last section of a multi-section file with no trailing newline', async () => {
         const h = openEditor(['> A', '>> - a', '> B'], { cursor: 2 });
         await onLockSection();
         expect(h.lines()).toEqual(['> A', '>> - a', '> B', '>> [locked]']);
-        expect(mock.recorded.info.at(-1)).toBe('CL: Section locked — bulk operations will skip this section');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Section locked - bulk operations will skip this section');
     });
     it('locks when the cursor is on the header line itself', async () => {
         const h = openEditor(['> S', '>> - a'], { cursor: 0 });
         await onLockSection();
         expect(h.lines()).toEqual(['> S', '>> [locked]', '>> - a']);
-        expect(mock.recorded.info.at(-1)).toBe('CL: Section locked — bulk operations will skip this section');
+        expect(mock.recorded.info.at(-1)).toBe('CL: Section locked - bulk operations will skip this section');
     });
 });
 describe('onUnlockSection', () => {

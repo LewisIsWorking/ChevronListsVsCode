@@ -17,7 +17,7 @@ export async function onTodayView(): Promise<void> {
     const items: TodayItem[] = [];
 
     await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: 'CL: Today View — scanning…', cancellable: false },
+        { location: vscode.ProgressLocation.Notification, title: 'CL: Today View - scanning…', cancellable: false },
         async () => {
             for (const uri of files) {
                 const doc     = await vscode.workspace.openTextDocument(uri);
@@ -49,7 +49,7 @@ export async function onTodayView(): Promise<void> {
     );
 
     if (items.length === 0) {
-        vscode.window.showInformationMessage('CL: Today View — nothing due today 🎉');
+        vscode.window.showInformationMessage('CL: Today View - nothing due today 🎉');
         return;
     }
 

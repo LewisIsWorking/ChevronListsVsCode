@@ -1,6 +1,6 @@
 /**
  * patternsUtils.ts
- * Pure utility functions that extend patterns.ts — split out to keep patterns.ts under 200 lines.
+ * Pure utility functions that extend patterns.ts - split out to keep patterns.ts under 200 lines.
  * All functions here are re-exported by patterns.ts so callers use a single import.
  */
 import { parseBullet, parseNumbered } from './patterns';
@@ -94,7 +94,7 @@ export function checkLinesHealth(
         if (plain.length === 0) {
             issues.push({ line: index, message: 'Item has no content after stripping metadata', kind: 'empty-content' });
         } else if (plain.length > 200) {
-            issues.push({ line: index, message: `Item is very long (${plain.length} chars) — consider splitting`, kind: 'too-long' });
+            issues.push({ line: index, message: `Item is very long (${plain.length} chars) - consider splitting`, kind: 'too-long' });
         }
         if (plain.length > 0) {
             const firstSeen = seen.get(plain.toLowerCase());

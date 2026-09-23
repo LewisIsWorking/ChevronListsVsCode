@@ -24,10 +24,10 @@ export async function onShowSectionTimeEstimate(): Promise<void> {
     }
 
     if (count === 0) {
-        vscode.window.showInformationMessage(`CL: "${name}" — no ~estimate markers found`);
+        vscode.window.showInformationMessage(`CL: "${name}" - no ~estimate markers found`);
         return;
     }
     vscode.window.showInformationMessage(
-        `CL: "${name}" — ${count} estimate${count === 1 ? '' : 's'} totalling ${formatTotalMinutes(total)}`
+        `CL: "${name}" - ${count} estimate${count === 1 ? '' : 's'} totalling ${formatTotalMinutes(total)}`
     );
 }

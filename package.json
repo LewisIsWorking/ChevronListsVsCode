@@ -125,7 +125,7 @@
                         "Ice blue headers, cool grey prefixes, white numbers",
                         "Bright green headers, dark prefixes, cyan numbers",
                         "Warm tan headers, brown prefixes, gold numbers",
-                        "Clear all preset colours — manage manually via settings"
+                        "Clear all preset colours - manage manually via settings"
                     ],
                     "description": "Built-in colour preset for chevron syntax highlighting."
                 },
@@ -1312,7 +1312,7 @@
             {
                 "id": "chevron-lists.gettingStarted",
                 "title": "Get Started with Chevron Lists",
-                "description": "Learn the core concepts in 5 steps — lists, markers, navigation, decorations, and views.",
+                "description": "Learn the core concepts in 5 steps - lists, markers, navigation, decorations, and views.",
                 "steps": [
                     {
                         "id": "step1",
@@ -1344,7 +1344,7 @@
                     {
                         "id": "step4",
                         "title": "Live Decorations",
-                        "description": "Progress bars, sparklines, due-soon warnings, and priority highlights update as you type — no commands needed.\n\n[Toggle Section Summary](command:chevron-lists.toggleSummaryDecoration)",
+                        "description": "Progress bars, sparklines, due-soon warnings, and priority highlights update as you type - no commands needed.\n\n[Toggle Section Summary](command:chevron-lists.toggleSummaryDecoration)",
                         "media": {
                             "markdown": "walkthroughs/step4-decorations.md"
                         }

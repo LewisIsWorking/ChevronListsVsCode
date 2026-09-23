@@ -33,7 +33,7 @@ export class ChevronTagCompletionProvider implements vscode.CompletionItemProvid
             .sort((a, b) => b[1] - a[1])
             .map(([tag, count]) => {
                 const item = new vscode.CompletionItem(tag, vscode.CompletionItemKind.Value);
-                item.detail      = `#${tag} — used ${count}×`;
+                item.detail      = `#${tag} - used ${count}×`;
                 item.sortText    = String(1000 - count).padStart(4, '0');
                 item.insertText  = tag;
                 return item;

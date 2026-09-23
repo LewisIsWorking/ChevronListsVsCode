@@ -30,7 +30,7 @@ export async function onHideSection(): Promise<void> {
     const pos = new vscode.Position(headerLine, 0);
     editor.selection = new vscode.Selection(pos, pos);
     await vscode.commands.executeCommand('editor.fold');
-    vscode.window.showInformationMessage('CL: Section hidden — use CL: Show Hidden Sections to reveal');
+    vscode.window.showInformationMessage('CL: Section hidden - use CL: Show Hidden Sections to reveal');
 }
 
 /** Command: removes all hidden markers and unfolds sections */

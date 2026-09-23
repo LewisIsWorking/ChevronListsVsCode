@@ -33,7 +33,7 @@ function getSectionPickItems(
 }
 
 /**
- * Command: Quick Capture — prompts for text and appends it as a new item
+ * Command: Quick Capture - prompts for text and appends it as a new item
  * to a selected section (pinned sections appear first).
  */
 export async function onQuickCapture(context: vscode.ExtensionContext): Promise<void> {

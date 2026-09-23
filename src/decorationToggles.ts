@@ -17,7 +17,7 @@ const state: DecorationState = {
     summary:      true,
     checklist:    true,
     wordGoal:     true,
-    badge:        false,  // off by default — section summary already shows item count
+    badge:        false,  // off by default - section summary already shows item count
     ageHighlight: true,
 };
 
@@ -53,5 +53,5 @@ export function onToggleAllDecorations(): void {
     vscode.window.showInformationMessage(`CL: All decorations ${!anyOn ? 'enabled' : 'disabled'}`);
 }
 
-/** Returns the current decoration state — used by update functions to skip disabled ones */
+/** Returns the current decoration state - used by update functions to skip disabled ones */
 export function getDecorationState(): Readonly<DecorationState> { return state; }

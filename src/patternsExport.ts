@@ -1,6 +1,6 @@
 /**
  * patternsExport.ts
- * Pure export/conversion utilities — split from patternsUtils.ts.
+ * Pure export/conversion utilities - split from patternsUtils.ts.
  * Re-exported by patterns.ts. Functions added in phases 42-43 live in patternsExtra.ts.
  */
 import { parseBullet, parseNumbered, isHeader } from './patterns';

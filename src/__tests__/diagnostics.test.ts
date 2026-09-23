@@ -6,7 +6,7 @@ function makeDoc(lines: string[]): LineReader {
     return { lineCount: lines.length, lineAt: (i: number) => ({ text: lines[i] }) };
 }
 
-describe('collectIssues — empty sections', () => {
+describe('collectIssues - empty sections', () => {
     it('flags a header with no items', () => {
         const doc    = makeDoc(['> EmptyHeader']);
         const issues = collectIssues(doc, '-');
@@ -29,7 +29,7 @@ describe('collectIssues — empty sections', () => {
     });
 });
 
-describe('collectIssues — duplicate headers', () => {
+describe('collectIssues - duplicate headers', () => {
     it('flags a duplicate section name', () => {
         const doc    = makeDoc(['> Alpha', '>> - item', '> Alpha', '>> - item']);
         const issues = collectIssues(doc, '-');
@@ -50,9 +50,9 @@ describe('collectIssues — duplicate headers', () => {
     });
 });
 
-describe('collectIssues — bad numbering', () => {
+describe('collectIssues - bad numbering', () => {
     it('flags the item BEFORE the break (not the item that breaks)', () => {
-        // 69 is followed by 2 — flag 69, not 2
+        // 69 is followed by 2 - flag 69, not 2
         const doc    = makeDoc(['> Header', '>> 69. first', '>> 2. second']);
         const issues = collectIssues(doc, '-');
         expect(issues.some(i => i.kind === 'bad-numbering')).toBe(true);
@@ -98,7 +98,7 @@ describe('collectIssues — bad numbering', () => {
     });
 });
 
-describe('collectIssues — duplicate subheadings', () => {
+describe('collectIssues - duplicate subheadings', () => {
     it('flags a duplicate ## subheading', () => {
         const doc    = makeDoc(['## Session 277.', '> Header', '>> - item', '## Session 277.']);
         const issues = collectIssues(doc, '-');

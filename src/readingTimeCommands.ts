@@ -29,12 +29,12 @@ export async function onShowReadingTime(): Promise<void> {
         const [, end] = getSectionRange(doc, headerLine);
         const words   = countWords(getContents(headerLine + 1, end));
         vscode.window.showInformationMessage(
-            `CL: "${name}" — ${words} word${words === 1 ? '' : 's'}, ~${formatReadingTime(words)} to read`
+            `CL: "${name}" - ${words} word${words === 1 ? '' : 's'}, ~${formatReadingTime(words)} to read`
         );
     } else {
         const words = countWords(getContents(0, doc.lineCount - 1));
         vscode.window.showInformationMessage(
-            `CL: Whole file — ${words} word${words === 1 ? '' : 's'}, ~${formatReadingTime(words)} to read`
+            `CL: Whole file - ${words} word${words === 1 ? '' : 's'}, ~${formatReadingTime(words)} to read`
         );
     }
 }

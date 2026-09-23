@@ -7,7 +7,7 @@ let overdueBar: vscode.StatusBarItem | undefined;
 /** Creates and returns the overdue status bar item (called from extension.ts activation) */
 export function createOverdueStatusBar(): vscode.StatusBarItem {
     overdueBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, -98);
-    overdueBar.tooltip = 'CL: Overdue items — click to open Today View';
+    overdueBar.tooltip = 'CL: Overdue items - click to open Today View';
     overdueBar.command = 'chevron-lists.todayView';
     return overdueBar;
 }

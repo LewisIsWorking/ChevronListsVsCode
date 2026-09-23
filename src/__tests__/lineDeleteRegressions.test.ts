@@ -48,7 +48,7 @@ describe('deleting the last line leaves no empty line behind', () => {
     it('merge item with next', async () => {
         const h = openEditor(['>> - a', '>> - b'], { cursor: 0 });
         await onMergeItemWithNext();
-        expect(h.lines()).toEqual(['>> - a — b']);
+        expect(h.lines()).toEqual(['>> - a - b']);
     });
 
     it('remove old items', async () => {

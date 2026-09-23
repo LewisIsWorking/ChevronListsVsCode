@@ -26,11 +26,11 @@ export async function onShowTimeEstimates(): Promise<void> {
     const total = totalEstimatedMinutes(items);
     const pick  = vscode.window.createQuickPick<EstimatePickItem>();
     pick.items = items.map(i => ({
-        label:       `$(clock) ~${i.estimate.display} — ${i.content}`,
+        label:       `$(clock) ~${i.estimate.display} - ${i.content}`,
         description: i.section,
         lineIndex:   i.line,
     }));
-    pick.placeholder = `${items.length} estimated item${items.length === 1 ? '' : 's'} — total: ${formatTotal(total)}`;
+    pick.placeholder = `${items.length} estimated item${items.length === 1 ? '' : 's'} - total: ${formatTotal(total)}`;
 
     const originalPos = editor.selection.active;
     pick.onDidChangeActive(active => {

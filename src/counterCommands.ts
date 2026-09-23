@@ -43,7 +43,7 @@ export async function onShowSectionSummary(): Promise<void> {
     const checkLine = done > 0 ? `  Done: ${done}/${items}` : '';
 
     vscode.window.showInformationMessage(
-        `"${name}" — ${items} item${items === 1 ? '' : 's'}, ${words} word${words === 1 ? '' : 's'}${checkLine}${tagLine}`
+        `"${name}" - ${items} item${items === 1 ? '' : 's'}, ${words} word${words === 1 ? '' : 's'}${checkLine}${tagLine}`
     );
 }
 

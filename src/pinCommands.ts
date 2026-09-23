@@ -43,7 +43,7 @@ export async function onFilterPinnedSections(
     const pins  = getPinnedSections(context);
 
     if (pins.size === 0) {
-        vscode.window.showInformationMessage('CL: No pinned sections — use CL: Toggle Pin to pin a section');
+        vscode.window.showInformationMessage('CL: No pinned sections - use CL: Toggle Pin to pin a section');
         return;
     }
 

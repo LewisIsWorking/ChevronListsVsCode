@@ -27,7 +27,7 @@ export async function onShowAgeStats(): Promise<void> {
     }
 
     if (ages.length === 0) {
-        vscode.window.showInformationMessage(`CL: "${name}" — no @created: stamps found. Use CL: Stamp Item to add them.`);
+        vscode.window.showInformationMessage(`CL: "${name}" - no @created: stamps found. Use CL: Stamp Item to add them.`);
         return;
     }
 
@@ -38,9 +38,9 @@ export async function onShowAgeStats(): Promise<void> {
     const stamped = ages.length;
 
     const msg = [
-        `"${name}" — ${stamped} stamped item${stamped === 1 ? '' : 's'}`,
-        `Oldest: ${oldest.dateStr} (${oldest.age}d) — ${oldest.content.slice(0, 40)}`,
-        `Newest: ${newest.dateStr} (${newest.age}d) — ${newest.content.slice(0, 40)}`,
+        `"${name}" - ${stamped} stamped item${stamped === 1 ? '' : 's'}`,
+        `Oldest: ${oldest.dateStr} (${oldest.age}d) - ${oldest.content.slice(0, 40)}`,
+        `Newest: ${newest.dateStr} (${newest.age}d) - ${newest.content.slice(0, 40)}`,
         `Average age: ${avgAge} day${avgAge === 1 ? '' : 's'}`,
     ].join('\n');
 

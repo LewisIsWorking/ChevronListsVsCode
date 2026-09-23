@@ -71,7 +71,7 @@ export async function onMoveSectionUp(): Promise<void> {
     const prevHeader = findHeaderAbove(doc, headerLine - 1);
     if (prevHeader < 0) { return; }
 
-    // Tight ranges — only header + chevron items, no separators
+    // Tight ranges - only header + chevron items, no separators
     const [curStart, curEnd]   = getTightSectionRange(doc, headerLine, prefix);
     const [prevStart, prevEnd] = getTightSectionRange(doc, prevHeader, prefix);
 
@@ -106,7 +106,7 @@ export async function onMoveSectionDown(): Promise<void> {
     const nextHeader = findHeaderBelow(doc, headerLine);
     if (nextHeader < 0) { return; }
 
-    // Tight ranges — only header + chevron items, no separators
+    // Tight ranges - only header + chevron items, no separators
     const [curStart, curEnd]   = getTightSectionRange(doc, headerLine, prefix);
     const [nextStart, nextEnd] = getTightSectionRange(doc, nextHeader, prefix);
 

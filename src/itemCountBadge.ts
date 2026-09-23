@@ -10,7 +10,7 @@ const BADGE_DECORATION = vscode.window.createTextEditorDecorationType({
     },
 });
 
-let badgesEnabled = false; // off by default — section summary already shows item count
+let badgesEnabled = false; // off by default - section summary already shows item count
 
 /** Updates the item count badge decorations on all section headers */
 export function updateBadgeDecorations(editor: vscode.TextEditor | undefined): void {

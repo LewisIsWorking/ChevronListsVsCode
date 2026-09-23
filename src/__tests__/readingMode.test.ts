@@ -116,7 +116,7 @@ describe('onEnterReadingMode', () => {
         onEnterReadingMode();
         expect(mock.recorded.info).toHaveLength(0);
         expect(panels).toHaveLength(1);
-        expect(lastPanel().title).toBe('notes — Reading Mode');
+        expect(lastPanel().title).toBe('notes - Reading Mode');
         expect(lastPanel().webview.html).toContain('<!DOCTYPE html>');
         expect(lastPanel().webview.html).toContain('Shopping');
         expect(lastPanel().webview.html).toContain('apples');
@@ -127,7 +127,7 @@ describe('onEnterReadingMode', () => {
         openEditor(['> S', '>> - last'], { fileName: 'C:/tmp/a.md' });
         onEnterReadingMode();
         expect(lastPanel().webview.html).toContain('last');
-        expect(lastPanel().title).toBe('a — Reading Mode');
+        expect(lastPanel().title).toBe('a - Reading Mode');
     });
 
     it('honours a custom listPrefix', () => {
@@ -141,7 +141,7 @@ describe('onEnterReadingMode', () => {
         const h1 = openEditor(['> First', '>> - one'], { fileName: 'C:/tmp/first.md' });
         onEnterReadingMode();
         const panel = lastPanel();
-        expect(panel.title).toBe('first — Reading Mode');
+        expect(panel.title).toBe('first - Reading Mode');
         expect(panel.webview.html).toContain('First');
         expect(subs).toHaveLength(1);
         expect(subs[0].disposed).toBe(false);
@@ -151,7 +151,7 @@ describe('onEnterReadingMode', () => {
         expect(panels).toHaveLength(1);
         expect(lastPanel()).toBe(panel);
         expect(panel.revealCount).toBe(1);
-        expect(panel.title).toBe('second — Reading Mode');
+        expect(panel.title).toBe('second - Reading Mode');
         expect(panel.webview.html).toContain('Second');
         expect(panel.webview.html).toContain('two');
         expect(panel.webview.html).not.toContain('First');
@@ -209,7 +209,7 @@ describe('onEnterReadingMode', () => {
         const h2 = openEditor(['> Fresh', '>> - new'], { fileName: 'C:/tmp/fresh.md' });
         onEnterReadingMode();
         expect(panels).toHaveLength(2);
-        expect(lastPanel().title).toBe('fresh — Reading Mode');
+        expect(lastPanel().title).toBe('fresh - Reading Mode');
         expect(lastPanel().webview.html).toContain('Fresh');
         expect(h2.lines()).toEqual(['> Fresh', '>> - new']);
     });

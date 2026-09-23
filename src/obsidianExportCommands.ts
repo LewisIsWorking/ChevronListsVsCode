@@ -12,5 +12,5 @@ export async function onExportToObsidian(): Promise<void> {
     const result = convertToObsidian(lines, prefix);
     const mdDoc  = await vscode.workspace.openTextDocument({ content: result, language: 'markdown' });
     await vscode.window.showTextDocument(mdDoc, vscode.ViewColumn.Beside);
-    vscode.window.showInformationMessage('CL: Obsidian export ready — save the file to use in Obsidian');
+    vscode.window.showInformationMessage('CL: Obsidian export ready - save the file to use in Obsidian');
 }

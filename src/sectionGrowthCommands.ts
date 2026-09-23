@@ -23,7 +23,7 @@ h1{font-size:.9rem;opacity:.6;margin-bottom:1rem}
 .bar{background:#A855F7;border-radius:3px;height:10px;min-width:2px}
 .count{width:30px;text-align:right;opacity:.5;font-size:.75rem}
 </style></head><body>
-<h1>📊 Section Growth — ${escHtml(fileName)}</h1>
+<h1>📊 Section Growth - ${escHtml(fileName)}</h1>
 ${sections.length === 0 ? '<p style="opacity:.5">No sections found</p>' : rows}
 </body></html>`;
 }

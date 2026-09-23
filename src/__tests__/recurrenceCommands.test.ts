@@ -64,8 +64,8 @@ describe('onShowRecurring', () => {
         openEditor(DOC);
         await onShowRecurring();
         expect(mock.lastQuickPick().items.map((i) => i.label)).toEqual([
-            '$(sync) @daily — Water plants',
-            '$(sync) @weekly — Review',
+            '$(sync) @daily - Water plants',
+            '$(sync) @weekly - Review',
         ]);
     });
 

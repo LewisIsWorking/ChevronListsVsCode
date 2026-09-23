@@ -38,7 +38,7 @@ export function registerLockEnforcement(context: vscode.ExtensionContext): void 
                 const headerText  = doc.lineAt(i).text;
                 const sectionName = headerText.replace(/^> /, '').trim();
                 vscode.window.showWarningMessage(
-                    `CL: "${sectionName}" is locked — use CL: Unlock Section to edit it`,
+                    `CL: "${sectionName}" is locked - use CL: Unlock Section to edit it`,
                     'Unlock Section'
                 ).then(choice => {
                     if (choice !== 'Unlock Section') { return; }

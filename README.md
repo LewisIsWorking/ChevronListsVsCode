@@ -2,7 +2,7 @@
 
 **The markdown list manager you didn't know VS Code was missing.**
 
-Chevron Lists turns VS Code into a fully-featured task, notes, and project management system — without leaving markdown. It uses a clean, readable `>> -` blockquote syntax and layers on 250+ commands, live decorations, autocomplete, and AI assistance — all zero-config out of the box.
+Chevron Lists turns VS Code into a fully-featured task, notes, and project management system - without leaving markdown. It uses a clean, readable `>> -` blockquote syntax and layers on 250+ commands, live decorations, autocomplete, and AI assistance - all zero-config out of the box.
 
 > **749 unit tests · 100% line coverage · 250 commands · 66 test files**
 
@@ -34,7 +34,7 @@ Plain markdown is great for writing. It's not great for *managing work*. Chevron
 >>> - Nested sub-task                  ← deep nesting
 ```
 
-Everything is plain markdown — readable anywhere, Git-diff friendly, no lock-in.
+Everything is plain markdown - readable anywhere, Git-diff friendly, no lock-in.
 
 
 ---
@@ -44,7 +44,7 @@ Everything is plain markdown — readable anywhere, Git-diff friendly, no lock-i
 1. Install the extension
 2. Open any `.md` file
 3. Type `> ` and a section name, press **Enter**
-4. Start typing items — **Enter** continues the list, **Tab** nests deeper
+4. Start typing items - **Enter** continues the list, **Tab** nests deeper
 
 Type `CL:` in the Command Palette (`Ctrl+Shift+P`) to explore 250+ commands.
 
@@ -52,7 +52,7 @@ Type `CL:` in the Command Palette (`Ctrl+Shift+P`) to explore 250+ commands.
 
 ## Item Markers
 
-Add any of these directly in item content — they're parsed live:
+Add any of these directly in item content - they're parsed live:
 
 | Marker | Example | What it does |
 |--------|---------|-------------|
@@ -102,7 +102,7 @@ Add any of these directly in item content — they're parsed live:
 
 ## Live Decorations
 
-These update as you type — no commands needed:
+These update as you type - no commands needed:
 
 | Decoration | What it shows |
 |------------|---------------|
@@ -115,7 +115,7 @@ These update as you type — no commands needed:
 | **Sticky Header** | Section name shown at top of viewport when scrolled |
 | **Item Age Highlight** | 30+ day old items rendered muted and italic |
 | **Section Colour** | `[colour:X]` header tags render in that colour |
-| **Overdue Status Bar** | `⚠ N overdue` — click to open Today View |
+| **Overdue Status Bar** | `⚠ N overdue` - click to open Today View |
 | **Word Goal Nudge** | `📝 N words to go` when below section goal |
 
 ---
@@ -219,12 +219,12 @@ Requires `chevron-lists.anthropicApiKey`.
 
 Chevron Lists works great for:
 
-- **Writers** — chapter outlines, scene cards, revision notes with word goals
-- **Developers** — feature tracking, bug lists, sprint notes, dependency mapping
-- **Project managers** — kanban-style section boards, task assignment via `@mentions`
-- **Students** — lecture notes with tags, revision checklists, due date tracking
-- **Personal productivity** — daily notes, GTD capture, habit tracking
-- **Game designers** — combo trees, card lists, balance tracking with votes
+- **Writers** - chapter outlines, scene cards, revision notes with word goals
+- **Developers** - feature tracking, bug lists, sprint notes, dependency mapping
+- **Project managers** - kanban-style section boards, task assignment via `@mentions`
+- **Students** - lecture notes with tags, revision checklists, due date tracking
+- **Personal productivity** - daily notes, GTD capture, habit tracking
+- **Game designers** - combo trees, card lists, balance tracking with votes
 
 ---
 
@@ -239,7 +239,7 @@ bunx @vscode/vsce package              # package VSIX
 
 **749 unit tests · 100% line coverage · 66 test files · all source modules under 200 lines**
 
-Architecture: SOLID principles throughout. Pure functions live in `patterns.ts` / `*Parser.ts` — never in `*Commands.ts`. Event-driven, single-responsibility modules. See `ARCHITECTURE.md`.
+Architecture: SOLID principles throughout. Pure functions live in `patterns.ts` / `*Parser.ts` - never in `*Commands.ts`. Event-driven, single-responsibility modules. See `ARCHITECTURE.md`.
 
 ---
 
@@ -256,4 +256,4 @@ Architecture: SOLID principles throughout. Pure functions live in `patterns.ts` 
 
 ## License
 
-CC BY-NC-ND 4.0 — © Lewis Creelman. Free for personal use.
+CC BY-NC-ND 4.0 - © Lewis Creelman. Free for personal use.

@@ -63,7 +63,7 @@ export async function onRewriteItem(): Promise<void> {
                     : `${chevrons} ${prefix} ${newContent}`;
                 await editor.edit(eb => eb.replace(doc.lineAt(lineIndex).range, newLine));
             } catch (e) {
-                vscode.window.showErrorMessage(`CL: AI request failed — ${e}`);
+                vscode.window.showErrorMessage(`CL: AI request failed - ${e}`);
             }
         }
     );

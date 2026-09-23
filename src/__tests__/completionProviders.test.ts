@@ -50,7 +50,7 @@ describe('ChevronTagCompletionProvider', () => {
 
     it('reports the usage count in the detail', () => {
         const items = complete(p, ['>> - a #x', '>> - b #x', '>> - #']);
-        expect(items[0].detail).toBe('#x — used 2×');
+        expect(items[0].detail).toBe('#x - used 2×');
     });
 
     it('inserts the bare tag, since the # is already typed', () => {
