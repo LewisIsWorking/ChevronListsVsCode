@@ -6,51 +6,81 @@ import { NumberingRuns } from './numberingRuns';
 
 type EditBuilder = vscode.TextEditorEdit;
 
-interface ItemLine { lineIndex: number; text: string; sortKey: string; }
+interface SortItem { head: string; depth: number; key: string; num: number | null }
 
-function collectBulletItems(doc: vscode.TextDocument, start: number, end: number, prefix: string): ItemLine[] {
-    const items: ItemLine[] = [];
-    for (let i = start + 1; i <= end; i++) {
-        const text   = doc.lineAt(i).text;
-        const bullet = parseBullet(text, prefix);
-        if (bullet) { items.push({ lineIndex: i, text, sortKey: bullet.content.toLowerCase() }); }
-    }
-    return items;
+function sortItemOf(line: string, prefix: string): SortItem | null {
+    const n = parseNumbered(line);
+    if (n) { return { head: line, depth: n.chevrons.length, key: n.content.toLowerCase(), num: n.num }; }
+    const b = parseBullet(line, prefix);
+    return b ? { head: line, depth: b.chevrons.length, key: b.content.toLowerCase(), num: null } : null;
 }
 
-async function replaceItems(editor: vscode.TextEditor, original: ItemLine[], sorted: ItemLine[]): Promise<void> {
-    await editor.edit((eb: EditBuilder) => {
-        for (let i = 0; i < original.length; i++) {
-            eb.replace(editor.document.lineAt(original[i].lineIndex).range, sorted[i].text);
+/**
+ * Pure: the lines of a section body with its items sorted. Siblings are sorted,
+ * not lines: each item keeps everything nested under it, and nested items are
+ * sorted among themselves. Lines that are not items stay put and split the
+ * lists around them. Numbers stay with their positions, so 1, 2, 3 still reads
+ * 1, 2, 3.
+ *
+ * The sort used to reorder every bullet line in the section regardless of depth,
+ * so nested items ended up under the wrong parent. Mirrors computeSortSection in
+ * the JetBrains plugin.
+ */
+export function sortItems(lines: string[], descending: boolean, prefix: string): string[] {
+    const out: string[] = [];
+    let i = 0;
+    while (i < lines.length) {
+        const first = sortItemOf(lines[i], prefix);
+        if (!first) { out.push(lines[i]); i++; continue; }
+
+        const blocks: { item: SortItem; children: string[] }[] = [];
+        while (i < lines.length) {
+            const item = sortItemOf(lines[i], prefix);
+            if (!item || item.depth !== first.depth) { break; }
+            let end = i + 1;
+            while (end < lines.length && (sortItemOf(lines[end], prefix)?.depth ?? 0) > first.depth) { end++; }
+            blocks.push({ item, children: sortItems(lines.slice(i + 1, end), descending, prefix) });
+            i = end;
         }
+
+        // Array.prototype.sort is stable, so equal items keep their order
+        const sorted  = [...blocks].sort((a, b) => (descending ? -1 : 1) * a.item.key.localeCompare(b.item.key));
+        const numbers = blocks.flatMap(b => b.item.num === null ? [] : [b.item.num]).sort((a, b) => a - b);
+        for (const { item, children } of sorted) {
+            if (item.num === null) { out.push(item.head); }
+            else {
+                const n = parseNumbered(item.head)!;
+                out.push(`${n.chevrons} ${numbers.shift()}. ${n.content}`);
+            }
+            out.push(...children);
+        }
+    }
+    return out;
+}
+
+async function sortSection(descending: boolean): Promise<void> {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) { return; }
+    const { prefix } = getConfig();
+    const doc        = editor.document;
+    const headerLine = findHeaderAbove(doc, editor.selection.active.line);
+    if (headerLine < 0) { return; }
+    const [, end]    = getSectionRange(doc, headerLine);
+    const before     = Array.from({ length: end - headerLine }, (_, k) => doc.lineAt(headerLine + 1 + k).text);
+    const after      = sortItems(before, descending, prefix);
+    if (after.every((text, k) => text === before[k])) { return; }
+    await editor.edit((eb: EditBuilder) => {
+        after.forEach((text, k) => {
+            if (text !== before[k]) { eb.replace(doc.lineAt(headerLine + 1 + k).range, text); }
+        });
     });
 }
 
-/** Sorts all bullet items in the current section A → Z */
-export async function onSortItemsAZ(): Promise<void> {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) { return; }
-    const { prefix } = getConfig();
-    const headerLine = findHeaderAbove(editor.document, editor.selection.active.line);
-    if (headerLine < 0) { return; }
-    const [, end]    = getSectionRange(editor.document, headerLine);
-    const items      = collectBulletItems(editor.document, headerLine, end, prefix);
-    if (items.length < 2) { return; }
-    await replaceItems(editor, items, [...items].sort((a, b) => a.sortKey.localeCompare(b.sortKey)));
-}
+/** Sorts the items in the current section A to Z, keeping nested items with their parent */
+export function onSortItemsAZ(): Promise<void> { return sortSection(false); }
 
-/** Sorts all bullet items in the current section Z → A */
-export async function onSortItemsZA(): Promise<void> {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) { return; }
-    const { prefix } = getConfig();
-    const headerLine = findHeaderAbove(editor.document, editor.selection.active.line);
-    if (headerLine < 0) { return; }
-    const [, end]    = getSectionRange(editor.document, headerLine);
-    const items      = collectBulletItems(editor.document, headerLine, end, prefix);
-    if (items.length < 2) { return; }
-    await replaceItems(editor, items, [...items].sort((a, b) => b.sortKey.localeCompare(a.sortKey)));
-}
+/** Sorts the items in the current section Z to A, keeping nested items with their parent */
+export function onSortItemsZA(): Promise<void> { return sortSection(true); }
 
 /** Resets numbering on all numbered items per chevron depth */
 export async function onRenumberItems(): Promise<void> {
