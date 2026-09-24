@@ -17,6 +17,7 @@ import {
     onConvertBulletsToNumbered,
     onConvertNumberedToBullets,
     renumber,
+    sortItems,
 } from '../sortCommands';
 
 const mock = vscode as unknown as {
@@ -69,16 +70,64 @@ describe('onSortItemsAZ', () => {
         expect(h.lines()).toEqual(['> One', '>> - a', '>> - b', '> Two', '>> - z', '>> - y']);
     });
 
-    it('skips non-bullet lines inside the section when collecting', async () => {
+    it('keeps a prose line in place and sorts the lists either side of it separately', async () => {
         const h = openEditor(
             ['> Tasks', '>> - cherry', 'a prose line', '>> 2. numbered', '>> - apple'],
             { cursor: 1 }
         );
         await onSortItemsAZ();
-        // Only the two bullets move; the prose and numbered lines stay put.
+        // A prose line belongs to the items around it, so bullets no longer jump
+        // across it. The numbered item sorts with its siblings and keeps the number
+        // of its position.
         expect(h.lines()).toEqual(
-            ['> Tasks', '>> - apple', 'a prose line', '>> 2. numbered', '>> - cherry']
+            ['> Tasks', '>> - cherry', 'a prose line', '>> - apple', '>> 2. numbered']
         );
+    });
+
+    // The sort used to reorder every bullet line regardless of depth, so these
+    // children ended up under the wrong parent: a, b, >>> x, >>> y.
+    it('keeps nested items with their parent', async () => {
+        const h = openEditor(['> H', '>> - b', '>>> - x', '>> - a', '>>> - y'], { cursor: 1 });
+        await onSortItemsAZ();
+        expect(h.lines()).toEqual(['> H', '>> - a', '>>> - y', '>> - b', '>>> - x']);
+    });
+
+    it('sorts nested items among themselves', async () => {
+        const h = openEditor(['> H', '>> - p', '>>> - z', '>>> - x', '>> - a'], { cursor: 1 });
+        await onSortItemsAZ();
+        expect(h.lines()).toEqual(['> H', '>> - a', '>> - p', '>>> - x', '>>> - z']);
+    });
+
+    it('keeps numbers with their positions', async () => {
+        const h = openEditor(['> H', '>> 1. cherry', '>> 2. apple', '>> 3. banana'], { cursor: 1 });
+        await onSortItemsAZ();
+        expect(h.lines()).toEqual(['> H', '>> 1. apple', '>> 2. banana', '>> 3. cherry']);
+    });
+});
+
+describe('sortItems', () => {
+    it('sorts Z to A with children attached', () => {
+        expect(sortItems(['>> - a', '>>> - q', '>> - c', '>> - b'], true, '-'))
+            .toEqual(['>> - c', '>> - b', '>> - a', '>>> - q']);
+    });
+
+    it('keeps equal items in their order', () => {
+        expect(sortItems(['>> - Same', '>> - same', '>> - a'], false, '-'))
+            .toEqual(['>> - a', '>> - Same', '>> - same']);
+    });
+
+    it('keeps a later list start', () => {
+        expect(sortItems(['>> 5. b', '>> 6. a'], false, '-')).toEqual(['>> 5. a', '>> 6. b']);
+    });
+
+    // Items need a space after the chevrons here (NUMBERED_ITEM_RE, bulletRE), so
+    // tab-separated lines are text and stay where they are
+    it('leaves tab-separated lines alone, as they are not items', () => {
+        expect(sortItems(['>>\t- b', '>>\t- a'], false, '-')).toEqual(['>>\t- b', '>>\t- a']);
+    });
+
+    it('leaves bullets with another prefix alone', () => {
+        expect(sortItems(['>> * b', '>> * a'], false, '-')).toEqual(['>> * b', '>> * a']);
     });
 });
 
