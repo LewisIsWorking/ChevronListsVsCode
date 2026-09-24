@@ -120,8 +120,10 @@ describe('sortItems', () => {
         expect(sortItems(['>> 5. b', '>> 6. a'], false, '-')).toEqual(['>> 5. a', '>> 6. b']);
     });
 
-    it('treats a tab after the chevrons as an item without crashing', () => {
-        expect(sortItems(['>>\t- b', '>>\t- a'], false, '-')).toEqual(['>>\t- a', '>>\t- b']);
+    // Items need a space after the chevrons here (NUMBERED_ITEM_RE, bulletRE), so
+    // tab-separated lines are text and stay where they are
+    it('leaves tab-separated lines alone, as they are not items', () => {
+        expect(sortItems(['>>\t- b', '>>\t- a'], false, '-')).toEqual(['>>\t- b', '>>\t- a']);
     });
 
     it('leaves bullets with another prefix alone', () => {
