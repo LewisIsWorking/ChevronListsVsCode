@@ -2,7 +2,7 @@
     "name": "chevron-lists",
     "displayName": "Chevron Lists",
     "description": "A powerful markdown list manager with 300+ commands: smart keyboard shortcuts, live decorations, tag filtering, kanban, daily notes, AI assist, and more.",
-    "version": "26.7.0",
+    "version": "26.8.0",
     "icon": "icon.png",
     "galleryBanner": {
         "color": "#12122A",
