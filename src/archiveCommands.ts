@@ -37,16 +37,26 @@ export async function onArchiveDoneItems(): Promise<void> {
     if (headerLine < 0) { vscode.window.showInformationMessage('CL: No section found at cursor'); return; }
 
     const [, end] = getSectionRange(doc, headerLine);
+    // A done item moves as a block: the item plus everything nested under it.
+    // Moving only the done line left its children behind, reading as children
+    // of whichever item sat above them.
     const doneLines: Array<{ lineIndex: number; text: string }> = [];
+    let archivedItems = 0;
+    const depthOf = (text: string): number | null =>
+        (parseBullet(text, prefix) ?? parseNumbered(text))?.chevrons.length ?? null;
 
     for (let i = headerLine + 1; i <= end; i++) {
-        const text    = doc.lineAt(i).text;
-        const bullet  = parseBullet(text, prefix);
+        const text     = doc.lineAt(i).text;
+        const bullet   = parseBullet(text, prefix);
         const numbered = parseNumbered(text);
         const content  = bullet?.content ?? numbered?.content ?? null;
-        if (!content) { continue; }
-        const check = parseCheck(content);
-        if (check?.state === 'done') { doneLines.push({ lineIndex: i, text }); }
+        if (!content || parseCheck(content)?.state !== 'done') { continue; }
+        const depth = (bullet ?? numbered)!.chevrons.length;
+        let last = i;
+        while (last + 1 <= end && (depthOf(doc.lineAt(last + 1).text) ?? 0) > depth) { last++; }
+        for (let k = i; k <= last; k++) { doneLines.push({ lineIndex: k, text: doc.lineAt(k).text }); }
+        archivedItems++;
+        i = last;
     }
 
     if (doneLines.length === 0) {
@@ -71,7 +81,7 @@ export async function onArchiveDoneItems(): Promise<void> {
         eb.insert(ins.position, ins.text);
     });
 
-    vscode.window.showInformationMessage(`CL: Archived ${doneLines.length} done item${doneLines.length === 1 ? '' : 's'}`);
+    vscode.window.showInformationMessage(`CL: Archived ${archivedItems} done item${archivedItems === 1 ? '' : 's'}`);
 }
 
 /** Command: moves the entire current section to the Archive area */
