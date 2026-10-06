@@ -1,11 +1,12 @@
 # Changelog
 
-## [26.8.0] - 2026-09-25
-Two structural fixes: moving and sorting items no longer separate nested items from their parent. Each fix has a regression test that fails on the old code.
+## [26.8.0] - 2026-10-06
+Three structural fixes: moving, sorting and archiving items no longer separate nested items from their parent. Each fix has a regression test that fails on the old code.
 
 ### Fixed
 - **Move Item Up / Down now carries nested items and keeps to its own depth.** It used to swap single lines with the nearest item of any depth, so moving a parent down put it below its own child, and moving a child up put it above its parent. An item now moves with everything nested under it and swaps with the previous or next item at the same depth; a first or last child stays where it is. Matches the JetBrains plugin.
 - **Sort Items A to Z / Z to A keeps nested items with their parent.** It reordered every bullet line in the section regardless of depth, so nested items ended up under the wrong parent. Siblings are now sorted with everything nested under them, and nested items are sorted among themselves. Numbered items sort too, keeping the numbers of their positions. A prose line between items stays put and the lists either side sort separately, instead of bullets jumping across it. Matches the JetBrains plugin.
+- **Archive Done Items keeps nested items with their parent.** It moved only the done line, so the item's children stayed behind and read as children of whichever item sat above them. A done item now moves to the archive with everything nested under it, and the message counts items, not lines. Matches the JetBrains plugin.
 
 ## [26.7.0] - 2026-09-21
 A large bug-fix release. Every fix below has a regression test that fails on the old code.
