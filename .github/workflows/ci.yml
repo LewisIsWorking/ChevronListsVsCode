@@ -33,3 +33,14 @@ jobs:
 
       - name: Compile TypeScript
         run: bun run compile
+
+      # The extension runs from the committed dist/extension.js, so a change to
+      # src/ that is not rebuilt never reaches users (26.8.0 nearly shipped
+      # without the Archive nesting fix this way). Rebuild and compare.
+      - name: Bundle is up to date
+        run: |
+          bun run bundle:prod
+          git diff --exit-code --stat -- dist/extension.js || {
+            echo "::error::dist/extension.js is stale: run 'bun run bundle:prod' and commit it"
+            exit 1
+          }
