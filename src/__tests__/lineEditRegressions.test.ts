@@ -14,6 +14,8 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import * as vscode from 'vscode';
+import * as path from 'path';
+import { formatDate } from '../patterns';
 import { openEditor, makeEditor, deactivate } from './helpers/editorHarness';
 import { onCloneItem, onCloneItemToSection } from '../cloneCommands';
 import { onCloneItemAsDone, onCloneItemStripped } from '../cloneTransformCommands';
@@ -333,6 +335,35 @@ describe('send to daily note', () => {
         await onSendToDailyNote();
         expect(at(applied[0][0].position)).toEqual([2, 7]);
         expect(applied[0][0].text).toBe('\n>> - idea');
+    });
+
+    // Send joined the folder onto the workspace root even when it was absolute,
+    // which Open Daily Note accepts: the note went to "<root>/<absolute path>"
+    const sentTo = async (folderSetting: string): Promise<string[]> => {
+        openEditor(['>> - idea'], { cursor: 0 });
+        mock.__setConfig('chevron-lists.dailyNotesFolder', folderSetting);
+        mock.workspace.workspaceFolders = [{ uri: vscode.Uri.file(path.resolve('/ws')) }];
+        const opened: string[] = [];
+        mock.workspace.openTextDocument = (u: unknown) => {
+            opened.push(slash((u as vscode.Uri).fsPath));
+            return Promise.resolve(makeEditor(['> Inbox']).document);
+        };
+        mock.workspace.applyEdit = () => Promise.resolve(true);
+        await onSendToDailyNote();
+        return opened;
+    };
+    const slash = (p: string) => p.replace(/\\/g, '/');
+    const todayFile = `${formatDate(new Date())}.md`;
+
+    it('uses an absolute daily notes folder as it is, as Open Daily Note does', async () => {
+        const abs = path.resolve('/elsewhere/daily');
+        expect(await sentTo(abs)).toEqual([slash(path.join(abs, todayFile))]);
+    });
+
+    // Send refused to run with the folder blank, where Open Daily Note uses the workspace root
+    it('uses the workspace root when the daily notes folder is blank', async () => {
+        expect(await sentTo('')).toEqual([slash(path.join(path.resolve('/ws'), todayFile))]);
+        expect(mock.recorded.info.some(m => m.includes('dailyNotesFolder'))).toBe(false);
     });
 });
 
