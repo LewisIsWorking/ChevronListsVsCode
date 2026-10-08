@@ -365,6 +365,17 @@ describe('send to daily note', () => {
         expect(await sentTo('')).toEqual([slash(path.join(path.resolve('/ws'), todayFile))]);
         expect(mock.recorded.info.some(m => m.includes('dailyNotesFolder'))).toBe(false);
     });
+
+    it('with no workspace folder and no folder setting, says where to set one', async () => {
+        openEditor(['>> - idea'], { cursor: 0 });
+        mock.__setConfig('chevron-lists.dailyNotesFolder', '');
+        mock.workspace.workspaceFolders = undefined;
+        let opened = 0;
+        mock.workspace.openTextDocument = () => { opened++; return Promise.resolve(undefined); };
+        await onSendToDailyNote();
+        expect(opened).toBe(0);
+        expect(mock.recorded.info.some(m => m.includes('dailyNotesFolder'))).toBe(true);
+    });
 });
 
 describe('AI commands', () => {
