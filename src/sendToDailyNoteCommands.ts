@@ -3,16 +3,13 @@ import * as path from 'path';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, formatDate } from './patterns';
 import { lineAfter } from './lineEdits';
+import { dailyNotesBase } from './dailyNoteCommands';
 
 /** Command: copies the cursor item to today's daily note under > Inbox */
 export async function onSendToDailyNote(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== 'markdown') { return; }
     const { prefix, dailyNotesFolder } = getConfig();
-    if (!dailyNotesFolder) {
-        vscode.window.showInformationMessage('CL: Set chevron-lists.dailyNotesFolder in settings first');
-        return;
-    }
 
     const lineIndex = editor.selection.active.line;
     const text      = editor.document.lineAt(lineIndex).text;
@@ -23,10 +20,10 @@ export async function onSendToDailyNote(): Promise<void> {
 
     const today    = formatDate(new Date());
     const fileName = `${today}.md`;
-    const folders  = vscode.workspace.workspaceFolders;
-    if (!folders?.length) { vscode.window.showInformationMessage('CL: No workspace folder open'); return; }
+    const base     = dailyNotesBase(dailyNotesFolder);
+    if (!base) { vscode.window.showInformationMessage('CL: Open a workspace folder first, or set chevron-lists.dailyNotesFolder'); return; }
 
-    const notePath  = path.join(folders[0].uri.fsPath, dailyNotesFolder, fileName);
+    const notePath  = path.join(base, fileName);
     const noteUri   = vscode.Uri.file(notePath);
     const itemLine  = `>> ${prefix} ${content}`;
     const INBOX_HDR = '> Inbox';

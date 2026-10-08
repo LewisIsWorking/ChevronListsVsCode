@@ -15,6 +15,20 @@ export function fillDateTemplate(template: string, today: Date): string {
         .replace(/\{\{day\}\}/g,     day);
 }
 
+/**
+ * The folder daily notes live in: the setting when absolute, else the setting
+ * under the first workspace folder; that folder itself when the setting is blank.
+ * Shared by Open and Send so both put today's note in the same place.
+ */
+export function dailyNotesBase(dailyNotesFolder: string): string | undefined {
+    const roots = vscode.workspace.workspaceFolders;
+    return dailyNotesFolder
+        ? (path.isAbsolute(dailyNotesFolder)
+            ? dailyNotesFolder
+            : roots ? path.join(roots[0].uri.fsPath, dailyNotesFolder) : dailyNotesFolder)
+        : (roots ? roots[0].uri.fsPath : undefined);
+}
+
 /** Command: opens or creates a daily note for today */
 export async function onOpenDailyNote(): Promise<void> {
     const { dailyNotesFolder, dailyNoteTemplate, prefix } = getConfig();
@@ -22,12 +36,7 @@ export async function onOpenDailyNote(): Promise<void> {
     const todayStr = formatDate(today);
     const fileName = `${todayStr}.md`;
 
-    const roots = vscode.workspace.workspaceFolders;
-    const base  = dailyNotesFolder
-        ? (path.isAbsolute(dailyNotesFolder)
-            ? dailyNotesFolder
-            : roots ? path.join(roots[0].uri.fsPath, dailyNotesFolder) : dailyNotesFolder)
-        : (roots ? roots[0].uri.fsPath : undefined);
+    const base = dailyNotesBase(dailyNotesFolder);
 
     if (!base) {
         vscode.window.showInformationMessage('CL: Open a workspace folder first, or set chevron-lists.dailyNotesFolder');

@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+### Fixed
+- **Send to Daily Note finds the same note as Open Daily Note.** With an absolute *dailyNotesFolder* it joined the path onto the workspace folder and wrote to the wrong place, and with the setting blank it refused to run. It now uses the folder exactly as Open Daily Note does: absolute as given, relative under the workspace folder, the workspace folder itself when blank.
+
 ## [26.8.0] - 2026-10-06
 Three structural fixes: moving, sorting and archiving items no longer separate nested items from their parent. Each fix has a regression test that fails on the old code.
 
