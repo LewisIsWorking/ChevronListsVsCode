@@ -1,11 +1,12 @@
 import type { LineReader } from './types';
 import { isHeader, parseBullet, parseNumbered } from './patterns';
 import { NumberingRuns } from './numberingRuns';
+import { collectSetDuplicates } from './sets';
 
 export interface DiagnosticIssue {
     line:    number;
     message: string;
-    kind:    'duplicate-header' | 'duplicate-subheading' | 'empty-section' | 'bad-numbering';
+    kind:    'duplicate-header' | 'duplicate-subheading' | 'empty-section' | 'bad-numbering' | 'set-duplicate';
 }
 
 /** Finds all diagnostic issues in a document */
@@ -82,6 +83,9 @@ export function collectIssues(doc: LineReader, prefix: string): DiagnosticIssue[
     if (lastHeaderLine >= 0 && !lastHeaderHasItems) {
         issues.push({ line: lastHeaderLine, message: `Empty section - no items under this header`, kind: 'empty-section' });
     }
+
+    const lines = Array.from({ length: doc.lineCount }, (_, i) => doc.lineAt(i).text);
+    issues.push(...collectSetDuplicates(lines, prefix));
 
     return issues;
 }

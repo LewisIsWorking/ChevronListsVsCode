@@ -1,6 +1,10 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- **Sets.** Tag a markdown heading `#set` (`# Beer Bikes #set`) and the `> Sections` under it, up to the next heading of the same level, become lists of one group, such as Paid, Hasn't paid and Not going. A name in two of them is warned about on both lines; case, a checkbox and end punctuation are ignored when matching. The heading shows the totals after it, such as "23 Paid, 3 Hasn't paid, 3 Not going, 28 in all", counting each member once in all. Ported from the JetBrains plugin.
+- **Move Item to Section takes nested items, list type and numbering with it.** The item moves with anything nested under it, takes the numbering or bullets of its new section, and both sections are renumbered. Inside a set it offers only the set's other lists.
+
 ### Fixed
 - **Send to Daily Note finds the same note as Open Daily Note.** With an absolute *dailyNotesFolder* it joined the path onto the workspace folder and wrote to the wrong place, and with the setting blank it refused to run. It now uses the folder exactly as Open Daily Note does: absolute as given, relative under the workspace folder, the workspace folder itself when blank.
 

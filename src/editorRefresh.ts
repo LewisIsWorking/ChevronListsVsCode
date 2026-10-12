@@ -12,6 +12,7 @@ import { updateBadgeDecorations } from './itemCountBadge';
 import { updateGoalDecorations } from './goalProgressDecoration';
 import { updateAgeDecorations } from './ageHighlightDecoration';
 import { updateSummaryDecorations } from './sectionSummaryDecoration';
+import { updateSetTotalsDecorations } from './setTotalsDecoration';
 import { updateChecklistProgressDecorations } from './checklistProgressDecoration';
 import { updateDiagnostics } from './diagnosticProvider';
 import { updateDueDateDiagnostics } from './dueDateCommands';
@@ -60,5 +61,6 @@ export function refreshEditor(
     updateGoalDecorations(editor);
     updateAgeDecorations(editor);
     updateSummaryDecorations(editor);
+    updateSetTotalsDecorations(editor);
     updateChecklistProgressDecorations(editor);
 }

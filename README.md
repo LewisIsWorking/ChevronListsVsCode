@@ -81,6 +81,7 @@ Add any of these directly in item content - they're parsed live:
 | `>> [locked]` | `>> [locked]` | Lock section (save warns) |
 | `>> [frozen]` | `>> [frozen]` | Freeze section |
 | `>>depends:Name` | `>>depends:Phase One` | Dependency marker |
+| `# Name #set` | `# Beer Bikes #set` | Set: the sections under the heading are lists of one group; a name in two of them is warned about, the totals show after the heading, and *Move Item to Section* offers only the set's other lists |
 
 
 ---
@@ -147,6 +148,7 @@ The Problems panel flags issues with quick-fix actions (`Ctrl+.`):
 | Overdue items | Reschedule to today · Remove date · Mark done |
 | Below word goal | Update goal · Remove goal |
 | Expired items | Extend by 7 days · Remove expiry |
+| Item in two lists of a `#set` | (*CL: Move Item to Section*) |
 
 
 ---

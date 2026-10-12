@@ -97,3 +97,17 @@ export function nextInRun(doc: LineReader, lineIndex: number, chevrons: string):
     }
     return -1;
 }
+
+/** Pure: numbers every list from 1, each list counted separately */
+export function renumberLines(lines: string[]): string[] {
+    const counters = new Map<number, number>();
+    const runs     = new NumberingRuns();
+    return lines.map(text => {
+        const run = runs.visit(text);
+        if (run === null) { return text; }
+        const numbered = parseNumbered(text)!;
+        const next = (counters.get(run) ?? 0) + 1;
+        counters.set(run, next);
+        return `${numbered.chevrons} ${next}. ${numbered.content}`;
+    });
+}
