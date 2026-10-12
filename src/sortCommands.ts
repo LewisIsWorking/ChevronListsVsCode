@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { findHeaderAbove, getSectionRange } from './documentUtils';
-import { NumberingRuns } from './numberingRuns';
+import { NumberingRuns, renumberLines } from './numberingRuns';
 
 type EditBuilder = vscode.TextEditorEdit;
 
@@ -164,14 +164,6 @@ export async function onConvertNumberedToBullets(): Promise<void> {
 
 /** Pure: numbers every list from 1, each list counted separately (see NumberingRuns) */
 export function renumber(lines: string[]): string[] {
-    const counters = new Map<number, number>();
-    const runs     = new NumberingRuns();
-    return lines.map(text => {
-        const run = runs.visit(text);
-        if (run === null) { return text; }
-        const numbered = parseNumbered(text)!;
-        const next = (counters.get(run) ?? 0) + 1;
-        counters.set(run, next);
-        return `${numbered.chevrons} ${next}. ${numbered.content}`;
-    });
+    return renumberLines(lines);
 }
+
