@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, isHeader, getFirstItemPrefix } from './patterns';
+import { renumberFollowing } from './numberingRuns';
 
 type EditBuilder = vscode.TextEditorEdit;
 
@@ -27,17 +28,21 @@ async function handleNumbered(
     const nextPrefix = `${chevrons} ${num + 1}. `;
     const atEnd      = cursor.character >= fullLine.length;
 
-    if (atEnd) {
-        // Normal end-of-line: just insert a new line with next number
-        await editor.edit((eb: EditBuilder) => eb.insert(cursor, `\n${nextPrefix}`));
-    } else {
-        // Mid-line split: keep text before cursor, put remainder on new numbered line
-        const before = fullLine.slice(0, cursor.character).trimEnd();
-        const after  = fullLine.slice(cursor.character).trimStart();
-        await editor.edit((eb: EditBuilder) =>
-            eb.replace(editor.document.lineAt(cursor.line).range,
-                `${before}\n${nextPrefix}${after}`));
-    }
+    // The items below move down one number, so the list stays in sequence
+    const renumber   = renumberFollowing(editor.document, cursor.line, chevrons, 1);
+
+    await editor.edit((eb: EditBuilder) => {
+        if (atEnd) {
+            // Normal end-of-line: just insert a new line with next number
+            eb.insert(cursor, `\n${nextPrefix}`);
+        } else {
+            // Mid-line split: keep text before cursor, put remainder on new numbered line
+            const before = fullLine.slice(0, cursor.character).trimEnd();
+            const after  = fullLine.slice(cursor.character).trimStart();
+            eb.replace(editor.document.lineAt(cursor.line).range, `${before}\n${nextPrefix}${after}`);
+        }
+        for (const r of renumber) { eb.replace(editor.document.lineAt(r.line).range, r.text); }
+    });
 
     const newPos = new vscode.Position(cursor.line + 1, nextPrefix.length);
     editor.selection = new vscode.Selection(newPos, newPos);
@@ -78,6 +83,32 @@ async function handleBullet(
     editor.revealRange(new vscode.Range(newPos, newPos));
 }
 
+/**
+ * Enter at the end of a header with a list straight under it: starts a new
+ * first item of that list's type, numbered 1 with the rest renumbered, or
+ * the list's bullet. False when no list follows, so the default applies.
+ */
+async function startListAbove(editor: vscode.TextEditor, cursor: vscode.Position, prefix: string): Promise<boolean> {
+    const doc      = editor.document;
+    const nextLine = cursor.line + 1 < doc.lineCount ? doc.lineAt(cursor.line + 1).text : '';
+    const numbered = parseNumbered(nextLine);
+    const bullet   = numbered ? null : parseBullet(nextLine, prefix);
+    if ((numbered ?? bullet)?.chevrons !== '>>') { return false; }
+
+    const pfx      = numbered ? '>> 1. ' : `>> ${prefix} `;
+    const renumber = numbered ? renumberFollowing(doc, cursor.line, '>>', 1) : [];
+    await editor.edit((eb: EditBuilder) => {
+        eb.insert(cursor, `
+${pfx}`);
+        for (const r of renumber) { eb.replace(doc.lineAt(r.line).range, r.text); }
+    });
+    const newPos = new vscode.Position(cursor.line + 1, pfx.length);
+    editor.selection = new vscode.Selection(newPos, newPos);
+    editor.revealRange(new vscode.Range(newPos, newPos));
+    await vscode.commands.executeCommand('editor.action.triggerSuggest');
+    return true;
+}
+
 /** Handles the Enter key in markdown files */
 export async function onEnter(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
@@ -111,6 +142,7 @@ export async function onEnter(): Promise<void> {
             editor.selection = new vscode.Selection(newPos, newPos);
             return;
         }
+        if (await startListAbove(editor, cursor, prefix)) { return; }
         const firstPrefix = getFirstItemPrefix(prefix, defaultNewListType);
         const newItem = blankLine ? `\n\n>> ${firstPrefix} ` : `\n>> ${firstPrefix} `;
         await vscode.commands.executeCommand('default:type', { text: newItem });
