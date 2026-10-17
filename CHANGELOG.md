@@ -6,6 +6,7 @@
 - **Move Item to Section takes nested items, list type and numbering with it.** The item moves with anything nested under it, takes the numbering or bullets of its new section, and both sections are renumbered. Inside a set it offers only the set's other lists.
 
 ### Fixed
+- **Show Kanban escapes section and file names.** A section named with `<` or `&` (such as `> Q&A <draft>`) broke the board, since only card text was escaped; section names, the tooltip and the file name are now escaped too.
 - **Enter on a header matches the list under it.** With a numbered list below, the new first item is `1.` and the list is renumbered; with a bulleted list below, it gets that bullet. Before, it always used the default list type.
 - **Enter on a numbered item renumbers the items below it**, so a list stays in sequence when an item is added in the middle.
 - **Send to Daily Note finds the same note as Open Daily Note.** With an absolute *dailyNotesFolder* it joined the path onto the workspace folder and wrote to the wrong place, and with the setting blank it refused to run. It now uses the folder exactly as Open Daily Note does: absolute as given, relative under the workspace folder, the workspace folder itself when blank.
