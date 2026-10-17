@@ -2,8 +2,9 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, isHeader } from './patterns';
 import { parseCheck } from './checkParser';
+import { escHtml } from './htmlExporter';
 
-interface KanbanCard { content: string; section: string; line: number; }
+export interface KanbanCard { content: string; section: string; line: number; }
 
 function collectKanban(doc: vscode.TextDocument, prefix: string): {
     todo: KanbanCard[]; inProgress: KanbanCard[]; done: KanbanCard[];
@@ -28,11 +29,11 @@ function collectKanban(doc: vscode.TextDocument, prefix: string): {
     return { todo, inProgress, done };
 }
 
-function buildKanbanHtml(
+export function buildKanbanHtml(
     todo: KanbanCard[], inProgress: KanbanCard[], done: KanbanCard[], fileName: string
 ): string {
     const card = (c: KanbanCard) =>
-        `<div class="card" title="${c.section}">${c.content.replace(/</g, '&lt;')}<span class="sec">${c.section}</span></div>`;
+        `<div class="card" title="${escHtml(c.section)}">${escHtml(c.content)}<span class="sec">${escHtml(c.section)}</span></div>`;
     const col  = (title: string, cls: string, cards: KanbanCard[]) =>
         `<div class="col"><div class="col-title ${cls}">${title} <span class="count">${cards.length}</span></div>
 ${cards.map(card).join('')}</div>`;
@@ -49,7 +50,7 @@ h1{font-size:.9rem;opacity:.6;margin-bottom:1rem}
 .card{background:var(--vscode-editor-background);border:1px solid var(--vscode-widget-border,#444);border-radius:4px;padding:.4rem .5rem;margin-bottom:.4rem;font-size:.85rem;line-height:1.4;cursor:default}
 .sec{display:block;font-size:.7rem;opacity:.45;margin-top:.2rem}
 </style></head><body>
-<h1>📋 ${fileName}</h1>
+<h1>📋 ${escHtml(fileName)}</h1>
 <div class="board">
 ${col('☐ Todo', 'todo', todo)}
 ${col('⭐ In Progress', 'inprog', inProgress)}
