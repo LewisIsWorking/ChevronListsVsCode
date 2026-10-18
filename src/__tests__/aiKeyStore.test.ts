@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import * as vscode from 'vscode';
 import { openEditor, deactivate } from './helpers/editorHarness';
 import { initAiKeyStore, getApiKey, onSetApiKey, onExpandItem } from '../aiCommands';
-import { onRewriteItem } from '../rewriteItemCommands';
+import { onRewriteItem, splitForRewrite } from '../rewriteItemCommands';
 
 const mock = vscode as unknown as {
     __reset(): void;
@@ -122,6 +122,31 @@ describe('Rewrite Item', () => {
         }) })) as unknown as typeof fetch;
         await onRewriteItem();
         expect(h.lines()).toEqual(['> A', '>> 2. Tidy item']);
+    });
+
+    it('applies the rewrite when a tag sits mid-text, keeping the metadata', async () => {
+        // The stripped words were searched for in the original line, so a tag in the
+        // middle of the text meant no match and the rewrite was silently dropped
+        mock.__setConfig(KEY, 'k');
+        const h = openEditor(['> A', '>> - [ ] !! fix the #urgent bug in login @2026-11-01 +3 // ask Sam'], { cursor: 1 });
+        let sent = '';
+        globalThis.fetch = ((_url: string, init: { body: string }) => {
+            sent = JSON.parse(init.body).messages[0].content;
+            return Promise.resolve({ ok: true, json: () => Promise.resolve({
+                content: [{ type: 'text', text: 'Fix the login bug' }],
+            }) });
+        }) as unknown as typeof fetch;
+        await onRewriteItem();
+        expect(sent).toBe('Item: fix the bug in login');
+        expect(h.lines()).toEqual(['> A', '>> - [ ] !! Fix the login bug #urgent @2026-11-01 +3 // ask Sam']);
+    });
+
+    it('splits an item into leading markers, words and metadata', () => {
+        expect(splitForRewrite('? ⭐ call  the bank ~2h [[Money]] {red}')).toEqual(
+            { lead: '? ⭐', plain: 'call the bank', tail: '~2h [[Money]] {red}' });
+        // Prose that only looks like a marker stays in the words
+        expect(splitForRewrite('Wow!! is C++11 ok?')?.plain).toBe('Wow!! is C++11 ok?');
+        expect(splitForRewrite('[x] #done @2026-01-01')).toBeNull();
     });
 
     it('warns when there is no key', async () => {
