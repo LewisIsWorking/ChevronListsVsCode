@@ -179,7 +179,7 @@ Configure with `chevron-lists.dailyNotesFolder` and `chevron-lists.dailyNoteTemp
 
 ## AI Assist
 
-Requires `chevron-lists.anthropicApiKey`.
+Run `CL: Set Anthropic API Key` first. The key is kept in VS Code's encrypted secret storage; the `ANTHROPIC_API_KEY` environment variable also works.
 
 | Command | Description |
 |---|---|

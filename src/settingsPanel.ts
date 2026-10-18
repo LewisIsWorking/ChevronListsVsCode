@@ -14,7 +14,7 @@ let panel: vscode.WebviewPanel | undefined;
 const ALLOWED_KEYS = new Set([
     'listPrefix', 'defaultNewListType', 'blankLineAfterHeader',
     'autoFixNumbering', 'autoArchive', 'snippetTrigger',
-    'colourPreset', 'dailyNotesFolder', 'dailyNoteTemplate', 'anthropicApiKey',
+    'colourPreset', 'dailyNotesFolder', 'dailyNoteTemplate',
 ]);
 
 type PanelMessage =
@@ -30,7 +30,8 @@ async function handleMessage(msg: PanelMessage): Promise<void> {
         if (msg.key === 'colourPreset') {
             await vscode.commands.executeCommand('chevron-lists.switchColourPreset');
         }
-    } else if (msg.type === 'runCommand' && typeof msg.command === 'string') {
+    } else if (msg.type === 'runCommand' && typeof msg.command === 'string' && msg.command.startsWith('chevron-lists.')) {
+        // Only this extension's own commands: the panel never needs any other
         await vscode.commands.executeCommand(msg.command);
     } else if (msg.type === 'openSettings') {
         await vscode.commands.executeCommand('workbench.action.openSettings', '@ext:lewisisworking.chevron-lists');

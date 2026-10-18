@@ -152,7 +152,8 @@
                 "chevron-lists.anthropicApiKey": {
                     "type": "string",
                     "default": "",
-                    "description": "Anthropic API key for AI Assist commands (CL: Suggest Items, Summarise Section, Expand Item). Get one at https://console.anthropic.com"
+                    "description": "Deprecated: run CL: Set Anthropic API Key instead, which keeps the key in VS Code's encrypted secret storage. A key here is still used when none is stored.",
+                    "markdownDeprecationMessage": "Run **CL: Set Anthropic API Key** instead. It keeps the key in VS Code's encrypted secret storage and removes it from this setting."
                 },
                 "chevron-lists.dailyNoteTemplate": {
                     "type": "string",
@@ -877,6 +878,10 @@
             {
                 "command": "chevron-lists.rewriteItem",
                 "title": "CL: Rewrite Item (AI)"
+            },
+            {
+                "command": "chevron-lists.setAnthropicApiKey",
+                "title": "CL: Set Anthropic API Key"
             },
             {
                 "command": "chevron-lists.toggleSummaryDecoration",

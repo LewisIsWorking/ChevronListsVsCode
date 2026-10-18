@@ -36,7 +36,7 @@ All settings are under the `chevron-lists.*` namespace.
 
 | Setting | Type | Default | Description |
 |---|---|---|---|
-| `anthropicApiKey` | string | `""` | Anthropic API key for AI commands. Get one at [console.anthropic.com](https://console.anthropic.com) |
+| `anthropicApiKey` | string | `""` | Deprecated: run `CL: Set Anthropic API Key`, which keeps the key in encrypted secret storage. Still read when no key is stored. |
 
 ## Templates
 
