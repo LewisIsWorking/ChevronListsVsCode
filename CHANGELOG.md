@@ -6,6 +6,7 @@
 - **Move Item to Section takes nested items, list type and numbering with it.** The item moves with anything nested under it, takes the numbering or bullets of its new section, and both sections are renumbered. Inside a set it offers only the set's other lists.
 
 ### Fixed
+- **AI assist uses a current model and has room to answer.** Suggest Items, Summarise Section and Expand Item asked `claude-sonnet-4-20250514` with a 512-token cap; they now ask Claude Opus 5.5 at low effort with room for its thinking, with server-side fallback on. A declined request shows an error instead of inserting nothing, and list markers Claude adds to its reply (`- one`) no longer end up doubled in the item (`>>> - - one`).
 - **Show Kanban escapes section and file names.** A section named with `<` or `&` (such as `> Q&A <draft>`) broke the board, since only card text was escaped; section names, the tooltip and the file name are now escaped too.
 - **Enter on a header matches the list under it.** With a numbered list below, the new first item is `1.` and the list is renumbered; with a bulleted list below, it gets that bullet. Before, it always used the default list type.
 - **Enter on a numbered item renumbers the items below it**, so a list stays in sequence when an item is added in the middle.
