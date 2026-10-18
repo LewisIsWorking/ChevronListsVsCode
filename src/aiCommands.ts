@@ -6,7 +6,7 @@ import { findHeaderAbove } from './documentUtils';
 import { lineAfter, sectionContentEnd } from './lineEdits';
 
 const API_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL   = 'claude-sonnet-4-20250514';
+const MODEL   = 'claude-opus-5-5';
 
 /** Reads the user's Anthropic API key from VS Code settings */
 function getApiKey(): string | undefined {
@@ -26,10 +26,17 @@ async function callClaude(system: string, user: string): Promise<string> {
             'content-type':      'application/json',
             'x-api-key':         apiKey,
             'anthropic-version': '2023-06-01',
+            'anthropic-beta':    'server-side-fallback-2026-07-01',
         },
         body: JSON.stringify({
             model:      MODEL,
-            max_tokens: 512,
+            // The model always thinks before answering, so leave room for that
+            // as well as the short reply. 512 could be spent on thinking alone.
+            max_tokens: 16000,
+            // Short list edits need little thinking: low effort keeps them quick
+            output_config: { effort: 'low' },
+            // If the model declines, the server retries on its default fallback
+            fallbacks: 'default',
             system,
             messages: [{ role: 'user', content: user }],
         }),
@@ -40,8 +47,17 @@ async function callClaude(system: string, user: string): Promise<string> {
         throw new Error(`Anthropic API error ${response.status}: ${err}`);
     }
 
-    const data = await response.json() as { content: { type: string; text: string }[] };
-    return data.content.find(b => b.type === 'text')?.text ?? '';
+    const data = await response.json() as { content: { type: string; text?: string }[]; stop_reason?: string };
+    if (data.stop_reason === 'refusal') { throw new Error('Claude declined this request'); }
+    return data.content.filter(b => b.type === 'text').map(b => b.text ?? '').join('');
+}
+
+// A bullet, star, number or chevron marker Claude sometimes adds despite the prompt
+const REPLY_MARKER = /^(>+\s*)?([-*•]|\d+[.)])\s+/;
+
+/** Pure: Claude's reply as items, one per non-blank line, with any list marker removed */
+export function replyItems(reply: string): string[] {
+    return reply.split('\n').map(l => l.trim().replace(REPLY_MARKER, '').trim()).filter(Boolean);
 }
 
 /** Collects the existing items in the section under the cursor */
@@ -92,7 +108,7 @@ export async function onSuggestItems(): Promise<void> {
             try {
                 const user  = `Section: "${header}"\nExisting items:\n${items.map(i => `- ${i}`).join('\n') || '(none yet)'}`;
                 const reply = await callClaude(SYSTEM_SUGGEST, user);
-                const suggestions = reply.split('\n').map(l => l.trim()).filter(Boolean);
+                const suggestions = replyItems(reply);
 
                 const picks = await vscode.window.showQuickPick(
                     suggestions.map(s => ({ label: s, picked: true })),
@@ -159,7 +175,7 @@ export async function onExpandItem(): Promise<void> {
             try {
                 const user     = `Section: "${header}"\nItem to expand: "${content}"`;
                 const reply    = await callClaude(SYSTEM_EXPAND, user);
-                const subItems = reply.split('\n').map(l => l.trim()).filter(Boolean);
+                const subItems = replyItems(reply);
                 if (subItems.length === 0) {
                     vscode.window.showInformationMessage('CL: Claude suggested no sub-items');
                     return;

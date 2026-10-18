@@ -433,6 +433,46 @@ describe('AI commands', () => {
         await onExpandItem();
         expect(h.lines()).toEqual(['> A', '>> - a', '>>> - one', '>>> - two']);
     });
+
+    it('asks a current model with room to think, at low effort, with server-side fallback', async () => {
+        // It asked claude-sonnet-4-20250514 with max_tokens 512, which thinking can use up.
+        openEditor(['> A', '>> - a'], { cursor: 1 });
+        mock.__setConfig('chevron-lists.anthropicApiKey', 'test-key');
+        let sent: { headers: Record<string, string>; body: string } | undefined;
+        globalThis.fetch = ((_url: string, init: { headers: Record<string, string>; body: string }) => {
+            sent = init;
+            return Promise.resolve({ ok: true, json: () => Promise.resolve({ content: [{ type: 'text', text: 'one' }] }) });
+        }) as unknown as typeof fetch;
+        await onExpandItem();
+        const body = JSON.parse(sent!.body);
+        expect(body.model).toBe('claude-opus-5-5');
+        expect(body.max_tokens).toBe(16000);
+        expect(body.output_config).toEqual({ effort: 'low' });
+        expect(body.fallbacks).toBe('default');
+        expect(sent!.headers['anthropic-beta']).toBe('server-side-fallback-2026-07-01');
+    });
+
+    it('reads the text after a thinking block and drops list markers Claude adds', async () => {
+        // Bullets in the reply came out as ">>> - - one".
+        const h = openEditor(['> A', '>> - a'], { cursor: 1 });
+        mock.__setConfig('chevron-lists.anthropicApiKey', 'test-key');
+        globalThis.fetch = (() => Promise.resolve({ ok: true, json: () => Promise.resolve({
+            content: [{ type: 'thinking', thinking: '' }, { type: 'text', text: '- one\n2. two' }],
+        }) })) as unknown as typeof fetch;
+        await onExpandItem();
+        expect(h.lines()).toEqual(['> A', '>> - a', '>>> - one', '>>> - two']);
+    });
+
+    it('reports a refusal instead of silently inserting nothing', async () => {
+        const h = openEditor(['> A', '>> - a'], { cursor: 1 });
+        mock.__setConfig('chevron-lists.anthropicApiKey', 'test-key');
+        globalThis.fetch = (() => Promise.resolve({ ok: true, json: () => Promise.resolve({
+            content: [], stop_reason: 'refusal',
+        }) })) as unknown as typeof fetch;
+        await onExpandItem();
+        expect(h.lines()).toEqual(['> A', '>> - a']);
+        expect(mock.recorded.error.at(-1)).toBe('CL: Claude declined this request');
+    });
 });
 
 describe('archive old done items', () => {
