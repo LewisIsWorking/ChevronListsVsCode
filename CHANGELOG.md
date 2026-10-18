@@ -1,6 +1,7 @@
 # Changelog
 
-## [Unreleased]
+## [26.9.0] - 2026-10-18
+Sets, Move Item to Section with nested items, and a round of fixes: AI assist on a current model with the API key in secret storage, Enter matching the list under a header, and Kanban escaping.
 ### Added
 - **Sets.** Tag a markdown heading `#set` (`# Beer Bikes #set`) and the `> Sections` under it, up to the next heading of the same level, become lists of one group, such as Paid, Hasn't paid and Not going. A name in two of them is warned about on both lines; case, a checkbox and end punctuation are ignored when matching. The heading shows the totals after it, such as "23 Paid, 3 Hasn't paid, 3 Not going, 28 in all", counting each member once in all. Ported from the JetBrains plugin.
 - **Move Item to Section takes nested items, list type and numbering with it.** The item moves with anything nested under it, takes the numbering or bullets of its new section, and both sections are renumbered. Inside a set it offers only the set's other lists.
