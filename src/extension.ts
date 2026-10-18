@@ -21,11 +21,13 @@ import { openOnFirstInstall }                                from './settingsPan
 import { getChevronDiagCollection }                           from './diagnosticProvider';
 import { getExpiryDiagCollection }                            from './expiryDiagnostics';
 import { clearAllDiagnostics }                                from './diagnosticCleanup';
+import { initAiKeyStore, onSetApiKey }                        from './aiCommands';
 
 /** Debounce window for the full decoration/diagnostic refresh, in ms */
 const REFRESH_DEBOUNCE_MS = 150;
 
 export function activate(context: vscode.ExtensionContext): void {
+    initAiKeyStore(context.secrets);
     const statusBar    = createStatusBar();
     const overdueBar   = createOverdueStatusBar();
     const dueDateDiags = vscode.languages.createDiagnosticCollection('chevron-lists-dates');
@@ -62,6 +64,7 @@ export function activate(context: vscode.ExtensionContext): void {
         ...registerSearchItemProviderCommands(context),
         ...registerPhase12to32Commands(),
         vscode.commands.registerCommand('chevron-lists.showTipOfDay', () => onShowTipOfDay(context)),
+        vscode.commands.registerCommand('chevron-lists.setAnthropicApiKey', onSetApiKey),
 
         // ── Language providers ───────────────────────────────────────────────
         vscode.languages.registerFoldingRangeProvider(

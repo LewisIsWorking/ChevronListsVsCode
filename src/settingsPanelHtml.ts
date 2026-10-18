@@ -53,7 +53,8 @@ export function buildSettingsPanelHtml(cfg: ChevronConfig, groups: CommandGroup[
         txt('dailyNotesFolder', 'Daily Notes Folder', 'Folder for daily notes. Relative to workspace root, or absolute path.', cfg.dailyNotesFolder),
         txt('dailyNoteTemplate', 'Daily Note Template', 'Template text for new notes. Supports {{date}}, {{weekday}}, {{day}}.', cfg.dailyNoteTemplate),
         '</section><section><h2>AI Assist</h2>',
-        txt('anthropicApiKey', 'Anthropic API Key', 'Required for CL: Suggest Items, Summarise Section, Expand Item, and Rewrite Item. Get one at https://console.anthropic.com', cfg.anthropicApiKey, 'password'),
+        '<div class="row"><strong>Anthropic API Key</strong><p class="desc">Required for CL: Suggest Items, Summarise Section, Expand Item and Rewrite Item. Kept in VS Code\'s encrypted secret storage. Get one at https://console.anthropic.com</p>' +
+        '<button class="cmd-btn" onclick="post({type:\'runCommand\',command:\'chevron-lists.setAnthropicApiKey\'})">Set API Key</button></div>',
         '</section><section><h2>Templates</h2>',
         '<div class="row"><strong>User Templates</strong><p class="desc">Templates are structured objects - best edited directly in settings.json.</p>' +
         '<button class="cmd-btn" onclick="post({type:\'openSettings\'})">Edit in settings.json ↗</button></div></section>',

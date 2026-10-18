@@ -8,16 +8,52 @@ import { lineAfter, sectionContentEnd } from './lineEdits';
 const API_URL = 'https://api.anthropic.com/v1/messages';
 const MODEL   = 'claude-opus-5-5';
 
-/** Reads the user's Anthropic API key from VS Code settings */
-function getApiKey(): string | undefined {
-    return vscode.workspace.getConfiguration('chevron-lists').get<string>('anthropicApiKey');
+const SECRET_KEY = 'chevron-lists.anthropicApiKey';
+
+/** VS Code's encrypted secret storage, set on activation */
+let secretStore: vscode.SecretStorage | undefined;
+
+/** Called from activate(): keeps the API key in secret storage, not settings.json */
+export function initAiKeyStore(secrets: vscode.SecretStorage): void {
+    secretStore = secrets;
+}
+
+/**
+ * The Anthropic API key: from secret storage, else the old plain-text
+ * setting (still read so existing setups keep working), else ANTHROPIC_API_KEY.
+ */
+export async function getApiKey(): Promise<string | undefined> {
+    const stored  = await secretStore?.get(SECRET_KEY);
+    const setting = vscode.workspace.getConfiguration('chevron-lists').get<string>('anthropicApiKey');
+    return stored || setting || process.env.ANTHROPIC_API_KEY || undefined;
+}
+
+/** Command: asks for the API key and saves it in secret storage; blank removes it */
+export async function onSetApiKey(): Promise<void> {
+    if (!secretStore) { return; }
+    const key = await vscode.window.showInputBox({
+        prompt: 'Anthropic API key for the AI commands (blank to remove). Kept in VS Code secret storage.',
+        password: true, ignoreFocusOut: true,
+    });
+    if (key === undefined) { return; }
+    if (key.trim()) { await secretStore.store(SECRET_KEY, key.trim()); }
+    else { await secretStore.delete(SECRET_KEY); }
+    // Move any key out of plain-text settings, where it used to be kept
+    const cfg = vscode.workspace.getConfiguration('chevron-lists');
+    if (cfg.get<string>('anthropicApiKey')) {
+        await cfg.update('anthropicApiKey', undefined, vscode.ConfigurationTarget.Global);
+        if (vscode.workspace.workspaceFolders?.length) {
+            await cfg.update('anthropicApiKey', undefined, vscode.ConfigurationTarget.Workspace);
+        }
+    }
+    vscode.window.showInformationMessage(key.trim() ? 'CL: API key saved' : 'CL: API key removed');
 }
 
 /** Makes a request to the Anthropic messages API */
-async function callClaude(system: string, user: string): Promise<string> {
-    const apiKey = getApiKey();
+export async function callClaude(system: string, user: string): Promise<string> {
+    const apiKey = await getApiKey();
     if (!apiKey) {
-        throw new Error('No API key - set chevron-lists.anthropicApiKey in settings');
+        throw new Error('No API key - run CL: Set Anthropic API Key');
     }
 
     const response = await fetch(API_URL, {

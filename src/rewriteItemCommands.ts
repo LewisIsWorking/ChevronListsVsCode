@@ -2,16 +2,19 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { stripAllMetadata } from './metadataStripper';
+import { callClaude, getApiKey } from './aiCommands';
+
+const SYSTEM_REWRITE = `You are a helpful writing assistant for a bullet list tool.
+Rewrite the list item you are given to be clearer and more concise.
+Return ONLY the rewritten text, no explanation, no quotes.`;
 
 /** Command: rewrites the item at the cursor using Claude, preserving all markers */
 export async function onRewriteItem(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== 'markdown') { return; }
 
-    const cfg = vscode.workspace.getConfiguration('chevron-lists');
-    const apiKey = cfg.get<string>('anthropicApiKey', '');
-    if (!apiKey) {
-        vscode.window.showWarningMessage('CL: Set chevron-lists.anthropicApiKey to use AI commands');
+    if (!(await getApiKey())) {
+        vscode.window.showWarningMessage('CL: Run CL: Set Anthropic API Key to use AI commands');
         return;
     }
 
@@ -36,24 +39,9 @@ export async function onRewriteItem(): Promise<void> {
         { location: vscode.ProgressLocation.Notification, title: 'CL: Rewriting item…', cancellable: false },
         async () => {
             try {
-                const response = await fetch('https://api.anthropic.com/v1/messages', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-api-key': apiKey,
-                        'anthropic-version': '2023-06-01',
-                    },
-                    body: JSON.stringify({
-                        model: 'claude-haiku-4-5-20251001',
-                        max_tokens: 200,
-                        messages: [{
-                            role: 'user',
-                            content: `Rewrite this list item to be clearer and more concise. Return ONLY the rewritten text, no explanation, no quotes.\n\nItem: ${plain}`,
-                        }],
-                    }),
-                });
-                const data     = await response.json() as { content?: Array<{ text: string }> };
-                const rewritten = data.content?.[0]?.text?.trim();
+                // It used to read only the first content block and ignore HTTP errors,
+                // so a failed request showed "AI returned no content"
+                const rewritten = (await callClaude(SYSTEM_REWRITE, `Item: ${plain}`)).trim();
                 if (!rewritten) { vscode.window.showWarningMessage('CL: AI returned no content'); return; }
 
                 // Rebuild line: replace the plain text portion, keep all markers
@@ -63,7 +51,7 @@ export async function onRewriteItem(): Promise<void> {
                     : `${chevrons} ${prefix} ${newContent}`;
                 await editor.edit(eb => eb.replace(doc.lineAt(lineIndex).range, newLine));
             } catch (e) {
-                vscode.window.showErrorMessage(`CL: AI request failed - ${e}`);
+                vscode.window.showErrorMessage(`CL: AI request failed - ${(e as Error).message}`);
             }
         }
     );

@@ -191,7 +191,7 @@ Type `CL:` in the Command Palette (`Ctrl+Shift+P`). Commands are grouped by area
 `CL: Colour Theme` (13 presets) · `CL: Toggle Section Summary` · `CL: Toggle Checklist Progress Bar` · `CL: Toggle Word Goal Bar` · `CL: Toggle Age Highlight` · `CL: Toggle All Decorations`
 
 ### AI Assist
-Requires `chevron-lists.anthropicApiKey`.
+Run `CL: Set Anthropic API Key` first. The key is kept in VS Code's encrypted secret storage; the `ANTHROPIC_API_KEY` environment variable also works.
 
 `CL: Suggest Items (AI)` · `CL: Summarise Section (AI)` · `CL: Expand Item (AI)` · `CL: Rewrite Item (AI)`
 
@@ -207,7 +207,7 @@ Requires `chevron-lists.anthropicApiKey`.
 | `chevron-lists.snippetTrigger` | `tab` | Snippet trigger: `tab`, `ctrl+enter`, or `none` |
 | `chevron-lists.colourPreset` | `default` | Colour theme preset |
 | `chevron-lists.templates` | `[]` | Custom templates |
-| `chevron-lists.anthropicApiKey` | `""` | API key for AI Assist |
+| `chevron-lists.anthropicApiKey` | `""` | Deprecated: use `CL: Set Anthropic API Key` |
 | `chevron-lists.autoArchive` | `false` | Auto-move `[x]` items to Archive on toggle |
 | `chevron-lists.dailyNotesFolder` | `""` | Folder for daily notes |
 | `chevron-lists.dailyNoteTemplate` | `""` | Daily note template (`{{date}}`, `{{weekday}}`, `{{day}}`) |
