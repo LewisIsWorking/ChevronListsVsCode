@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
-import { findHeaderAbove, findHeaderBelow, getSectionRange, getTightSectionRange } from './documentUtils';
+import { findHeaderAbove, findHeaderBelow, getSectionRange } from './documentUtils';
 import { lineAfter, sectionContentEnd } from './lineEdits';
 
 type EditBuilder = vscode.TextEditorEdit;
@@ -65,15 +65,15 @@ export async function onMoveSectionUp(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) { return; }
     const doc        = editor.document;
-    const { prefix } = getConfig();
     const headerLine = findHeaderAbove(doc, editor.selection.active.line);
     if (headerLine <= 0) { return; }
     const prevHeader = findHeaderAbove(doc, headerLine - 1);
     if (prevHeader < 0) { return; }
 
-    // Tight ranges - only header + chevron items, no separators
-    const [curStart, curEnd]   = getTightSectionRange(doc, headerLine, prefix);
-    const [prevStart, prevEnd] = getTightSectionRange(doc, prevHeader, prefix);
+    // Header to its last non-blank line, so notes under the items move too.
+    // Stopping at the last item left a paragraph behind under the other section.
+    const [curStart, curEnd]   = [headerLine, sectionContentEnd(doc, headerLine)];
+    const [prevStart, prevEnd] = [prevHeader, sectionContentEnd(doc, prevHeader)];
 
     // Gap = lines between the end of prev section and start of cur section
     const gapLines = getLines(doc, prevEnd + 1, curStart - 1);
@@ -100,15 +100,14 @@ export async function onMoveSectionDown(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) { return; }
     const doc        = editor.document;
-    const { prefix } = getConfig();
     const headerLine = findHeaderAbove(doc, editor.selection.active.line);
     if (headerLine < 0) { return; }
     const nextHeader = findHeaderBelow(doc, headerLine);
     if (nextHeader < 0) { return; }
 
-    // Tight ranges - only header + chevron items, no separators
-    const [curStart, curEnd]   = getTightSectionRange(doc, headerLine, prefix);
-    const [nextStart, nextEnd] = getTightSectionRange(doc, nextHeader, prefix);
+    // Header to its last non-blank line, so notes under the items move too
+    const [curStart, curEnd]   = [headerLine, sectionContentEnd(doc, headerLine)];
+    const [nextStart, nextEnd] = [nextHeader, sectionContentEnd(doc, nextHeader)];
 
     // Gap = lines between the end of cur section and start of next section
     const gapLines  = getLines(doc, curEnd + 1, nextStart - 1);

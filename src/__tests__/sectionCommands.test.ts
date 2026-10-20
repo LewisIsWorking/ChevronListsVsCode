@@ -145,6 +145,14 @@ describe('onMoveSectionUp', () => {
         expect(h.lines()).toEqual(['> Two', '>> - b', '', '> One', '>> - a']);
     });
 
+    it('notes under the items move with their section', async () => {
+        // The move stopped at the last item, so the paragraph stayed behind
+        // and ended up under the other section
+        const h = openEditor(['> One', '>> - a', 'One notes', '', '> Two', '>> - b', 'Two notes'], { cursor: 4 });
+        await onMoveSectionUp();
+        expect(h.lines()).toEqual(['> Two', '>> - b', 'Two notes', '', '> One', '>> - a', 'One notes']);
+    });
+
     it('moves the cursor with the section', async () => {
         const h = openEditor(['> One', '>> - a', '> Two', '>> - b'], { cursor: 2 });
         await onMoveSectionUp();
@@ -181,6 +189,14 @@ describe('onMoveSectionDown', () => {
         const h = openEditor(['> One', '>> - a', '', '> Two', '>> - b'], { cursor: 0 });
         await onMoveSectionDown();
         expect(h.lines()).toEqual(['> Two', '>> - b', '', '> One', '>> - a']);
+    });
+
+    it('notes under the items move with their section', async () => {
+        // The move stopped at the last item, so the paragraph stayed behind
+        // and ended up under the other section
+        const h = openEditor(['> One', '>> - a', 'One notes', '', '> Two', '>> - b', 'Two notes'], { cursor: 0 });
+        await onMoveSectionDown();
+        expect(h.lines()).toEqual(['> Two', '>> - b', 'Two notes', '', '> One', '>> - a', 'One notes']);
     });
 
     it('moves the cursor with the section', async () => {
