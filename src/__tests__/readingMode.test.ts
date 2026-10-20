@@ -6,7 +6,7 @@
  * workspace listener are captured by wrapping the vscode mock, so the tests
  * assert on title/html rather than on internal calls.
  */
-import { describe, it, expect, beforeEach } from 'bun:test';
+import { describe, it, expect, beforeEach, afterAll } from 'bun:test';
 import * as vscode from 'vscode';
 import { openEditor, makeEditor, deactivate } from './helpers/editorHarness';
 import { onEnterReadingMode } from '../readingMode';
@@ -43,6 +43,9 @@ const winAny = vscode.window as unknown as {
 const wsAny = vscode.workspace as unknown as {
     onDidChangeTextDocument: (cb: (e: { document: unknown }) => void) => unknown;
 };
+
+const realCreateWebviewPanel = winAny.createWebviewPanel;
+const realOnDidChangeTextDocument = wsAny.onDidChangeTextDocument;
 
 winAny.createWebviewPanel = (_type: unknown, title: unknown) => {
     const panel: FakePanel = {
@@ -93,6 +96,16 @@ beforeEach(() => {
     subs = [];
     mock.__reset();
     deactivate();
+});
+
+// The module keeps its panel between calls, so one left open here was reused
+// by later files: focusAndReadingMode's tests then saw no new panel, but only
+// when the runner happened to put this file first. Close it and put the real
+// mocks back for whatever runs next.
+afterAll(() => {
+    for (const p of panels) { if (!p.disposed) { p.dispose(); } }
+    winAny.createWebviewPanel = realCreateWebviewPanel;
+    wsAny.onDidChangeTextDocument = realOnDidChangeTextDocument;
 });
 
 describe('onEnterReadingMode', () => {
