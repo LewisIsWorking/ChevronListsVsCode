@@ -76,7 +76,16 @@ describe('onCopySectionAsMarkdown', () => {
         openEditor(DOC, { cursor: 1 });
         await onCopySectionAsMarkdown();
         expect(clipboardLines()).toEqual(
-            ['## Shopping', '', '- apples', '2. bananas', '  - nested cherries']
+            ['## Shopping', '', '- apples', '2. bananas', '   - nested cherries']
+        );
+    });
+
+    it('indents a nested item to its parent\'s text, so it stays in the list', async () => {
+        // Two spaces a level is not enough under "1. " in CommonMark: the child left the list
+        openEditor(['> S', '>> 1. mix', '>>> - flour', '>>>> 10. sift', '>>>>> - twice', '>> 2. bake'], { cursor: 1 });
+        await onCopySectionAsMarkdown();
+        expect(clipboardLines()).toEqual(
+            ['## S', '', '1. mix', '   - flour', '     10. sift', '         - twice', '2. bake']
         );
     });
 

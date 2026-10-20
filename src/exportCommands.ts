@@ -3,22 +3,29 @@ import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { findHeaderAbove, getSectionRange } from './documentUtils';
 
-/** Strips chevron prefix from a bullet item returning plain text e.g. ">> - foo" → "- foo" */
-function bulletToMarkdown(text: string, prefix: string): string | null {
+/** An item as a markdown list line without its indent, and its depth (>> = 0), or null */
+function itemToMarkdown(text: string, prefix: string): { depth: number; item: string } | null {
+    const numbered = parseNumbered(text);
+    if (numbered) { return { depth: numbered.chevrons.length - 2, item: `${numbered.num}. ${numbered.content}` }; }
     const bullet = parseBullet(text, prefix);
-    if (!bullet) { return null; }
-    const depth = bullet.chevrons.length - 2; // >> = depth 0, >>> = depth 1 etc.
-    const indent = '  '.repeat(depth);
-    return `${indent}- ${bullet.content}`;
+    if (bullet) { return { depth: bullet.chevrons.length - 2, item: `- ${bullet.content}` }; }
+    return null;
 }
 
-/** Strips chevron prefix from a numbered item e.g. ">> 1. foo" → "1. foo" */
-function numberedToMarkdown(text: string): string | null {
-    const numbered = parseNumbered(text);
-    if (!numbered) { return null; }
-    const depth = numbered.chevrons.length - 2;
-    const indent = '  '.repeat(depth);
-    return `${indent}${numbered.num}. ${numbered.content}`;
+/**
+ * Indents each item to its parent's text, so it nests under a numbered item
+ * too: CommonMark needs three spaces under "1. ", and the two used for every
+ * level let the child fall out of the list. With no parent, two spaces a level.
+ */
+function nestMarkdown(items: { depth: number; item: string }[]): string[] {
+    const textColumn: number[] = [];   // by depth, for the latest item at it
+    return items.map(({ depth, item }) => {
+        textColumn.length = Math.min(textColumn.length, depth);
+        const parent = textColumn.filter(c => c !== undefined).pop();
+        const indent = parent ?? 2 * depth;
+        textColumn[depth] = indent + item.indexOf(' ') + 1;
+        return ' '.repeat(indent) + item;
+    });
 }
 
 /** Copies the current section as standard markdown (heading + list items) */
@@ -32,13 +39,13 @@ export async function onCopySectionAsMarkdown(): Promise<void> {
     const headerText = editor.document.lineAt(headerLine).text;
     const heading    = `## ${headerText.replace(/^> /, '')}`;
     const [, end]    = getSectionRange(editor.document, headerLine);
-    const lines: string[] = [heading, ''];
+    const items: { depth: number; item: string }[] = [];
 
     for (let i = headerLine + 1; i <= end; i++) {
-        const text    = editor.document.lineAt(i).text;
-        const md      = bulletToMarkdown(text, prefix) ?? numberedToMarkdown(text);
-        if (md !== null) { lines.push(md); }
+        const md = itemToMarkdown(editor.document.lineAt(i).text, prefix);
+        if (md) { items.push(md); }
     }
+    const lines = [heading, '', ...nestMarkdown(items)];
 
     await vscode.env.clipboard.writeText(lines.join('\n'));
     vscode.window.showInformationMessage('Chevron Lists: Section copied as Markdown');
