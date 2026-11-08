@@ -1,12 +1,13 @@
 import type { LineReader } from './types';
 import { parseBullet, parseNumbered } from './patterns';
+import { splitItem } from './itemParts';
 
 /** Regex matching @expires:YYYY-MM-DD in item content */
 export const EXPIRES_RE = /@expires:(\d{4}-\d{2}-\d{2})/;
 
 /** Parses an expiry date from item content */
 export function parseExpiry(content: string): string | null {
-    return content.match(EXPIRES_RE)?.[1] ?? null;
+    return splitItem(content).body.match(EXPIRES_RE)?.[1] ?? null;
 }
 
 /** Returns true if the given YYYY-MM-DD date is in the past */
