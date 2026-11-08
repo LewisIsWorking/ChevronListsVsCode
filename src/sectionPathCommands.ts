@@ -3,6 +3,7 @@ import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
 import { itemWordCount } from './metadataStripper';
+import { headerNameWithoutGoal } from './wordGoalParser';
 
 /** Command: shows current section name, word count and item count as a quick orientation */
 export async function onShowSectionPath(): Promise<void> {
@@ -13,7 +14,7 @@ export async function onShowSectionPath(): Promise<void> {
     const headerLine  = findHeaderAbove(doc, editor.selection.active.line);
     if (headerLine < 0) { vscode.window.showInformationMessage('CL: Not inside a section'); return; }
 
-    const name        = doc.lineAt(headerLine).text.replace(/^> /, '').trim();
+    const name        = headerNameWithoutGoal(doc.lineAt(headerLine).text);
     const cursorLine  = editor.selection.active.line;
     const [, end]     = getSectionRange(doc, headerLine);
     let   items = 0, words = 0;

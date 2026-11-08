@@ -40,7 +40,11 @@ async function bulkTransformSection(
 export async function onBulkTagItems(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== 'markdown') { return; }
-    const input = await vscode.window.showInputBox({ prompt: 'Tag to add to all items (without #)', placeHolder: 'urgent' });
+    const input = await vscode.window.showInputBox({
+        prompt:        'Tag to add to all items (without #)',
+        placeHolder:   'urgent',
+        validateInput: v => /^#*\w[\w-]*$/.test(v.trim()) ? null : 'Enter one tag: letters, numbers, hyphens and underscores',
+    });
     // A leading # is accepted rather than doubled into "##urgent".
     const tag = input?.trim().replace(/^#+/, '');
     if (!tag) { return; }
