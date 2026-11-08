@@ -4,6 +4,7 @@ import { parseWordCountGoal, headerNameWithoutGoal } from './wordGoalParser';
 import { getSectionRange } from './documentUtils';
 import { findHeaderAbove } from './documentUtils';
 import { itemWordCount } from './metadataStripper';
+import { validatePositiveInteger } from './numberInput';
 
 const wordGoalDiagCollection = vscode.languages.createDiagnosticCollection('chevron-lists-wordgoals');
 
@@ -66,6 +67,9 @@ export async function onSetWordCountGoal(): Promise<void> {
         prompt:      `Set word count goal for "${cleanName}"`,
         value:       current !== null ? String(current) : '',
         placeHolder: 'e.g. 500 (leave blank to remove goal)',
+        validateInput: v => !v.trim() || validatePositiveInteger(v) === null
+            ? null
+            : 'Enter a positive whole number, or leave blank to remove the goal',
     });
 
     if (input === undefined) { return; }

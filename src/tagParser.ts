@@ -91,3 +91,9 @@ export function uniqueTags(doc: LineReader, prefix: string): string[] {
 export function renameTagInText(text: string, oldTag: string, newTag: string): string {
     return text.replace(oneTagRegex(oldTag), `#${newTag.replace(/^#/, '')}`);
 }
+
+/** Renames a tag in a chevron item's content; any other line comes back unchanged */
+export function renameTagInItem(line: string, prefix: string, oldTag: string, newTag: string): string {
+    const content = parseBullet(line, prefix)?.content ?? parseNumbered(line)?.content;
+    return content ? line.slice(0, line.length - content.length) + renameTagInText(content, oldTag, newTag) : line;
+}

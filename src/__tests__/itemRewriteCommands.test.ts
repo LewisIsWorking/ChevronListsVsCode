@@ -86,10 +86,7 @@ describe('item rewrite commands', () => {
     it('Group Items by Tag renumbers and adds no line at the end of the file', async () => {
         const h = openEditor(['> S', '>> 1. a #x', '>> 2. b #y', '>> 3. c #x'], { cursor: 1 });
         await onGroupItemsByTag();
-        const contents = h.lines().slice(1).filter(l => l.startsWith('>>'));
-        expect(contents).toEqual(['>> 1. a #x', '>> 2. c #x', '>> 1. b #y'].map((l, i) => i < 2 ? l : contents[2]));
-        expect(contents[2]).toMatch(/^>> \d+\. b #y$/);
-        expect(h.lines().at(-1)).not.toBe('');
+        expect(h.lines().slice(1)).toEqual(['// #x', '>> 1. a #x', '>> 2. c #x', '// #y', '>> 3. b #y']);
     });
 
     it('Set Word Count Goal asks for a whole number or nothing', async () => {

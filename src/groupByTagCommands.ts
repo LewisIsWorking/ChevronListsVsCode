@@ -3,6 +3,9 @@ import { getConfig } from './config';
 import { groupLinesByTag } from './patterns';
 import { extractTags } from './tagParser';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
+import { renumberLines } from './numberingRuns';
+
+const GROUP_HEADING_RE = /^\/\/ #[\w-]+$/;
 
 /** Command: re-orders items in the section so items sharing a #tag are clustered */
 export async function onGroupItemsByTag(): Promise<void> {
@@ -17,7 +20,9 @@ export async function onGroupItemsByTag(): Promise<void> {
     const [, end] = getSectionRange(doc, headerLine);
     const itemLines: string[] = [];
     for (let i = headerLine + 1; i <= end; i++) {
-        itemLines.push(doc.lineAt(i).text);
+        const text = doc.lineAt(i).text;
+        // A heading from an earlier run is replaced, not kept among the untagged lines.
+        if (!GROUP_HEADING_RE.test(text)) { itemLines.push(text); }
     }
 
     const groups  = groupLinesByTag(itemLines, prefix, extractTags);
@@ -33,8 +38,8 @@ export async function onGroupItemsByTag(): Promise<void> {
         newLines.push(...group.lines);
     }
 
-    const range = new vscode.Range(headerLine + 1, 0, end + 1, 0);
-    await editor.edit(eb => eb.replace(range, newLines.join('\n') + '\n'));
+    const range = new vscode.Range(headerLine + 1, 0, end, doc.lineAt(end).text.length);
+    await editor.edit(eb => eb.replace(range, renumberLines(newLines).join('\n')));
     vscode.window.showInformationMessage(
         `CL: Grouped into ${groups.filter(g => g.tag).length} tag group${groups.length === 1 ? '' : 's'}`
     );
