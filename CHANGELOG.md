@@ -23,6 +23,8 @@ Sets, Move Item to Section with nested items, and a round of fixes: AI assist on
 - **Merge Item with Next and Split Item at Cursor keep numbered lists in sequence.** Merging left a gap and splitting repeated a number. Merging also keeps the second item's vote and comment, and drops its checkbox instead of leaving it in the words.
 - **Sort All Sections keeps the document's shape.** The blank line between sections moved with the section, and each sort added another blank line at the end.
 - **Underline Text keeps an emoji whole.**
+- **Copy Section as HTML escapes the section name.** A name holding & or < produced broken HTML.
+- **Struck-through text no longer hides a time estimate.** An item with ~~old~~ before ~2h had no estimate.
 - **Merge Section Below no longer leaves a gap mid-list.** It deleted only the next header, so the blank lines between the two sections ended up between their items. They are removed now, and the next section's items carry straight on.
 - **Move Section Up / Down takes a section's notes with it.** A section stopped at its last item, so a paragraph under the items stayed behind and ended up under the other section. The whole section now moves, up to its last non-blank line.
 - **Copy Section as Markdown keeps items nested under a numbered item.** Every level was indented two spaces, but under `1. ` CommonMark needs three, so a child of a numbered item fell out of the list. Each item is now indented to its parent's text.
