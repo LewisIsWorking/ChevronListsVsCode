@@ -9,6 +9,7 @@ import { openEditor, deactivate } from './helpers/editorHarness';
 import { onReplaceInSection } from '../findReplaceCommands';
 import { onConvertItemToSectionLink } from '../convertToLinkCommands';
 import { onExtractUrlsFromSection } from '../urlExtractorCommands';
+import { onShiftAllDueDates } from '../shiftDueDatesCommands';
 
 const mock = vscode as unknown as {
     __reset(): void;
@@ -59,6 +60,14 @@ describe('section text fixes', () => {
         const h = openEditor(['> Launch', '> B', '>> - [x] !! Launch #tag @2026-01-01 // note'], { cursor: 2 });
         await onConvertItemToSectionLink();
         expect(h.lines()[2]).toBe('>> - [[Launch]]');
+    });
+
+    it('Shift All Due Dates leaves a date the calendar does not have', async () => {
+        const h = openEditor(['> S', '>> - a @2026-02-30 @2026-03-01'], { cursor: 1 });
+        mock.queued.inputBox.push('1');
+        await onShiftAllDueDates();
+        expect(h.lines()[1]).toBe('>> - a @2026-02-30 @2026-03-02');
+        expect(mock.recorded.info).toContain('CL: Shifted 1 date by +1 day');
     });
 
     it('Extract URLs leaves out punctuation after a link', async () => {
