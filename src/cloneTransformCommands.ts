@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
+import { joinItem, splitItem } from './itemParts';
 import { parseBullet, parseNumbered } from './patterns';
 import { stripAllMetadata } from './metadataStripper';
 import { applyItemCopy, itemCopyBelow } from './lineEdits';
@@ -18,11 +19,8 @@ export async function onCloneItemAsDone(): Promise<void> {
         vscode.window.showInformationMessage('CL: Place cursor on a chevron item');
         return;
     }
-    const content    = (numbered ?? bullet)!.content;
-    const newContent = content.startsWith('[x]') || content.startsWith('[ ]')
-        ? content.replace(/^\[.\]\s*/, '[x] ')
-        : `[x] ${content}`;
-    const copy = itemCopyBelow(doc, lineIndex, prefix, newContent);
+    const parts = splitItem((numbered ?? bullet)!.content);
+    const copy  = itemCopyBelow(doc, lineIndex, prefix, joinItem({ ...parts, check: '[x]' }));
     await editor.edit(eb => applyItemCopy(eb, doc, copy));
 }
 
