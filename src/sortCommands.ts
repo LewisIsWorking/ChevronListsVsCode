@@ -6,13 +6,24 @@ import { NumberingRuns, renumberLines } from './numberingRuns';
 
 type EditBuilder = vscode.TextEditorEdit;
 
-interface SortItem { head: string; depth: number; key: string; num: number | null }
+interface SortItem { head: string; depth: number; content: string; num: number | null }
+
+/** Compares two items by their content */
+export type ItemOrder = (a: string, b: string) => number;
+
+const alphabetical: ItemOrder = (a, b) => a.toLowerCase().localeCompare(b.toLowerCase());
+const reverseAlphabetical: ItemOrder = (a, b) => alphabetical(b, a);
 
 function sortItemOf(line: string, prefix: string): SortItem | null {
     const n = parseNumbered(line);
-    if (n) { return { head: line, depth: n.chevrons.length, key: n.content.toLowerCase(), num: n.num }; }
+    if (n) { return { head: line, depth: n.chevrons.length, content: n.content, num: n.num }; }
     const b = parseBullet(line, prefix);
-    return b ? { head: line, depth: b.chevrons.length, key: b.content.toLowerCase(), num: null } : null;
+    return b ? { head: line, depth: b.chevrons.length, content: b.content, num: null } : null;
+}
+
+/** Pure: the lines of a section body with its items sorted A to Z, or Z to A (see sortItemsBy) */
+export function sortItems(lines: string[], descending: boolean, prefix: string): string[] {
+    return sortItemsBy(lines, descending ? reverseAlphabetical : alphabetical, prefix);
 }
 
 /**
@@ -26,7 +37,7 @@ function sortItemOf(line: string, prefix: string): SortItem | null {
  * so nested items ended up under the wrong parent. Mirrors computeSortSection in
  * the JetBrains plugin.
  */
-export function sortItems(lines: string[], descending: boolean, prefix: string): string[] {
+export function sortItemsBy(lines: string[], order: ItemOrder, prefix: string): string[] {
     const out: string[] = [];
     let i = 0;
     while (i < lines.length) {
@@ -39,12 +50,12 @@ export function sortItems(lines: string[], descending: boolean, prefix: string):
             if (!item || item.depth !== first.depth) { break; }
             let end = i + 1;
             while (end < lines.length && (sortItemOf(lines[end], prefix)?.depth ?? 0) > first.depth) { end++; }
-            blocks.push({ item, children: sortItems(lines.slice(i + 1, end), descending, prefix) });
+            blocks.push({ item, children: sortItemsBy(lines.slice(i + 1, end), order, prefix) });
             i = end;
         }
 
         // Array.prototype.sort is stable, so equal items keep their order
-        const sorted  = [...blocks].sort((a, b) => (descending ? -1 : 1) * a.item.key.localeCompare(b.item.key));
+        const sorted  = [...blocks].sort((a, b) => order(a.item.content, b.item.content));
         const numbers = blocks.flatMap(b => b.item.num === null ? [] : [b.item.num]).sort((a, b) => a - b);
         for (const { item, children } of sorted) {
             if (item.num === null) { out.push(item.head); }
@@ -58,29 +69,33 @@ export function sortItems(lines: string[], descending: boolean, prefix: string):
     return out;
 }
 
-async function sortSection(descending: boolean): Promise<void> {
+/** Sorts the items of the section at the cursor, then shows `done` if given */
+export async function sortSectionBy(order: ItemOrder, done?: string): Promise<void> {
     const editor = vscode.window.activeTextEditor;
-    if (!editor) { return; }
+    if (!editor || editor.document.languageId !== 'markdown') { return; }
     const { prefix } = getConfig();
     const doc        = editor.document;
     const headerLine = findHeaderAbove(doc, editor.selection.active.line);
-    if (headerLine < 0) { return; }
+    if (headerLine < 0) {
+        vscode.window.showInformationMessage('CL: No section found at cursor');
+        return;
+    }
     const [, end]    = getSectionRange(doc, headerLine);
     const before     = Array.from({ length: end - headerLine }, (_, k) => doc.lineAt(headerLine + 1 + k).text);
-    const after      = sortItems(before, descending, prefix);
-    if (after.every((text, k) => text === before[k])) { return; }
+    const after      = sortItemsBy(before, order, prefix);
     await editor.edit((eb: EditBuilder) => {
         after.forEach((text, k) => {
             if (text !== before[k]) { eb.replace(doc.lineAt(headerLine + 1 + k).range, text); }
         });
     });
+    if (done) { vscode.window.showInformationMessage(done); }
 }
 
 /** Sorts the items in the current section A to Z, keeping nested items with their parent */
-export function onSortItemsAZ(): Promise<void> { return sortSection(false); }
+export function onSortItemsAZ(): Promise<void> { return sortSectionBy(alphabetical); }
 
 /** Sorts the items in the current section Z to A, keeping nested items with their parent */
-export function onSortItemsZA(): Promise<void> { return sortSection(true); }
+export function onSortItemsZA(): Promise<void> { return sortSectionBy(reverseAlphabetical); }
 
 /** Resets numbering on all numbered items per chevron depth */
 export async function onRenumberItems(): Promise<void> {
