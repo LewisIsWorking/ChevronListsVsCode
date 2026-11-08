@@ -155,7 +155,7 @@ const STOP_WORDS = new Set([
 export function countWordFrequency(lines: string[]): Map<string, number> {
     const freq = new Map<string, number>();
     for (const line of lines) {
-        for (const word of line.toLowerCase().match(/[a-z]{3,}/g) ?? []) {
+        for (const word of line.toLowerCase().match(/\p{L}{3,}/gu) ?? []) {
             if (STOP_WORDS.has(word)) { continue; }
             freq.set(word, (freq.get(word) ?? 0) + 1);
         }

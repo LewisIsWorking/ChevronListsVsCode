@@ -13,7 +13,7 @@ export function topWords(contents: string[], topN = 20): Array<{ word: string; c
     for (const content of contents) {
         const words = content
             .toLowerCase()
-            .replace(/[^a-z0-9'\s-]/g, ' ')
+            .replace(/[^\p{L}\p{N}'\s-]/gu, ' ')
             .split(/\s+/)
             .filter(w => w.length > 2 && !STOP_WORDS.has(w));
         for (const word of words) {

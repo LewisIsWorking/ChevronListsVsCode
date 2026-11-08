@@ -21,7 +21,7 @@ export async function onCountWordFrequency(): Promise<void> {
         const content = parseBullet(t, prefix)?.content ?? parseNumbered(t)?.content ?? null;
         if (!content) { continue; }
         const plain = stripAllMetadata(content).toLowerCase();
-        for (const w of plain.split(/\W+/).filter(Boolean)) { words.push(w); }
+        for (const w of plain.split(/[^\p{L}\p{N}_]+/u).filter(Boolean)) { words.push(w); }
     }
 
     const freq = rankWordFrequency(words);

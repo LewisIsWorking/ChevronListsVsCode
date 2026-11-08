@@ -43,6 +43,7 @@ Sets, Move Item to Section with nested items, and a round of fixes: AI assist on
 - **Change Item Prefix can be changed back.** Once a section used another prefix, the command could no longer read its items.
 - **Set Word Count Goal asks for a whole number.** Text was written into the header as a goal that never parsed.
 - **Show Section Time Estimate finds every estimate.** A struck-through item or a loose "~" before the estimate counted as none, and an estimate in a comment counted as one.
+- **Word counts keep accented letters.** Count Word Frequency and the other word rankings no longer cut a word such as "café" at its accent.
 - **Bulk Set Due Date and Set Expiry refuse a date the calendar does not have.**
 - **Extract URLs leaves out the punctuation after a link.** A link ending a sentence used to open with the full stop on it.
 - **Merge Section Below no longer leaves a gap mid-list.** It deleted only the next header, so the blank lines between the two sections ended up between their items. They are removed now, and the next section's items carry straight on.
