@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { collectIssues } from './diagnostics';
-import { parseNumbered } from './patterns';
 import { isHeader } from './patterns';
+import { renumberLines } from './numberingRuns';
 
 const collection = vscode.languages.createDiagnosticCollection('chevron-lists');
 
@@ -40,29 +40,17 @@ export async function onFixNumbering(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== 'markdown') { return; }
 
-    const doc      = editor.document;
-    const counters = new Map<string, number>();
-    let   inSection = false;
-
-    await editor.edit(eb => {
-        for (let i = 0; i < doc.lineCount; i++) {
-            const text = doc.lineAt(i).text;
-            if (isHeader(text)) { counters.clear(); inSection = true; continue; }
-            if (!inSection) { continue; }
-
-            const numbered = parseNumbered(text);
-            if (!numbered) { continue; }
-
-            const key      = numbered.chevrons;
-            const expected = (counters.get(key) ?? 0) + 1;
-            counters.set(key, expected);
-
-            if (numbered.num !== expected) {
-                const fixed = `${numbered.chevrons} ${expected}. ${numbered.content}`;
-                eb.replace(doc.lineAt(i).range, fixed);
-            }
-        }
-    });
+    const doc    = editor.document;
+    const before = Array.from({ length: doc.lineCount }, (_, i) => doc.lineAt(i).text);
+    const start  = before.findIndex(isHeader);
+    if (start >= 0) {
+        const fixed = renumberLines(before.slice(start));
+        await editor.edit(eb => {
+            fixed.forEach((text, k) => {
+                if (text !== before[start + k]) { eb.replace(doc.lineAt(start + k).range, text); }
+            });
+        });
+    }
 
     updateDiagnostics(editor.document);
     vscode.window.showInformationMessage('CL: Numbered items fixed');
