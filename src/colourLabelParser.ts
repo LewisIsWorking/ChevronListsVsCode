@@ -9,9 +9,10 @@ export type ColourLabel = typeof COLOUR_LABELS[number];
 /** Regex matching {colour} in item content */
 export const COLOUR_LABEL_RE = /\{(red|green|blue|yellow|orange|purple)\}/g;
 
-/** Parses the first colour label from item content */
+/** Parses the first colour label from item content, leaving out its comment */
 export function parseColourLabel(content: string): ColourLabel | null {
-    const match = content.match(/\{(red|green|blue|yellow|orange|purple)\}/);
+    const { colour, body } = splitItem(content);
+    const match = `${colour} ${body}`.match(/\{(red|green|blue|yellow|orange|purple)\}/);
     return match ? match[1] as ColourLabel : null;
 }
 

@@ -34,6 +34,9 @@ Sets, Move Item to Section with nested items, and a round of fixes: AI assist on
 - **Bulk Set Rating says when nothing changed.** It used to say no items were found.
 - **Paste as Bullets and Paste as Numbered replace copied markers.** "- milk" used to become ">> - - milk".
 - **Bulk commands keep an item's markers in place.** Bulk Tag, Bulk Set Due Date and Set Expiry on All Items added after the vote and comment, so the vote stopped parsing and the addition landed inside the comment. Bulk Set Priority put the priority before the checkbox and doubled one that came after it.
+- **Bulk Tag asks for one tag.** "a b" tagged only "a" and left "b" as a word on every item.
+- **A colour named in a comment is not the item's colour.** "// was {red}" counted in the statistics, exports and colour lists.
+- **Show Section Path leaves out the word goal.**
 - **Bulk Set Due Date and Set Expiry refuse a date the calendar does not have.**
 - **Extract URLs leaves out the punctuation after a link.** A link ending a sentence used to open with the full stop on it.
 - **Merge Section Below no longer leaves a gap mid-list.** It deleted only the next header, so the blank lines between the two sections ended up between their items. They are removed now, and the next section's items carry straight on.
