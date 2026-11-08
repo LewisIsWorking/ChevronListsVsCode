@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { parseNumbered } from './patterns';
 import { findHeaderAbove, getSectionRange } from './documentUtils';
 import { NumberingRuns } from './numberingRuns';
+import { validateNonZeroInteger } from './numberInput';
 
 type EditBuilder = vscode.TextEditorEdit;
 
@@ -59,7 +60,7 @@ export async function onOffsetListNumbers(): Promise<void> {
     const input = await vscode.window.showInputBox({
         prompt:       'Offset all numbers by (use negative to subtract)',
         placeHolder:  'e.g. 10 or -5',
-        validateInput: v => /^-?\d+$/.test(v.trim()) && v.trim() !== '0' ? null : 'Enter a non-zero integer',
+        validateInput: validateNonZeroInteger,
     });
     if (!input?.trim()) { return; }
     const offset = Number(input.trim());

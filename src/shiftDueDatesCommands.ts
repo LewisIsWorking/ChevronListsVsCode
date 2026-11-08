@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
+import { validateNonZeroInteger } from './numberInput';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, shiftDate } from './patterns';
+import { isRealDate } from './patternsUtils';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
 
 /** Command: shifts the @YYYY-MM-DD due dates of the section's items by N days */
@@ -11,8 +13,7 @@ export async function onShiftAllDueDates(): Promise<void> {
     const input = await vscode.window.showInputBox({
         prompt:       'Shift all due dates by how many days? (use negative to move back)',
         placeHolder:  'e.g. 7 or -3',
-        validateInput: v => /^-?\d+$/.test(v.trim()) && v.trim() !== '0'
-            ? null : 'Enter a non-zero integer',
+        validateInput: validateNonZeroInteger,
     });
     if (!input?.trim()) { return; }
 
@@ -31,7 +32,9 @@ export async function onShiftAllDueDates(): Promise<void> {
         for (let i = headerLine + 1; i <= end; i++) {
             const text = doc.lineAt(i).text;
             if (!parseBullet(text, prefix) && !parseNumbered(text)) { continue; }
-            const newText = text.replace(/@(\d{4}-\d{2}-\d{2})/g, (_, d: string) => {
+            const newText = text.replace(/@(\d{4}-\d{2}-\d{2})/g, (whole: string, d: string) => {
+                // A date the calendar does not have would roll into another month.
+                if (!isRealDate(d)) { return whole; }
                 shifted++;
                 return `@${shiftDate(d, days)}`;
             });

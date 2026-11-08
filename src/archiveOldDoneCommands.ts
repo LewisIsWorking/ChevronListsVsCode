@@ -5,6 +5,7 @@ import { getSectionRange } from './documentUtils';
 import { appendBlock, lineAfter, wholeLineRanges } from './lineEdits';
 import { parseCheck } from './checkParser';
 import { parseCreatedDate, ageInDays } from './itemAgeParser';
+import { validatePositiveInteger } from './numberInput';
 
 /** Command: archives [x] done items older than N days to > Archive */
 export async function onArchiveOldDoneItems(): Promise<void> {
@@ -14,7 +15,7 @@ export async function onArchiveOldDoneItems(): Promise<void> {
     const input = await vscode.window.showInputBox({
         prompt:       'Archive done items older than how many days?',
         value:        '30',
-        validateInput: v => /^\d+$/.test(v.trim()) && Number(v.trim()) > 0 ? null : 'Enter a positive integer',
+        validateInput: validatePositiveInteger,
     });
     if (!input?.trim()) { return; }
 

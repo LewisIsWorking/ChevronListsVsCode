@@ -3,6 +3,7 @@ import { parseNumbered } from './patterns';
 import { findHeaderAbove, getSectionRange } from './documentUtils';
 import { lineAfter } from './lineEdits';
 import { NumberingRuns } from './numberingRuns';
+import { validatePositiveInteger } from './numberInput';
 
 /**
  * Command: two behaviours depending on cursor position:
@@ -30,9 +31,7 @@ export async function onSetListStartNumber(): Promise<void> {
             : 'Start numbered list at…',
         value:       String(defaultN),
         placeHolder: 'e.g. 69',
-        validateInput: v => /^\d+$/.test(v.trim()) && Number(v.trim()) > 0
-            ? null
-            : 'Enter a positive integer',
+        validateInput: validatePositiveInteger,
     });
     if (!input?.trim()) { return; }
 

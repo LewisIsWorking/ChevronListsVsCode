@@ -3,6 +3,7 @@ import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { parseCreatedDate, ageInDays } from './itemAgeParser';
 import { wholeLineRanges } from './lineEdits';
+import { validatePositiveInteger } from './numberInput';
 
 /** Command: removes all items older than a user-specified number of days */
 export async function onRemoveOldItems(): Promise<void> {
@@ -13,7 +14,7 @@ export async function onRemoveOldItems(): Promise<void> {
         prompt:       'Remove items older than how many days?',
         value:        '30',
         placeHolder:  'e.g. 30',
-        validateInput: v => /^\d+$/.test(v.trim()) && Number(v.trim()) > 0 ? null : 'Enter a positive integer',
+        validateInput: validatePositiveInteger,
     });
     if (!input?.trim()) { return; }
 

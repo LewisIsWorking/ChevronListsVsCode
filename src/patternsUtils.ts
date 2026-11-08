@@ -56,7 +56,7 @@ export function shiftDate(dateStr: string, days: number): string {
 }
 
 /** Whether a YYYY-MM-DD string names a day the calendar has */
-function isRealDate(iso: string): boolean {
+export function isRealDate(iso: string): boolean {
     const [year, month, day] = iso.split('-').map(Number);
     const d = new Date(0);
     d.setFullYear(year, month - 1, day);

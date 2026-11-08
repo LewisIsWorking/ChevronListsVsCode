@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, isHeader } from './patterns';
-import { stripTags } from './tagParser';
+import { stripAllMetadata } from './metadataStripper';
 
 /** Command: replaces the cursor item with a [[SectionName]] link if a matching section exists */
 export async function onConvertItemToSectionLink(): Promise<void> {
@@ -20,8 +20,9 @@ export async function onConvertItemToSectionLink(): Promise<void> {
     const chevrons    = bullet?.chevrons ?? numbered!.chevrons;
     const content     = bullet?.content  ?? numbered!.content;
     const num         = numbered?.num ?? null;
-    // Strip markers to get plain name for matching
-    const plainName   = stripTags(content).replace(/\[.\]\s*|[!]+\s*|@\S+|~\S+|\+\d+|\/\/.*$/g, '').trim();
+    // Strip markers to get plain name for matching. Each marker only where it is
+    // one: a "!" anywhere used to be removed, so "Launch!" never matched its section.
+    const plainName   = stripAllMetadata(content).trim();
 
     // Find a section with matching name (case-insensitive)
     let matchedName: string | null = null;

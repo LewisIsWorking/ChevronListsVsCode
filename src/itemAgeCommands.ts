@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, todayDate } from './patterns';
-import { collectAgedItems } from './itemAgeParser';
+import { addCreatedDate, collectAgedItems, parseCreatedDate } from './itemAgeParser';
 
 interface AgePickItem extends vscode.QuickPickItem { lineIndex: number; }
 
@@ -23,11 +23,11 @@ export async function onStampItem(): Promise<void> {
     const chevrons = bullet?.chevrons ?? numbered!.chevrons;
     const content  = bullet?.content  ?? numbered!.content;
     const num      = numbered?.num ?? null;
-    if (content.includes('@created:')) {
+    if (parseCreatedDate(content)) {
         vscode.window.showInformationMessage('CL: Item already has a creation date');
         return;
     }
-    const newContent = `${content} @created:${today}`;
+    const newContent = addCreatedDate(content, today);
     const newLine    = num !== null
         ? `${chevrons} ${num}. ${newContent}`
         : `${chevrons} ${prefix} ${newContent}`;
