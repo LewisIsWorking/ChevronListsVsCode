@@ -3,6 +3,8 @@ import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
 import { parseExpiry } from './expiryParser';
+import { appendToItemBody, joinItem, splitItem } from './itemParts';
+import { isRealDate } from './patternsUtils';
 
 /** Command: sets @expires:YYYY-MM-DD on every item in the current section */
 export async function onSetExpiryOnAllItems(): Promise<void> {
@@ -12,7 +14,7 @@ export async function onSetExpiryOnAllItems(): Promise<void> {
     const input = await vscode.window.showInputBox({
         prompt:       'Set expiry date on all items in this section (YYYY-MM-DD)',
         placeHolder:  'e.g. 2026-12-31',
-        validateInput: v => /^\d{4}-\d{2}-\d{2}$/.test(v.trim()) ? null : 'Enter a date as YYYY-MM-DD',
+        validateInput: v => /^\d{4}-\d{2}-\d{2}$/.test(v.trim()) && isRealDate(v.trim()) ? null : 'Enter a date as YYYY-MM-DD',
     });
     if (!input?.trim()) { return; }
 
@@ -34,9 +36,10 @@ export async function onSetExpiryOnAllItems(): Promise<void> {
             const content  = bullet?.content  ?? numbered!.content;
             const num      = numbered?.num ?? null;
             // Replace existing expiry or append new one
-            const newContent = parseExpiry(content)
-                ? content.replace(/@expires:\d{4}-\d{2}-\d{2}/, `@expires:${dateStr}`)
-                : `${content} @expires:${dateStr}`;
+            const parts      = splitItem(content);
+            const newContent = parseExpiry(parts.body)
+                ? joinItem({ ...parts, body: parts.body.replace(/@expires:\d{4}-\d{2}-\d{2}/, `@expires:${dateStr}`) })
+                : appendToItemBody(content, `@expires:${dateStr}`);
             const newLine = num !== null
                 ? `${chevrons} ${num}. ${newContent}`
                 : `${chevrons} ${prefix} ${newContent}`;

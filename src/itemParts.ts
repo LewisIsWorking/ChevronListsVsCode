@@ -54,6 +54,12 @@ export function splitItem(content: string): ItemParts {
 }
 
 /** Pure: joins parts back into content, markers in the order the parsers read them */
+/** Adds `words` at the end of the item's words, so a vote and comment stay last */
+export function appendToItemBody(content: string, words: string): string {
+    const parts = splitItem(content);
+    return joinItem({ ...parts, body: `${parts.body} ${words}`.trim() });
+}
+
 export function joinItem(parts: ItemParts): string {
     const check = parts.check.toLowerCase() === '[x]' ? '[x]' : parts.check === '' ? '' : '[ ]';
     return [
