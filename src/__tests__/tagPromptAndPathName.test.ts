@@ -6,6 +6,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import * as vscode from 'vscode';
 import { openEditor, deactivate } from './helpers/editorHarness';
 import { onBulkTagItems } from '../bulkCommands';
+import { parseColourLabel } from '../colourLabelParser';
 import { onShowSectionPath } from '../sectionPathCommands';
 
 const mock = vscode as unknown as {
@@ -28,6 +29,12 @@ describe('tag prompt and path name', () => {
         expect(validate('#')).not.toBeNull();
         expect(validate('urgent')).toBeNull();
         expect(validate(' #to-do_1 ')).toBeNull();
+    });
+
+    it('a colour named in a comment is not the colour of the item', () => {
+        expect(parseColourLabel('a // was {red}')).toBeNull();
+        expect(parseColourLabel('[x] {red} a')).toBe('red');
+        expect(parseColourLabel('a {blue} b // was {red}')).toBe('blue');
     });
 
     it('Show Section Path leaves out the word goal', async () => {
