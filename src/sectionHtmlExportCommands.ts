@@ -6,6 +6,10 @@ import { parseCheck } from './checkParser';
 import { parsePriority } from './priorityParser';
 import { stripAllMetadata } from './metadataStripper';
 
+function escapeHtml(text: string): string {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 /** Pure: converts priority level to an HTML badge */
 function priorityBadge(level: number): string {
     if (level === 3) { return '<span style="color:#E06C75;font-weight:bold">🔴 </span>'; }
@@ -38,8 +42,7 @@ export async function onCopySectionAsHtml(): Promise<void> {
         const indent   = '&nbsp;'.repeat(depth * 4);
         const check    = parseCheck(content);
         const priority = parsePriority(content)?.level ?? 0;
-        const plain    = stripAllMetadata(content)
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const plain    = escapeHtml(stripAllMetadata(content));
         const badge    = priorityBadge(priority);
 
         if (check) {
@@ -54,7 +57,7 @@ export async function onCopySectionAsHtml(): Promise<void> {
         }
     }
 
-    const html = `<section><h3 style="margin:0 0 .5em">${name}</h3><ul style="padding-left:1.2em;margin:0">${lines.join('')}</ul></section>`;
+    const html = `<section><h3 style="margin:0 0 .5em">${escapeHtml(name)}</h3><ul style="padding-left:1.2em;margin:0">${lines.join('')}</ul></section>`;
     await vscode.env.clipboard.writeText(html);
     vscode.window.showInformationMessage(`CL: "${name}" copied as HTML (${lines.length} items)`);
 }

@@ -14,7 +14,7 @@ export interface TimeEstimate {
 
 /** Parses a ~Nh~Nm time estimate from item content */
 export function parseEstimate(content: string): TimeEstimate | null {
-    const match = content.match(/~((?:\d+h)?(?:\d+m)?)/);
+    const match = content.match(/~(\d+h(?:\d+m)?|\d+m)/);
     if (!match || !match[1]) { return null; }
     const hours   = parseInt(match[1].match(/(\d+)h/)?.[1] ?? '0', 10);
     const minutes = parseInt(match[1].match(/(\d+)m/)?.[1] ?? '0', 10);
