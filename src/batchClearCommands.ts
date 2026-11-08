@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
+import { splitItem, joinItem } from './itemParts';
 
 type EditBuilder = vscode.TextEditorEdit;
 
@@ -44,7 +45,7 @@ async function batchTransform(
 
 /** Command: removes all !,!!,!!! priority markers from every item in the section */
 export const onClearAllPriority  = () => batchTransform(
-    c => c.replace(/!{1,3}\s*/g, '').replace(/\s{2,}/g, ' ').trim(),
+    c => { const parts = splitItem(c); return parts.priority ? joinItem({ ...parts, priority: '' }) : c; },
     'All Priority'
 );
 

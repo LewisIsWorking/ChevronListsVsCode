@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
-import { parseCheck } from './checkParser';
+import { splitItem, joinItem } from './itemParts';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
 
 /** Command: marks all checkbox items in the current section as done */
@@ -31,13 +31,13 @@ async function toggleSectionCheckboxes(target: 'done' | 'todo'): Promise<void> {
             const numbered = parseNumbered(text);
             const content  = bullet?.content ?? numbered?.content ?? null;
             if (!content) { continue; }
-            const check = parseCheck(content);
-            if (!check) { continue; }
-            if (check.state === target) { continue; }
+            const parts = splitItem(content);
+            if (!parts.check) { continue; }
+            if (/x/i.test(parts.check) === (target === 'done')) { continue; }
             const chevrons   = bullet?.chevrons ?? numbered!.chevrons;
             const num        = numbered?.num ?? null;
             const mark       = target === 'done' ? '[x]' : '[ ]';
-            const newContent = `${mark} ${check.contentWithout}`;
+            const newContent = joinItem({ ...parts, check: mark });
             const newLine    = num !== null
                 ? `${chevrons} ${num}. ${newContent}`
                 : `${chevrons} ${prefix} ${newContent}`;

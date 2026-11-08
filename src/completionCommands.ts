@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
-import { parseCheck } from './checkParser';
+import { splitItem, joinItem } from './itemParts';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
 
 type EditBuilder = vscode.TextEditorEdit;
@@ -40,24 +40,23 @@ async function transformCheckboxes(
 /** Command: marks all [ ] items in the current section as [x] */
 export async function onMarkAllDone(): Promise<void> {
     await transformCheckboxes(content => {
-        if (parseCheck(content)?.state === 'todo') { return content.replace('[ ]', '[x]'); }
-        if (!parseCheck(content)) { return `[x] ${content}`; }
-        return content;
+        const parts = splitItem(content);
+        return /x/i.test(parts.check) ? content : joinItem({ ...parts, check: '[x]' });
     });
 }
 
 /** Command: resets all [x] items in the current section back to [ ] */
 export async function onMarkAllUndone(): Promise<void> {
     await transformCheckboxes(content => {
-        if (parseCheck(content)?.state === 'done') { return content.replace('[x]', '[ ]').replace('[X]', '[ ]'); }
-        return content;
+        const parts = splitItem(content);
+        return /x/i.test(parts.check) ? joinItem({ ...parts, check: '[ ]' }) : content;
     });
 }
 
 /** Command: strips all [x]/[ ] markers from all items in the section */
 export async function onRemoveAllCheckboxes(): Promise<void> {
     await transformCheckboxes(content => {
-        const check = parseCheck(content);
-        return check ? check.contentWithout : content;
+        const parts = splitItem(content);
+        return parts.check ? joinItem({ ...parts, check: '' }) : content;
     });
 }
