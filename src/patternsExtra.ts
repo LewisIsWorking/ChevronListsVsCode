@@ -35,9 +35,7 @@ export function isEscalatable(content: string, today: Date = new Date()): boolea
 
 /** Pure: parses a ~Nh/~Nm/~NhNm estimate string to total minutes */
 export function parseEstimateToMinutes(content: string): number {
-    const match = content.match(/~(\d+h)?(\d+m)?/);
-    if (!match || (!match[1] && !match[2])) { return 0; }
-    return (match[1] ? parseInt(match[1]) : 0) * 60 + (match[2] ? parseInt(match[2]) : 0);
+    return parseEstimate(content)?.totalMinutes ?? 0;
 }
 
 /** Pure: formats total minutes as a readable string */
