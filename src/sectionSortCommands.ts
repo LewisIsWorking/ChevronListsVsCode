@@ -42,10 +42,22 @@ async function sortSections(ascending: boolean): Promise<void> {
         if (isHeader(doc.lineAt(i).text)) { firstHeader = i; break; }
     }
 
-    const newContent = sorted.map(b => b.lines.join('\n')).join('\n');
-    const range      = new vscode.Range(firstHeader, 0, doc.lineCount, 0);
+    // Blank lines separate sections rather than belonging to one, so the gap
+    // and the end of the document keep their shape.
+    const trailingBlanks = (b: SectionBlock): number => {
+        let n = 0;
+        while (n < b.lines.length && b.lines[b.lines.length - 1 - n].trim() === '') { n++; }
+        return n;
+    };
+    const gap = trailingBlanks(blocks[0]);
+    const end = trailingBlanks(blocks[blocks.length - 1]);
+    const newContent = sorted.flatMap((b, i) => [
+        ...b.lines.slice(0, b.lines.length - trailingBlanks(b)),
+        ...Array<string>(i < sorted.length - 1 ? gap : end).fill(''),
+    ]).join('\n');
+    const range      = new vscode.Range(firstHeader, 0, doc.lineCount - 1, doc.lineAt(doc.lineCount - 1).text.length);
 
-    await editor.edit(eb => eb.replace(range, newContent + '\n'));
+    await editor.edit(eb => eb.replace(range, newContent));
     vscode.window.showInformationMessage(`CL: Sorted ${blocks.length} sections ${ascending ? 'A → Z' : 'Z → A'}`);
 }
 
