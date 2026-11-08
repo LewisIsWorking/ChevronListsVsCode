@@ -1,4 +1,5 @@
 import { tagRegex } from './tagParser';
+import { splitItem } from './itemParts';
 
 /**
  * The number of words an author wrote in an item: metadata stripped first.
@@ -27,17 +28,8 @@ export function stripAllMetadata(content: string): string {
     // and stripped text the rest of the extension does not treat as metadata at
     // all (a mid-sentence "!!!" is never a priority to parsePriority).
     //
-    // Leading markers follow the parsers' own order: checkbox, then priority,
-    // then star or flag -- the same sequence previewItemCommands applies.
-    let s = content.trim();
-    s = s.replace(/^\[(?:x| ?)\]\s*/i, '');         // checkbox      (CHECK_RE, start)
-    s = s.replace(/^!{1,3} +/, '');                 // priority      (PRIORITY_RE, start)
-    s = s.replace(/^\* +/, '');                     // star marker   (STAR_RE, start)
-    s = s.replace(/^\? +/, '');                     // flag marker   (FLAG_RE, start)
-    // A vote is the +N at the end of the text before any comment (parseVote), so
-    // the comment goes first: "idea +5 // note" has the vote 5.
-    s = s.replace(/(?:^|\s+)\/\/.*$/, '');          // inline comment (COMMENT_RE; not URLs)
-    s = s.replace(/(?:^|\s+)\+\d+\s*$/, '');        // votes         (parseVote; not C++11)
+    // splitItem takes the leading markers in any order, the comment and the vote.
+    let s = splitItem(content).body;
     // These parsers match anywhere in the content.
     s = s.replace(tagRegex(), '');                  // tags (not URL fragments)
     s = s.replace(/@\d{4}-\d{2}-\d{2}/g, '');       // due dates
