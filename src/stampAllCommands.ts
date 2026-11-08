@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, formatDate } from './patterns';
-import { parseCreatedDate } from './itemAgeParser';
+import { addCreatedDate, parseCreatedDate } from './itemAgeParser';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
 
 /** Command: adds @created:today to every item in the section that doesn't already have one */
@@ -26,7 +26,7 @@ export async function onStampAllItems(): Promise<void> {
             const content  = bullet?.content  ?? numbered!.content;
             const num      = numbered?.num ?? null;
             if (parseCreatedDate(content)) { continue; } // already stamped
-            const newContent = `${content} @created:${today}`;
+            const newContent = addCreatedDate(content, today);
             const newLine    = num !== null
                 ? `${chevrons} ${num}. ${newContent}`
                 : `${chevrons} ${prefix} ${newContent}`;

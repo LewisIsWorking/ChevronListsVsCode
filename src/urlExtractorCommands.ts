@@ -4,6 +4,8 @@ import { parseBullet, parseNumbered } from './patterns';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
 
 const URL_RE = /https?:\/\/[^\s)"'>]+/g;
+/** Punctuation that ends the sentence around a link rather than the link */
+const TRAILING_PUNCTUATION = /[.,;:!?\]]+$/;
 
 interface UrlPickItem extends vscode.QuickPickItem { url: string; }
 
@@ -25,9 +27,10 @@ export async function onExtractUrlsFromSection(): Promise<void> {
         const content = parseBullet(text, prefix)?.content ?? parseNumbered(text)?.content ?? null;
         if (!content) { continue; }
         for (const m of content.matchAll(URL_RE)) {
-            if (!seen.has(m[0])) {
-                seen.add(m[0]);
-                urls.push({ label: m[0], url: m[0] });
+            const url = m[0].replace(TRAILING_PUNCTUATION, '');
+            if (!seen.has(url)) {
+                seen.add(url);
+                urls.push({ label: url, url });
             }
         }
     }

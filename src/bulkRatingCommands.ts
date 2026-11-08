@@ -23,12 +23,14 @@ export async function onBulkSetRating(): Promise<void> {
     const [, end]     = getSectionRange(doc, headerLine);
 
     let changed = 0;
+    let items   = 0;
     await editor.edit(eb => {
         for (let i = headerLine + 1; i <= end; i++) {
             const text    = doc.lineAt(i).text;
             const bullet  = parseBullet(text, prefix);
             const numbered = parseNumbered(text);
             if (!bullet && !numbered) { continue; }
+            items++;
             const chevrons = bullet?.chevrons ?? numbered!.chevrons;
             const content  = bullet?.content  ?? numbered!.content;
             const num      = numbered?.num ?? null;
@@ -43,6 +45,8 @@ export async function onBulkSetRating(): Promise<void> {
     });
 
     vscode.window.showInformationMessage(
-        changed > 0 ? `CL: Updated rating on ${changed} item${changed === 1 ? '' : 's'}` : 'CL: No items found'
+        changed > 0
+            ? `CL: Updated rating on ${changed} item${changed === 1 ? '' : 's'}`
+            : items > 0 ? 'CL: No ratings changed' : 'CL: No items found'
     );
 }

@@ -1,24 +1,30 @@
 import type { LineReader } from './types';
 import { parseBullet, parseNumbered } from './patterns';
+import { joinItem, splitItem } from './itemParts';
 
 /** Regex matching ★N rating (1–5) in item content */
 export const RATING_RE = /★([1-5])/;
 
 /** Parses a star rating from item content */
 export function parseRating(content: string): number | null {
-    const match = content.match(RATING_RE);
+    const match = splitItem(content).body.match(RATING_RE);
     return match ? Number(match[1]) : null;
 }
 
-/** Sets or replaces the ★N rating in item content */
+function withoutRating(body: string): string {
+    return body.replace(/★[1-5]\s*/g, '').trim();
+}
+
+/** Sets or replaces the ★N rating among the item's words, after any leading markers */
 export function setRating(content: string, rating: number): string {
-    const stripped = content.replace(/★[1-5]\s*/g, '').trim();
-    return `★${rating} ${stripped}`;
+    const parts = splitItem(content);
+    return joinItem({ ...parts, body: `★${rating} ${withoutRating(parts.body)}`.trim() });
 }
 
 /** Removes any ★N rating from item content */
 export function removeRating(content: string): string {
-    return content.replace(/★[1-5]\s*/g, '').trim();
+    const parts = splitItem(content);
+    return joinItem({ ...parts, body: withoutRating(parts.body) });
 }
 
 export interface RatedItem { content: string; rating: number; section: string; line: number; }

@@ -1,12 +1,19 @@
 import type { LineReader } from './types';
 import { parseBullet, parseNumbered } from './patterns';
+import { joinItem, splitItem } from './itemParts';
 
 /** Regex matching @created:YYYY-MM-DD in item content */
 export const CREATED_RE = /@created:(\d{4}-\d{2}-\d{2})/;
 
 /** Parses a creation date from item content */
 export function parseCreatedDate(content: string): string | null {
-    return content.match(CREATED_RE)?.[1] ?? null;
+    return splitItem(content).body.match(CREATED_RE)?.[1] ?? null;
+}
+
+/** Adds @created:date among the item's words, so a vote and comment stay last */
+export function addCreatedDate(content: string, date: string): string {
+    const parts = splitItem(content);
+    return joinItem({ ...parts, body: `${parts.body} @created:${date}`.trim() });
 }
 
 /** Returns the age in days of a YYYY-MM-DD date string from today */

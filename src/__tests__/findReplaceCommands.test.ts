@@ -95,12 +95,12 @@ describe('onReplaceInSection', () => {
         expect(lastInfo()).toBe('CL: Replaced 1 occurrence in section');
     });
 
-    it('replaces every occurrence on a line, counting the line once', async () => {
+    it('replaces every occurrence on a line, counting each one', async () => {
         const h = openEditor(['> S', '>> - cat and cat'], { cursor: 1 });
         mock.queued.inputBox.push('cat', 'dog');
         await onReplaceInSection();
         expect(h.lines()[1]).toBe('>> - dog and dog');
-        expect(lastInfo()).toBe('CL: Replaced 1 occurrence in section');
+        expect(lastInfo()).toBe('CL: Replaced 2 occurrences in section');
     });
 
     it('deletes the term when the replacement is empty', async () => {

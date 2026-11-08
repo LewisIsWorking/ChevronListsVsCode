@@ -29,10 +29,14 @@ export async function onReplaceInSection(): Promise<void> {
             const bullet  = parseBullet(text, prefix);
             const numbered = parseNumbered(text);
             if (!bullet && !numbered) { continue; }
-            if (!text.includes(find)) { continue; }
-            const newText = text.split(find).join(replace);
-            eb.replace(doc.lineAt(i).range, newText);
-            count++;
+            // Only the item's words. The whole line used to be searched, so
+            // replacing "-" or "1" rewrote the list marker or the number.
+            const content = bullet?.content ?? numbered!.content;
+            const pieces  = content.split(find);
+            if (pieces.length < 2) { continue; }
+            const marker  = text.slice(0, text.length - content.length);
+            eb.replace(doc.lineAt(i).range, marker + pieces.join(replace));
+            count += pieces.length - 1;
         }
     });
 

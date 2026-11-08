@@ -25,6 +25,15 @@ Sets, Move Item to Section with nested items, and a round of fixes: AI assist on
 - **Underline Text keeps an emoji whole.**
 - **Copy Section as HTML escapes the section name.** A name holding & or < produced broken HTML.
 - **Struck-through text no longer hides a time estimate.** An item with ~~old~~ before ~2h had no estimate.
+- **Number prompts judge the number, not the digits.** Offset List Numbers and Shift All Due Dates accepted "00" and "-0" as a change of zero, and every whole number prompt accepted values too large to keep exact. Numbers are now limited to 1,000,000.
+- **Replace in Section edits only an item's words.** Replacing "-" or "1" used to rewrite the list marker or the number. Its message now counts occurrences rather than lines.
+- **Convert Item to Section Link matches a name holding punctuation.** An item called "Launch!" never found the section "Launch!".
+- **Shift All Due Dates leaves a date the calendar does not have.** @2026-02-30 used to roll into March.
+- **Item stamps stay among the words.** Stamp Item and Stamp All Items put @created: after the vote and comment, so the vote stopped parsing and the date landed inside the comment.
+- **A rating keeps the checkbox and priority leading.** Set Item Rating and Bulk Set Rating put the star first, so the checkbox and priority stopped parsing. A star inside a comment no longer counts as a rating.
+- **Bulk Set Rating says when nothing changed.** It used to say no items were found.
+- **Paste as Bullets and Paste as Numbered replace copied markers.** "- milk" used to become ">> - - milk".
+- **Extract URLs leaves out the punctuation after a link.** A link ending a sentence used to open with the full stop on it.
 - **Merge Section Below no longer leaves a gap mid-list.** It deleted only the next header, so the blank lines between the two sections ended up between their items. They are removed now, and the next section's items carry straight on.
 - **Move Section Up / Down takes a section's notes with it.** A section stopped at its last item, so a paragraph under the items stayed behind and ended up under the other section. The whole section now moves, up to its last non-blank line.
 - **Copy Section as Markdown keeps items nested under a numbered item.** Every level was indented two spaces, but under `1. ` CommonMark needs three, so a child of a numbered item fell out of the list. Each item is now indented to its parent's text.
