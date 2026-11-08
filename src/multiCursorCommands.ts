@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
-import { parseCheck } from './checkParser';
+import { splitItem, joinItem } from './itemParts';
 
 type EditBuilder = vscode.TextEditorEdit;
 
@@ -32,15 +32,8 @@ export async function onToggleDoneAllCursors(): Promise<void> {
             const numbered = parseNumbered(text);
             const content  = bullet?.content ?? numbered?.content ?? null;
             if (!content) { continue; }
-            const check = parseCheck(content);
-            let newContent: string;
-            if (!check) {
-                newContent = `[ ] ${content}`;
-            } else if (check.state === 'done') {
-                newContent = `[ ] ${check.contentWithout}`;
-            } else {
-                newContent = `[x] ${check.contentWithout}`;
-            }
+            const parts = splitItem(content);
+            const newContent = joinItem({ ...parts, check: /^\[ ?]$/.test(parts.check) ? '[x]' : '[ ]' });
             const newLine = rebuildLine(text, newContent, prefix);
             if (newLine) { eb.replace(doc.lineAt(lineIndex).range, newLine); }
         }
@@ -74,9 +67,7 @@ export async function onSetPriorityAllCursors(): Promise<void> {
             const numbered = parseNumbered(text);
             const content  = bullet?.content ?? numbered?.content ?? null;
             if (!content) { continue; }
-            // Strip existing priority
-            const stripped = content.replace(/^(!{1,3})\s*/, '').trim();
-            const newContent = pick.priority ? `${pick.priority} ${stripped}` : stripped;
+            const newContent = joinItem({ ...splitItem(content), priority: pick.priority });
             const newLine    = rebuildLine(text, newContent, prefix);
             if (newLine) { eb.replace(doc.lineAt(lineIndex).range, newLine); }
         }
