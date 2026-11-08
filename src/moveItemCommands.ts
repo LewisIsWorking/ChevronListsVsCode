@@ -72,20 +72,38 @@ export function moveItemBlock(lines: string[], index: number, up: boolean, prefi
     return { lines: rest, newIndex: insertAt };
 }
 
+/**
+ * Pure: moves the item at `index`, with anything nested under it, to the first
+ * place among its siblings (or the last when `top` is false). Null when it is
+ * already there or the line is not an item.
+ */
+export function moveItemToEdge(lines: string[], index: number, top: boolean, prefix: string): MoveResult | null {
+    let result = moveItemBlock(lines, index, top, prefix);
+    if (!result) { return null; }
+    for (let next = moveItemBlock(result.lines, result.newIndex, top, prefix); next;
+         next = moveItemBlock(result.lines, result.newIndex, top, prefix)) {
+        result = next;
+    }
+    return result;
+}
+
 /** Applies a move: rewrites only the lines that changed, then follows the item with the cursor */
-async function moveItem(up: boolean): Promise<void> {
+export async function applyItemMove(
+    compute: (lines: string[], index: number, prefix: string) => MoveResult | null,
+    notAnItem: string,
+): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== 'markdown') { return; }
     const { prefix } = getConfig();
     const doc        = editor.document;
     const lineIndex  = editor.selection.active.line;
     if (depthOf(doc.lineAt(lineIndex).text, prefix) === null) {
-        vscode.window.showInformationMessage('CL: Place cursor on a chevron item to move it'); return;
+        vscode.window.showInformationMessage(notAnItem); return;
     }
 
     const before: string[] = [];
     for (let i = 0; i < doc.lineCount; i++) { before.push(doc.lineAt(i).text); }
-    const result = moveItemBlock(before, lineIndex, up, prefix);
+    const result = compute(before, lineIndex, prefix);
     if (!result) { return; }
 
     let first = 0;
@@ -100,8 +118,10 @@ async function moveItem(up: boolean): Promise<void> {
     editor.selection = new vscode.Selection(pos, pos);
 }
 
+const MOVE_HINT = 'CL: Place cursor on a chevron item to move it';
+
 /** Command: moves the item at the cursor, with its nested items, above the previous item at its depth */
-export function onMoveItemUp(): Promise<void> { return moveItem(true); }
+export function onMoveItemUp(): Promise<void> { return applyItemMove((l, i, p) => moveItemBlock(l, i, true, p), MOVE_HINT); }
 
 /** Command: moves the item at the cursor, with its nested items, below the next item at its depth */
-export function onMoveItemDown(): Promise<void> { return moveItem(false); }
+export function onMoveItemDown(): Promise<void> { return applyItemMove((l, i, p) => moveItemBlock(l, i, false, p), MOVE_HINT); }
