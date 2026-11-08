@@ -2,8 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
 import { parseVote, setVoteCount } from './voteParser';
-import { getSectionRange } from './documentUtils';
-import { findHeaderAbove } from './documentUtils';
+import { sortSectionBy } from './sortCommands';
 
 /** Adjusts vote count on the item at the cursor by delta (+1 or -1) */
 async function adjustVote(delta: 1 | -1): Promise<void> {
@@ -27,31 +26,10 @@ async function adjustVote(delta: 1 | -1): Promise<void> {
     await editor.edit(eb => eb.replace(doc.lineAt(lineIndex).range, newLine));
 }
 
-/** Command: sorts items in the current section by vote count descending */
-export async function onSortByVotes(): Promise<void> {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor || editor.document.languageId !== 'markdown') { return; }
-    const { prefix }  = getConfig();
-    const doc         = editor.document;
-    const headerLine  = findHeaderAbove(doc, editor.selection.active.line);
-    if (headerLine < 0) { vscode.window.showInformationMessage('CL: No section found at cursor'); return; }
-    const [, end]     = getSectionRange(doc, headerLine);
+const votesOf = (content: string): number => parseVote(content)?.count ?? 0;
 
-    const lines: string[] = [];
-    for (let i = headerLine + 1; i <= end; i++) { lines.push(doc.lineAt(i).text); }
-
-    const sorted = [...lines].sort((a, b) => {
-        const bv = parseBullet(b, prefix) ?? parseNumbered(b);
-        const av = parseBullet(a, prefix) ?? parseNumbered(a);
-        const bc = bv ? (bv as any).content ?? '' : '';
-        const ac = av ? (av as any).content ?? '' : '';
-        return (parseVote(bc)?.count ?? 0) - (parseVote(ac)?.count ?? 0);
-    }).reverse();
-
-    await editor.edit(eb => {
-        sorted.forEach((line, idx) => eb.replace(doc.lineAt(headerLine + 1 + idx).range, line));
-    });
-}
+/** Command: sorts items in the current section by vote count, most first, keeping nested items with their parent */
+export const onSortByVotes = () => sortSectionBy((a, b) => votesOf(b) - votesOf(a));
 
 export const onAddVote    = () => adjustVote(1);
 export const onRemoveVote = () => adjustVote(-1);
