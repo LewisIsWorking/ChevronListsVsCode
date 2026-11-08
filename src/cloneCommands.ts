@@ -2,16 +2,13 @@ import * as vscode from 'vscode';
 import { isHeader, parseNumbered } from './patterns';
 import { findHeaderAbove } from './documentUtils';
 import { lineAfter, sectionContentEnd } from './lineEdits';
+import { prevNumberInRun } from './numberingRuns';
 
 /** The item's text for the end of the section at `headerLine`: a numbered item continues the list there */
 function textForSection(doc: vscode.TextDocument, text: string, headerLine: number): string {
     const item = parseNumbered(text);
     if (!item) { return text; }
-    let last = 0;
-    for (let i = headerLine + 1; i <= sectionContentEnd(doc, headerLine); i++) {
-        const other = parseNumbered(doc.lineAt(i).text);
-        if (other?.chevrons === item.chevrons) { last = other.num; }
-    }
+    const last = prevNumberInRun(doc, sectionContentEnd(doc, headerLine) + 1, item.chevrons);
     return `${item.chevrons} ${last + 1}. ${item.content}`;
 }
 
