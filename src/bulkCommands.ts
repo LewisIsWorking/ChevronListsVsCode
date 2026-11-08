@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, todayDate } from './patterns';
 import { hasTag } from './tagParser';
+import { appendToItemBody, joinItem, splitItem } from './itemParts';
+import { isRealDate } from './patternsUtils';
 import { getSectionRange } from './documentUtils';
 import { findHeaderAbove } from './documentUtils';
 
@@ -45,8 +47,8 @@ export async function onBulkTagItems(): Promise<void> {
     await bulkTransformSection(editor, (content) => {
         // The tag itself, in any case -- not any text containing it: "#tagging"
         // used to count as already having "#tag".
-        if (hasTag(content, tag)) { return content; }
-        return `${content} #${tag}`;
+        if (hasTag(splitItem(content).body, tag)) { return content; }
+        return appendToItemBody(content, `#${tag}`);
     });
 }
 
@@ -59,10 +61,7 @@ export async function onBulkSetPriority(): Promise<void> {
         { placeHolder: 'Select priority level for all items' }
     );
     if (!level) { return; }
-    await bulkTransformSection(editor, (content) => {
-        const stripped = content.replace(/^!{1,3} /, '');
-        return `${level.value} ${stripped}`;
-    });
+    await bulkTransformSection(editor, (content) => joinItem({ ...splitItem(content), priority: level.value }));
 }
 
 /** Command: sets a due date on all items in the current section */
@@ -72,11 +71,12 @@ export async function onBulkSetDueDate(): Promise<void> {
     const date = await vscode.window.showInputBox({
         prompt:      'Due date for all items (YYYY-MM-DD)',
         placeHolder: `${todayDate()}`,
-        validateInput: v => /^\d{4}-\d{2}-\d{2}$/.test(v) ? null : 'Format must be YYYY-MM-DD',
+        validateInput: v => /^\d{4}-\d{2}-\d{2}$/.test(v) && isRealDate(v) ? null : 'Format must be YYYY-MM-DD',
     });
     if (!date?.trim()) { return; }
     await bulkTransformSection(editor, (content) => {
-        const stripped = content.replace(/@\d{4}-\d{2}-\d{2}/, '').trim();
-        return `${stripped} @${date.trim()}`;
+        const parts = splitItem(content);
+        const body  = parts.body.replace(/@\d{4}-\d{2}-\d{2}/, '').trim();
+        return joinItem({ ...parts, body: `${body} @${date.trim()}`.trim() });
     });
 }
