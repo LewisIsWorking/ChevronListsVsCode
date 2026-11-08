@@ -50,7 +50,7 @@ export function extractLabels(content: string): Array<{ text: string; start: num
 
 /** Title-cases a string - first letter of each word capitalised */
 export function toTitleCase(s: string): string {
-    return s.replace(/\b\w/g, c => c.toUpperCase());
+    return s.replace(/(?<![\p{L}\p{N}_'’])\p{L}/gu, c => c.toUpperCase());
 }
 
 /** Toggles ~~strikethrough~~ on a content string */
