@@ -24,7 +24,7 @@ export async function onShowSectionVoteLeaderboard(): Promise<void> {
         if (!content) { continue; }
         const vote = parseVote(content);
         if (!vote) { continue; }
-        ranked.push({ content, votes: vote.count, line: i });
+        ranked.push({ content: vote.contentWithout, votes: vote.count, line: i });
     }
 
     if (ranked.length === 0) {

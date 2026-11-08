@@ -1,19 +1,23 @@
 import type { LineReader } from './types';
 import { parseBullet, parseNumbered } from './patterns';
+import { splitItem, joinItem } from './itemParts';
 
 /** Regex matching ? question flag at start of item content */
 export const FLAG_RE = /^\? (.+)$/;
 
 /** Parses a question flag from item content */
 export function parseFlag(content: string): { contentWithout: string } | null {
-    const match = content.match(FLAG_RE);
-    return match ? { contentWithout: match[1] } : null;
+    const parts = splitItem(content);
+    if (parts.marker !== '?' || !parts.body) { return null; }
+    return { contentWithout: joinItem({ ...parts, marker: '' }) };
 }
 
 /** Toggles the ? flag on item content */
 export function toggleFlag(content: string): string {
     const parsed = parseFlag(content);
-    return parsed ? parsed.contentWithout : `? ${content}`;
+    if (parsed) { return parsed.contentWithout; }
+    const parts = splitItem(content);
+    return parts.marker ? `? ${content}` : joinItem({ ...parts, marker: '?' });
 }
 
 export interface FlaggedItem {

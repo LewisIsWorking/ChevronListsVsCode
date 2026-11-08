@@ -1,19 +1,23 @@
 import type { LineReader } from './types';
 import { parseBullet, parseNumbered } from './patterns';
+import { splitItem, joinItem } from './itemParts';
 
 /** Regex matching a star marker at the start of item content */
 export const STAR_RE = /^\* (.+)$/;
 
 /** Parses a star marker from item content */
 export function parseStar(content: string): { contentWithout: string } | null {
-    const match = content.match(STAR_RE);
-    return match ? { contentWithout: match[1] } : null;
+    const parts = splitItem(content);
+    if (parts.marker !== '*' || !parts.body) { return null; }
+    return { contentWithout: joinItem({ ...parts, marker: '' }) };
 }
 
 /** Returns item content with a star marker toggled on or off */
 export function toggleStar(content: string): string {
     const star = parseStar(content);
-    return star ? star.contentWithout : `* ${content}`;
+    if (star) { return star.contentWithout; }
+    const parts = splitItem(content);
+    return parts.marker ? `* ${content}` : joinItem({ ...parts, marker: '*' });
 }
 
 export interface StarredItem {

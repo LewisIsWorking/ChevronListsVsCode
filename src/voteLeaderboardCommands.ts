@@ -24,7 +24,7 @@ export async function onShowVoteLeaderboard(): Promise<void> {
         const vote = parseVote(content);
         if (!vote || vote.count <= 0) { continue; }
         items.push({
-            label:       `$(star-full) +${vote.count}  ${content.replace(/\+\d+/, '').trim()}`,
+            label:       `$(star-full) +${vote.count}  ${vote.contentWithout}`,
             description: section,
             lineIndex:   i,
             votes:       vote.count,
