@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
+import { renumberFollowing } from './numberingRuns';
 
 /** Command: splits the item at the cursor position into two items */
 export async function onSplitItemAtCursor(): Promise<void> {
@@ -44,11 +45,13 @@ export async function onSplitItemAtCursor(): Promise<void> {
     const lineA    = makeItem(beforeSplit, num);
     const lineB    = makeItem(afterSplit, nextNum);
 
-    await editor.edit(eb =>
-        eb.replace(doc.lineAt(lineIndex).range, `${lineA}\n${lineB}`)
-    );
+    const openUp = numbered ? renumberFollowing(doc, lineIndex, chevrons, 1) : [];
+    await editor.edit(eb => {
+        eb.replace(doc.lineAt(lineIndex).range, `${lineA}\n${lineB}`);
+        for (const { line, text: renumbered } of openUp) { eb.replace(doc.lineAt(line).range, renumbered); }
+    });
 
-    // Place cursor at start of second item
-    const pos = new vscode.Position(lineIndex + 1, lineB.length);
+    // Place cursor at start of second item's words
+    const pos = new vscode.Position(lineIndex + 1, lineB.length - afterSplit.length);
     editor.selection = new vscode.Selection(pos, pos);
 }

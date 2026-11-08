@@ -20,6 +20,9 @@ Sets, Move Item to Section with nested items, and a round of fixes: AI assist on
 - **Set Priority and Toggle Done on all cursors read markers in any order.** A priority after a checkbox, or a checkbox after a priority, was missed and a second one added. An exclamation mark starting a word was removed as if it were a priority.
 - **Clear All Priority leaves exclamation marks in the words.** It removed every ! in the item, so "Wow! great" lost its punctuation.
 - **Section checkbox commands and Strip All Metadata read markers in any order.** A checkbox after a priority was missed, and Mark All Done added a second one.
+- **Merge Item with Next and Split Item at Cursor keep numbered lists in sequence.** Merging left a gap and splitting repeated a number. Merging also keeps the second item's vote and comment, and drops its checkbox instead of leaving it in the words.
+- **Sort All Sections keeps the document's shape.** The blank line between sections moved with the section, and each sort added another blank line at the end.
+- **Underline Text keeps an emoji whole.**
 - **Merge Section Below no longer leaves a gap mid-list.** It deleted only the next header, so the blank lines between the two sections ended up between their items. They are removed now, and the next section's items carry straight on.
 - **Move Section Up / Down takes a section's notes with it.** A section stopped at its last item, so a paragraph under the items stayed behind and ended up under the other section. The whole section now moves, up to its last non-blank line.
 - **Copy Section as Markdown keeps items nested under a numbered item.** Every level was indented two spaces, but under `1. ` CommonMark needs three, so a child of a numbered item fell out of the list. Each item is now indented to its parent's text.

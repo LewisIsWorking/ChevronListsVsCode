@@ -137,7 +137,7 @@ export function toggleWrap(text: string, style: 'bold' | 'italic' | 'mono' | 'st
 
 /** Pure: applies Unicode combining low line underline to each character */
 export function applyUnicodeUnderline(text: string): string {
-    return text.split('').map(c => c + '\u0332').join('');
+    return [...text].map(c => c + '\u0332').join('');
 }
 
 /** Pure: removes Unicode combining low line underline characters */
