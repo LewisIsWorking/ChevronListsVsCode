@@ -55,13 +55,21 @@ export function shiftDate(dateStr: string, days: number): string {
     return formatDate(date);
 }
 
+/** Whether a YYYY-MM-DD string names a day the calendar has */
+function isRealDate(iso: string): boolean {
+    const [year, month, day] = iso.split('-').map(Number);
+    const d = new Date(0);
+    d.setFullYear(year, month - 1, day);
+    return d.getMonth() === month - 1 && d.getDate() === day;
+}
+
 /** Parses natural-language date input to YYYY-MM-DD. Returns null if unrecognised. */
 export function parseNaturalDate(input: string, from: Date = new Date()): string | null {
     const s     = input.trim().toLowerCase();
     const today = new Date(from.getFullYear(), from.getMonth(), from.getDate());
     const relMatch = s.match(/^\+(\d+)$/);
-    if (relMatch) { const d = new Date(today); d.setDate(d.getDate() + Number(relMatch[1])); return formatDate(d); }
-    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) { return s; }
+    if (relMatch) { const d = new Date(today); d.setDate(d.getDate() + Number(relMatch[1])); return isNaN(d.getTime()) ? null : formatDate(d); }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) { return isRealDate(s) ? s : null; }
     const days: Record<string, number> = {
         sun: 0, sunday: 0, mon: 1, monday: 1, tue: 2, tuesday: 2,
         wed: 3, wednesday: 3, thu: 4, thursday: 4, fri: 5, friday: 5, sat: 6, saturday: 6,
