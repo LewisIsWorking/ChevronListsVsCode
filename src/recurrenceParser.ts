@@ -1,5 +1,6 @@
 import type { LineReader } from './types';
 import { parseBullet, parseNumbered, addMonths, formatDate } from './patterns';
+import { splitItem } from './itemParts';
 
 export type RecurrenceType = 'daily' | 'weekly' | 'monthly';
 
@@ -9,11 +10,11 @@ export interface RecurrenceMatch {
 }
 
 /** Regex matching @daily, @weekly, @monthly in item content */
-export const RECURRENCE_RE = /@(daily|weekly|monthly)/i;
+export const RECURRENCE_RE = /(?<!\S)@(daily|weekly|monthly)(?![\w-])/i;
 
 /** Parses a recurrence marker from item content */
 export function parseRecurrence(content: string): RecurrenceMatch | null {
-    const match = content.match(RECURRENCE_RE);
+    const match = splitItem(content).body.match(RECURRENCE_RE);
     if (!match) { return null; }
     return {
         type:           match[1].toLowerCase() as RecurrenceType,

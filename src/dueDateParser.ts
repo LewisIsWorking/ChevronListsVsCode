@@ -1,5 +1,6 @@
 import type { LineReader } from './types';
 import { parseBullet, parseNumbered } from './patterns';
+import { splitItem } from './itemParts';
 
 /** A parsed due date item */
 export interface DueDate {
@@ -16,7 +17,7 @@ export const DATE_RE = /@(\d{4}-\d{2}-\d{2})/g;
 
 /** Extracts the first @YYYY-MM-DD date from item content */
 export function extractDate(content: string): { dateStr: string; contentWithout: string } | null {
-    const match = content.match(/@(\d{4}-\d{2}-\d{2})/);
+    const match = splitItem(content).body.match(/@(\d{4}-\d{2}-\d{2})/);
     if (!match) { return null; }
     return {
         dateStr:      match[1],

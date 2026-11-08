@@ -4,6 +4,7 @@
  * Re-exported by patterns.ts so callers use a single import.
  */
 import { extractTags } from './tagParser';
+import { splitItem } from './itemParts';
 import { extractMentions } from './mentionParser';
 import { CHECK_RE } from './checkParser';
 import { PRIORITY_RE } from './priorityParser';
@@ -171,8 +172,6 @@ export function collectMentionStats(
     lines: Array<{ text: string }>,
     prefix: string
 ): MentionStat[] {
-    const CHECK_DONE = /^\[x\] /i;
-    const CHECK_ANY  = /^\[(x| ?)\] /i;
     const BULLET_RE  = new RegExp(`^(>{2,}) ${prefix === '-' ? '-' : prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} (.*)$`);
     const NUM_RE     = /^(>{2,}) \d+\. (.*)$/;
     const stats      = new Map<string, { total: number; done: number }>();
@@ -184,7 +183,7 @@ export function collectMentionStats(
         // Each person once per item: an item naming @Sam twice is one item for Sam.
         const mentions  = extractMentions(content);
         if (mentions.length === 0) { continue; }
-        const done = CHECK_ANY.test(content) && CHECK_DONE.test(content);
+        const done = splitItem(content).check.toLowerCase() === '[x]';
         for (const name of mentions) {
             if (!stats.has(name)) { stats.set(name, { total: 0, done: 0 }); }
             const s = stats.get(name)!;
