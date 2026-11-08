@@ -6,6 +6,7 @@
 import { parseBullet, parseNumbered, isHeader } from './patterns';
 import { todayDate } from './patternsUtils';
 import { extractTags } from './tagParser';
+import { splitItem } from './itemParts';
 
 /** Formats elapsed milliseconds as Ns / Nm / NhNm */
 export function formatElapsed(ms: number): string {
@@ -103,8 +104,6 @@ export interface TagStat { tag: string; total: number; done: number; }
 
 /** Pure: collects per-tag item/done counts from document lines */
 export function collectTagStats(lines: Array<{ text: string }>, prefix: string): TagStat[] {
-    const CHECK_DONE = /^\[x\] /i;
-    const CHECK_ANY  = /^\[(x| ?)\] /i;
     const BULLET_RE  = new RegExp(`^(>{2,}) ${prefix === '-' ? '-' : prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} (.*)$`);
     const NUM_RE     = /^(>{2,}) \d+\. (.*)$/;
     const stats      = new Map<string, { total: number; done: number }>();
@@ -115,7 +114,7 @@ export function collectTagStats(lines: Array<{ text: string }>, prefix: string):
         // are one tag, and an item tagged twice counts once.
         const tags = extractTags(content);
         if (tags.length === 0) { continue; }
-        const done = CHECK_ANY.test(content) && CHECK_DONE.test(content);
+        const done = splitItem(content).check.toLowerCase() === '[x]';
         for (const tag of tags) {
             if (!stats.has(tag)) { stats.set(tag, { total: 0, done: 0 }); }
             const s = stats.get(tag)!; s.total++; if (done) { s.done++; }

@@ -47,6 +47,8 @@ Sets, Move Item to Section with nested items, and a round of fixes: AI assist on
 - **Stars and flags are found after a checkbox or priority.** Toggle Star and Toggle Flag no longer add a second marker there, and the star and flag filters, JSON copies and statistics now count those items.
 - **Expiry dates are read from an item's words.** A date inside a comment no longer counts.
 - **Vote leaderboards show the right words.** The file list no longer cuts an earlier "+N" from an item, and the section list no longer shows the vote twice.
+- **Due dates, recurrence and mentions are read from an item's words.** One inside a comment no longer counts, and @dailybrief is no longer a daily item.
+- **Tag Stats and the Mentions Report count every done item.** A checkbox after a priority or star now counts.
 - **Bulk Set Due Date and Set Expiry refuse a date the calendar does not have.**
 - **Extract URLs leaves out the punctuation after a link.** A link ending a sentence used to open with the full stop on it.
 - **Merge Section Below no longer leaves a gap mid-list.** It deleted only the next header, so the blank lines between the two sections ended up between their items. They are removed now, and the next section's items carry straight on.

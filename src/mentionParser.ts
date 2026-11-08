@@ -1,5 +1,6 @@
 import type { LineReader } from './types';
 import { parseBullet, parseNumbered } from './patterns';
+import { splitItem } from './itemParts';
 
 /** A @mention occurrence in item content */
 export interface MentionOccurrence {
@@ -24,7 +25,7 @@ export const MENTION_RE = /(?<!\S)@([A-Z][\w-]*)/g;
 /** Extracts all @mentions from item content */
 export function extractMentions(content: string): string[] {
     const names: string[] = [];
-    for (const match of content.matchAll(MENTION_RE)) {
+    for (const match of splitItem(content).body.matchAll(MENTION_RE)) {
         names.push(match[1]);
     }
     return [...new Set(names)];
