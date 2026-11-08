@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { isHeader } from './patterns';
 import { getSectionRange } from './documentUtils';
 import { findHeaderAbove } from './documentUtils';
+import { sectionContentEnd } from './lineEdits';
 
 /** Command: merges the current section with the one immediately below it */
 export async function onMergeSectionBelow(): Promise<void> {
@@ -13,31 +13,20 @@ export async function onMergeSectionBelow(): Promise<void> {
     if (headerLine < 0) { vscode.window.showInformationMessage('CL: No section found at cursor'); return; }
 
     const [, currentEnd] = getSectionRange(doc, headerLine);
-
-    // Find the next header
-    let nextHeader = -1;
-    for (let i = currentEnd + 1; i < doc.lineCount; i++) {
-        if (isHeader(doc.lineAt(i).text)) { nextHeader = i; break; }
-    }
-    if (nextHeader < 0) {
+    const nextHeader     = currentEnd + 1;
+    if (nextHeader >= doc.lineCount) {
         vscode.window.showInformationMessage('CL: No section below to merge with');
         return;
     }
 
-    const [, nextEnd] = getSectionRange(doc, nextHeader);
-
-    // Collect all lines from the next section's items (skip the header)
-    const nextItems: string[] = [];
-    for (let i = nextHeader + 1; i <= nextEnd; i++) {
-        nextItems.push(doc.lineAt(i).text);
-    }
-
-    await editor.edit(eb => {
-        // Delete the next section header and any blank lines between sections
-        const deleteStart = new vscode.Position(currentEnd + 1, 0);
-        const deleteEnd   = new vscode.Position(nextHeader + 1, 0);
-        eb.delete(new vscode.Range(deleteStart, deleteEnd));
-    });
+    // Delete the blank lines after this section's content and the next header,
+    // so the next section's items carry straight on. getSectionRange runs up to
+    // the next header, so deleting from its end left those blanks mid-list.
+    const contentEnd = sectionContentEnd(doc, headerLine);
+    await editor.edit(eb => eb.delete(new vscode.Range(
+        new vscode.Position(contentEnd + 1, 0),
+        new vscode.Position(nextHeader + 1, 0),
+    )));
 }
 
 /** Command: splits the current section at the cursor line */
