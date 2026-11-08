@@ -1,6 +1,10 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { uniqueTags, renameTagInText } from './tagParser';
+import { uniqueTags, renameTagInItem } from './tagParser';
+
+function validateTagName(value: string): string | null {
+    return /^#?\w[\w-]*$/.test(value.trim()) ? null : 'Tags can only contain letters, numbers, hyphens and underscores';
+}
 
 /** Command: renames a #tag across all items in the current file */
 export async function onRenameTag(): Promise<void> {
@@ -25,7 +29,7 @@ export async function onRenameTag(): Promise<void> {
     const newTag = await vscode.window.showInputBox({
         prompt: `Rename #${picked.tag} to`,
         value:  picked.tag,
-        validateInput: v => /^[\w-]+$/.test(v) ? null : 'Tags can only contain letters, numbers, hyphens and underscores',
+        validateInput: validateTagName,
     });
     if (!newTag?.trim() || newTag.trim() === picked.tag) { return; }
 
@@ -33,7 +37,7 @@ export async function onRenameTag(): Promise<void> {
     await editor.edit(eb => {
         for (let i = 0; i < doc.lineCount; i++) {
             const text    = doc.lineAt(i).text;
-            const renamed = renameTagInText(text, picked.tag, newTag.trim());
+            const renamed = renameTagInItem(text, prefix, picked.tag, newTag.trim());
             if (renamed !== text) { eb.replace(doc.lineAt(i).range, renamed); count++; }
         }
     });
@@ -67,7 +71,7 @@ export async function onRenameTagWorkspace(): Promise<void> {
     const newTag = await vscode.window.showInputBox({
         prompt: `Rename #${picked.tag} to (workspace-wide)`,
         value:  picked.tag,
-        validateInput: v => /^[\w-]+$/.test(v) ? null : 'Tags can only contain letters, numbers, hyphens and underscores',
+        validateInput: validateTagName,
     });
     if (!newTag?.trim() || newTag.trim() === picked.tag) { return; }
 
@@ -82,7 +86,7 @@ export async function onRenameTagWorkspace(): Promise<void> {
                 let changed = false;
                 for (let i = 0; i < doc.lineCount; i++) {
                     const text    = doc.lineAt(i).text;
-                    const renamed = renameTagInText(text, picked.tag, newTag.trim());
+                    const renamed = renameTagInItem(text, prefix, picked.tag, newTag.trim());
                     if (renamed !== text) {
                         edit.replace(uri, doc.lineAt(i).range, renamed);
                         totalLines++; changed = true;

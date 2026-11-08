@@ -37,6 +37,11 @@ Sets, Move Item to Section with nested items, and a round of fixes: AI assist on
 - **Bulk Tag asks for one tag.** "a b" tagged only "a" and left "b" as a word on every item.
 - **A colour named in a comment is not the item's colour.** "// was {red}" counted in the statistics, exports and colour lists.
 - **Show Section Path leaves out the word goal.**
+- **Batch Replace Text edits only an item's words.** Replacing "-" or "1" used to rewrite the list marker or the number.
+- **Rename Tag changes only items.** It also rewrote the tag in headings and prose around the lists, in the file and across the workspace.
+- **Group Items by Tag can be run again.** A second run stacked up the old group headings. It now renumbers numbered items and no longer adds a blank line at the end of the file.
+- **Change Item Prefix can be changed back.** Once a section used another prefix, the command could no longer read its items.
+- **Set Word Count Goal asks for a whole number.** Text was written into the header as a goal that never parsed.
 - **Bulk Set Due Date and Set Expiry refuse a date the calendar does not have.**
 - **Extract URLs leaves out the punctuation after a link.** A link ending a sentence used to open with the full stop on it.
 - **Merge Section Below no longer leaves a gap mid-list.** It deleted only the next header, so the blank lines between the two sections ended up between their items. They are removed now, and the next section's items carry straight on.

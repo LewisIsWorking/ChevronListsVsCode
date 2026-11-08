@@ -22,11 +22,10 @@ export async function onBatchReplaceText(): Promise<void> {
 
     for (let i = headerLine + 1; i <= end; i++) {
         const text    = doc.lineAt(i).text;
-        const bullet  = parseBullet(text, prefix);
-        const numbered = parseNumbered(text);
-        if (!bullet && !numbered) { continue; }
-        if (!text.includes(find)) { continue; }
-        matches.push({ line: i, newText: text.split(find).join(replace) });
+        const content = parseBullet(text, prefix)?.content ?? parseNumbered(text)?.content ?? '';
+        // Only the words: searching the whole line rewrote the marker and the number.
+        if (!content.includes(find)) { continue; }
+        matches.push({ line: i, newText: text.slice(0, text.length - content.length) + content.split(find).join(replace) });
     }
 
     if (matches.length === 0) {
