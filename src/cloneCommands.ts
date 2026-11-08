@@ -1,7 +1,19 @@
 import * as vscode from 'vscode';
-import { isHeader } from './patterns';
+import { isHeader, parseNumbered } from './patterns';
 import { findHeaderAbove } from './documentUtils';
 import { lineAfter, sectionContentEnd } from './lineEdits';
+
+/** The item's text for the end of the section at `headerLine`: a numbered item continues the list there */
+function textForSection(doc: vscode.TextDocument, text: string, headerLine: number): string {
+    const item = parseNumbered(text);
+    if (!item) { return text; }
+    let last = 0;
+    for (let i = headerLine + 1; i <= sectionContentEnd(doc, headerLine); i++) {
+        const other = parseNumbered(doc.lineAt(i).text);
+        if (other?.chevrons === item.chevrons) { last = other.num; }
+    }
+    return `${item.chevrons} ${last + 1}. ${item.content}`;
+}
 
 function revealLine(editor: vscode.TextEditor, lineIndex: number): void {
     const pos = new vscode.Position(lineIndex, 0);
@@ -25,7 +37,7 @@ export async function onCloneItem(): Promise<void> {
 
     const headerLine = findHeaderAbove(doc, lineIndex);
     if (headerLine < 0) { return; }
-    const ins = lineAfter(doc, sectionContentEnd(doc, headerLine), text);
+    const ins = lineAfter(doc, sectionContentEnd(doc, headerLine), textForSection(doc, text, headerLine));
     await editor.edit(eb => eb.insert(ins.position, ins.text));
     revealLine(editor, ins.line);
 }
@@ -57,7 +69,7 @@ export async function onCloneItemToSection(): Promise<void> {
     );
     if (!pick) { return; }
 
-    const ins = lineAfter(doc, sectionContentEnd(doc, pick.lineIndex), text);
+    const ins = lineAfter(doc, sectionContentEnd(doc, pick.lineIndex), textForSection(doc, text, pick.lineIndex));
     await editor.edit(eb => eb.insert(ins.position, ins.text));
     revealLine(editor, ins.line);
 }
