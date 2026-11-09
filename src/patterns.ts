@@ -86,9 +86,7 @@ export function stripDate(content: string): string {
 
 /** Adds [x] done marker to item content if not already present */
 export function markDone(content: string): string {
-    if (content.startsWith('[ ]')) { return content.replace('[ ]', '[x]'); }
-    if (content.startsWith('[x]')) { return content; }
-    return `[x] ${content}`;
+    return joinItem({ ...splitItem(content), check: '[x]' });
 }
 
 /** Applies a numeric offset to a numbered item line; returns null if result < 1 */

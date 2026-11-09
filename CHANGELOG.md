@@ -59,6 +59,9 @@ Sets, Move Item to Section with nested items, and a round of fixes: AI assist on
 - **A done item is no longer overdue.** The status bar, Today View, Quick Stats, the Progress Report, the Problems panel, escalation and the overdue decoration all counted it, and a date in a comment counted too.
 - **The Kanban board and Progress Report read every marker.** A star after a checkbox is in progress, and a flag after a checkbox counts.
 - **Pin Section to Top keeps sections apart.** Pinning the last section of a file glued it to the next one and left a stray line at the end.
+- **Escalating an overdue item raises its priority.** `! item` became `!!! ! item`, and a checkbox was pushed behind the marker. The Mark Done quick fix had the same fault with a priority before a checkbox.
+- **Shift All Due Dates and Clear All Due Dates leave a date in a comment alone.**
+- **Compare Section Statistics keeps a `|` in a section name inside its table cell.**
 - **Bulk Set Due Date and Set Expiry refuse a date the calendar does not have.**
 - **Extract URLs leaves out the punctuation after a link.** A link ending a sentence used to open with the full stop on it.
 - **Merge Section Below no longer leaves a gap mid-list.** It deleted only the next header, so the blank lines between the two sections ended up between their items. They are removed now, and the next section's items carry straight on.

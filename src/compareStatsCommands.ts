@@ -62,7 +62,8 @@ export async function onCompareStatistics(): Promise<void> {
     const b = computeSectionStats(doc, prefix, pickB.line);
 
     const rows = [
-        `| Metric | ${a.name} | ${b.name} |`,
+        // An unescaped pipe in a section name would end the table cell.
+        `| Metric | ${a.name.replace(/\|/g, '\\|')} | ${b.name.replace(/\|/g, '\\|')} |`,
         `|--------|${'-'.repeat(a.name.length + 2)}|${'-'.repeat(b.name.length + 2)}|`,
         `| Items  | ${a.items} | ${b.items} |`,
         `| Words  | ${a.words} | ${b.words} |`,

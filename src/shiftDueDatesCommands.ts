@@ -4,6 +4,7 @@ import { getConfig } from './config';
 import { parseBullet, parseNumbered, shiftDate } from './patterns';
 import { isRealDate } from './patternsUtils';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
+import { joinItem, splitItem } from './itemParts';
 
 /** Command: shifts the @YYYY-MM-DD due dates of the section's items by N days */
 export async function onShiftAllDueDates(): Promise<void> {
@@ -31,14 +32,20 @@ export async function onShiftAllDueDates(): Promise<void> {
     await editor.edit(eb => {
         for (let i = headerLine + 1; i <= end; i++) {
             const text = doc.lineAt(i).text;
-            if (!parseBullet(text, prefix) && !parseNumbered(text)) { continue; }
-            const newText = text.replace(/@(\d{4}-\d{2}-\d{2})/g, (whole: string, d: string) => {
+            const bullet   = parseBullet(text, prefix);
+            const numbered = parseNumbered(text);
+            if (!bullet && !numbered) { continue; }
+            const parts = splitItem(bullet?.content ?? numbered!.content);
+            // The words only: a date quoted in a comment is a note, not a due date.
+            const body  = parts.body.replace(/@(\d{4}-\d{2}-\d{2})/g, (whole: string, d: string) => {
                 // A date the calendar does not have would roll into another month.
                 if (!isRealDate(d)) { return whole; }
                 shifted++;
                 return `@${shiftDate(d, days)}`;
             });
-            if (newText !== text) { eb.replace(doc.lineAt(i).range, newText); }
+            if (body === parts.body) { continue; }
+            const lead = numbered ? `${numbered.chevrons} ${numbered.num}.` : `${bullet!.chevrons} ${prefix}`;
+            eb.replace(doc.lineAt(i).range, `${lead} ${joinItem({ ...parts, body })}`);
         }
     });
 
