@@ -12,10 +12,11 @@ export interface SectionLink {
 /** Regex matching [[SectionName]] links */
 export const LINK_RE = /\[\[([^\]]+)\]\]/g;
 
-/** Extracts all [[links]] from a single content string */
+/** Extracts all [[section]] links from a single content string; [[file:...]] links are not sections */
 export function extractLinks(text: string): Array<{ target: string; startChar: number; endChar: number }> {
     const links = [];
     for (const match of text.matchAll(LINK_RE)) {
+        if (match[1].trimStart().startsWith('file:')) { continue; }
         links.push({
             target:    match[1].trim(),
             startChar: match.index!,

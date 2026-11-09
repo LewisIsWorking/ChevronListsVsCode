@@ -1,10 +1,11 @@
 import type { LineReader } from './types';
 
-/** Regex matching [[file:filename.md]] syntax */
-export const FILE_LINK_RE = /\[\[file:([^\]]+)\]\]/g;
+/** Regex matching [[file:filename.md]] and [[file:filename.md#Section]] syntax */
+export const FILE_LINK_RE = /\[\[file:([^\]#]+)(?:#([^\]]+))?\]\]/g;
 
 export interface FileLink {
     filename:   string;
+    section?:   string;
     start:      number;
     end:        number;
     lineIndex:  number;
@@ -16,6 +17,7 @@ export function extractFileLinks(text: string, lineIndex: number): FileLink[] {
     for (const match of text.matchAll(FILE_LINK_RE)) {
         links.push({
             filename:  match[1].trim(),
+            section:   match[2]?.trim(),
             start:     match.index!,
             end:       match.index! + match[0].length,
             lineIndex,
