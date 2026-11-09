@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { parseBullet, parseNumbered, todayDate } from './patterns';
 import { getConfig } from './config';
+import { openDueDate } from './dueDateParser';
 
 let overdueBar: vscode.StatusBarItem | undefined;
 
@@ -29,8 +30,8 @@ export function updateOverdueStatusBar(editor: vscode.TextEditor | undefined): v
         const text    = doc.lineAt(i).text;
         const content = parseBullet(text, prefix)?.content ?? parseNumbered(text)?.content ?? null;
         if (!content) { continue; }
-        const m = content.match(/@(\d{4}-\d{2}-\d{2})/);
-        if (m && m[1] < today) { overdue++; }
+        const due = openDueDate(content);
+        if (due && due < today) { overdue++; }
     }
 
     if (overdue === 0) { overdueBar.hide(); return; }

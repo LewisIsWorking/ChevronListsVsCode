@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered } from './patterns';
+import { openDueDate } from './dueDateParser';
 
 const DUE_SOON_DAYS  = 3;
 
@@ -39,9 +40,9 @@ export function updateDueSoonDecorations(editor: vscode.TextEditor | undefined):
         const text    = doc.lineAt(i).text;
         const content = parseBullet(text, prefix)?.content ?? parseNumbered(text)?.content ?? null;
         if (!content) { continue; }
-        const m = content.match(/@(\d{4}-\d{2}-\d{2})/);
+        const m = openDueDate(content);
         if (!m) { continue; }
-        const [y, mo, d] = m[1].split('-').map(Number);
+        const [y, mo, d] = m.split('-').map(Number);
         const due = new Date(y, mo - 1, d);
         const range = new vscode.Range(i, doc.lineAt(i).range.end.character, i, doc.lineAt(i).range.end.character);
         if (due < today)       { overdueRanges.push(range); }

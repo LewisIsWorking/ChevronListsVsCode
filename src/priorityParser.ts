@@ -1,5 +1,6 @@
 import type { LineReader } from './types';
 import { parseBullet, parseNumbered } from './patterns';
+import { splitItem } from './itemParts';
 
 /** Priority levels */
 export type PriorityLevel = 1 | 2 | 3;
@@ -15,10 +16,13 @@ export const PRIORITY_RE = /^(!{1,3}) /;
 
 /** Parses priority marker from item content. Returns null if none present. */
 export function parsePriority(content: string): PriorityMatch | null {
-    const match = content.match(PRIORITY_RE);
+    // Through splitItem so a priority after a checkbox or star counts, and one among
+    // the item's words does not. The first run of ! in the text is that one.
+    if (splitItem(content).priority === '') { return null; }
+    const match = content.match(/(?<!\S)(!{1,3}) /);
     if (!match) { return null; }
     const level = Math.min(match[1].length, 3) as PriorityLevel;
-    return { level, contentWithout: content.slice(match[0].length) };
+    return { level, contentWithout: content.slice(0, match.index) + content.slice(match.index! + match[0].length) };
 }
 
 /** Priority labels for display */

@@ -1,6 +1,7 @@
 import type { LineReader } from './types';
 import { parseBullet, parseNumbered } from './patterns';
 import { splitItem } from './itemParts';
+import { parseCheck } from './checkParser';
 
 /** A parsed due date item */
 export interface DueDate {
@@ -26,6 +27,11 @@ export function extractDate(content: string): { dateStr: string; contentWithout:
 }
 
 /** Returns true if a YYYY-MM-DD string represents a date before today */
+export function openDueDate(content: string): string | null {
+    if (parseCheck(content)?.state === 'done') { return null; }
+    return extractDate(content)?.dateStr ?? null;
+}
+
 export function isOverdue(dateStr: string, today: Date = new Date()): boolean {
     const [y, m, d] = dateStr.split('-').map(Number);
     const date = new Date(y, m - 1, d);
@@ -61,7 +67,7 @@ export function collectDueDates(
             content:   parsed.contentWithout,
             section,
             line:      i,
-            overdue:   isOverdue(parsed.dateStr, today),
+            overdue:   isOverdue(parsed.dateStr, today) && openDueDate(content) !== null,
         });
     }
 
