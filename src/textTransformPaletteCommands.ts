@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { onBoldText, onItalicText, onUnderlineText, onMonoText, onStrikeText } from './richTextSimCommands';
+import { toTitleCase } from './patterns';
 
 interface TransformItem extends vscode.QuickPickItem { action: () => Promise<void>; }
 
@@ -23,6 +24,13 @@ export async function onTextTransformPalette(): Promise<void> {
     if (pick) { await pick.action(); }
 }
 
+/** The text in the given case */
+export function casedText(mode: 'upper' | 'lower' | 'title', text: string): string {
+    if (mode === 'upper') { return text.toUpperCase(); }
+    if (mode === 'lower') { return text.toLowerCase(); }
+    return toTitleCase(text);
+}
+
 async function applyCase(mode: 'upper' | 'lower' | 'title'): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) { return; }
@@ -30,9 +38,5 @@ async function applyCase(mode: 'upper' | 'lower' | 'title'): Promise<void> {
     const range = sel.isEmpty ? editor.document.getWordRangeAtPosition(sel.active) ?? sel : new vscode.Range(sel.start, sel.end);
     const text  = editor.document.getText(range);
     if (!text.trim()) { return; }
-    let newText: string;
-    if (mode === 'upper')      { newText = text.toUpperCase(); }
-    else if (mode === 'lower') { newText = text.toLowerCase(); }
-    else { newText = text.replace(/\b\w/g, c => c.toUpperCase()); }
-    await editor.edit(eb => eb.replace(range, newText));
+    await editor.edit(eb => eb.replace(range, casedText(mode, text)));
 }
