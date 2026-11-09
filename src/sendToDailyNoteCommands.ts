@@ -36,7 +36,10 @@ export async function onSendToDailyNote(): Promise<void> {
         const we = new vscode.WorkspaceEdit();
         we.createFile(noteUri, { overwrite: false, ignoreIfExists: true });
         we.insert(noteUri, new vscode.Position(0, 0), `# ${today}\n\n${INBOX_HDR}\n${itemLine}\n`);
-        await vscode.workspace.applyEdit(we);
+        if (!await vscode.workspace.applyEdit(we)) {
+            vscode.window.showErrorMessage(`CL: ${fileName} could not be created`);
+            return;
+        }
         vscode.window.showInformationMessage(`CL: Created ${fileName} and added item to Inbox`);
         return;
     }
@@ -53,6 +56,9 @@ export async function onSendToDailyNote(): Promise<void> {
 
     const we = new vscode.WorkspaceEdit();
     we.insert(noteUri, ins.position, ins.text);
-    await vscode.workspace.applyEdit(we);
+    if (!await vscode.workspace.applyEdit(we)) {
+        vscode.window.showErrorMessage(`CL: The item could not be added to ${fileName}`);
+        return;
+    }
     vscode.window.showInformationMessage(`CL: Sent to ${fileName} › Inbox`);
 }

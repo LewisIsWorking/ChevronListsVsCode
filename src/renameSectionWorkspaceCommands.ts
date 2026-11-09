@@ -24,6 +24,7 @@ export async function onRenameSectionWorkspace(): Promise<void> {
 
     const mdFiles = await vscode.workspace.findFiles('**/*.md', '**/node_modules/**');
     let totalUpdated = 0;
+    let failed = 0;
 
     await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Notification, title: 'CL: Renaming section across workspace…', cancellable: false },
@@ -49,14 +50,16 @@ export async function onRenameSectionWorkspace(): Promise<void> {
                     }
                 }
                 if (updated) {
-                    await vscode.workspace.applyEdit(edit);
-                    totalUpdated++;
+                    if (await vscode.workspace.applyEdit(edit)) { totalUpdated++; } else { failed++; }
                 }
             }
         }
     );
 
-    vscode.window.showInformationMessage(
-        `CL: Renamed "${oldName}" → "${newName.trim()}" across ${totalUpdated} file${totalUpdated === 1 ? '' : 's'}`
-    );
+    const summary = `CL: Renamed "${oldName}" → "${newName.trim()}" across ${totalUpdated} file${totalUpdated === 1 ? '' : 's'}`;
+    if (failed > 0) {
+        vscode.window.showWarningMessage(`${summary}; ${failed} file${failed === 1 ? '' : 's'} could not be changed`);
+    } else {
+        vscode.window.showInformationMessage(summary);
+    }
 }

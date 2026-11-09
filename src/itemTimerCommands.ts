@@ -68,6 +68,9 @@ export async function onStopItemTimer(): Promise<void> {
     const newLine    = num !== null ? `${chevrons} ${num}. ${newContent}` : `${chevrons} ${prefix} ${newContent}`;
     const edit = new vscode.WorkspaceEdit();
     edit.replace(doc.uri, doc.lineAt(timer.lineIndex).range, newLine);
-    await vscode.workspace.applyEdit(edit);
+    if (!await vscode.workspace.applyEdit(edit)) {
+        vscode.window.showErrorMessage(`CL: Timer stopped at ${elapsed}, but the item could not be stamped`);
+        return;
+    }
     vscode.window.showInformationMessage(`CL: Timer stopped - ${elapsed} stamped on item`);
 }

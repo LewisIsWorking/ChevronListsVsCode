@@ -257,6 +257,7 @@ export class WorkspaceEdit {
     replace(uri: Uri, range: Range, text: string): void { this.operations.push({ kind: 'replace', uri, range, text }); }
     insert(uri: Uri, position: Position, text: string): void { this.operations.push({ kind: 'insert', uri, position, text }); }
     delete(uri: Uri, range: Range): void { this.operations.push({ kind: 'delete', uri, range }); }
+    createFile(_uri: Uri, _options?: { overwrite?: boolean; ignoreIfExists?: boolean }): void { /* not recorded */ }
     has(uri: Uri): boolean { return this.operations.some(o => o.uri.toString() === uri.toString()); }
     entries(): [Uri, EditOp[]][] {
         const byUri = new Map<string, [Uri, EditOp[]]>();

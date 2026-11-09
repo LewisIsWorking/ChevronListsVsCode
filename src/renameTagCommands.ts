@@ -77,27 +77,33 @@ export async function onRenameTagWorkspace(): Promise<void> {
 
     let totalLines = 0;
     let filesChanged = 0;
+    let failed = 0;
     await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Notification, title: `CL: Renaming #${picked.tag}...`, cancellable: false },
         async () => {
             for (const uri of files) {
                 const doc  = await vscode.workspace.openTextDocument(uri);
                 const edit = new vscode.WorkspaceEdit();
-                let changed = false;
+                let changedLines = 0;
                 for (let i = 0; i < doc.lineCount; i++) {
                     const text    = doc.lineAt(i).text;
                     const renamed = renameTagInItem(text, prefix, picked.tag, newTag.trim());
                     if (renamed !== text) {
                         edit.replace(uri, doc.lineAt(i).range, renamed);
-                        totalLines++; changed = true;
+                        changedLines++;
                     }
                 }
-                if (changed) { await vscode.workspace.applyEdit(edit); filesChanged++; }
+                if (changedLines === 0) { continue; }
+                if (await vscode.workspace.applyEdit(edit)) { filesChanged++; totalLines += changedLines; }
+                else { failed++; }
             }
         }
     );
 
-    vscode.window.showInformationMessage(
-        `CL: Renamed #${picked.tag} → #${newTag.trim()} on ${totalLines} line${totalLines === 1 ? '' : 's'} across ${filesChanged} file${filesChanged === 1 ? '' : 's'}`
-    );
+    const summary = `CL: Renamed #${picked.tag} → #${newTag.trim()} on ${totalLines} line${totalLines === 1 ? '' : 's'} across ${filesChanged} file${filesChanged === 1 ? '' : 's'}`;
+    if (failed > 0) {
+        vscode.window.showWarningMessage(`${summary}; ${failed} file${failed === 1 ? '' : 's'} could not be changed`);
+    } else {
+        vscode.window.showInformationMessage(summary);
+    }
 }
