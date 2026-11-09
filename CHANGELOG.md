@@ -71,6 +71,7 @@ Sets, Move Item to Section with nested items, and a round of fixes: AI assist on
 - **Go to Linked File works on section links.** A `[[file:notes.md#Section]]` link now opens the file at that section instead of failing to find a file with `#Section` in its name, and hovering a file link no longer warns that it is a missing section.
 - **File links reach other folders.** Go to Linked File and the file link hover now find a linked file elsewhere in the workspace, so links made by Insert File Section Link to a file in another folder can be followed.
 - **Lock and Freeze Section say what they do.** Lock promised that bulk operations would skip the section, and Freeze promised a warning on edit. Neither happens: Lock warns when the file is saved, and Freeze only adds its marker.
+- **A bookmark name with a `]` in it is no longer cut short.** The bracket is dropped, because it would end the marker early.
 - **Bulk Set Due Date and Set Expiry refuse a date the calendar does not have.**
 - **Extract URLs leaves out the punctuation after a link.** A link ending a sentence used to open with the full stop on it.
 - **Merge Section Below no longer leaves a gap mid-list.** It deleted only the next header, so the blank lines between the two sections ended up between their items. They are removed now, and the next section's items carry straight on.

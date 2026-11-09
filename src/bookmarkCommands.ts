@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { collectBookmarks, parseBookmark } from './bookmarkParser';
+import { bookmarkMarker, collectBookmarks, parseBookmark } from './bookmarkParser';
 import { wholeLineRange } from './lineEdits';
 
 interface BookmarkPickItem extends vscode.QuickPickItem { lineIndex: number; }
@@ -13,10 +13,11 @@ export async function onAddBookmark(): Promise<void> {
         prompt:      'Bookmark name',
         placeHolder: 'e.g. Chapter 3 start, Key decision point',
     });
-    if (!name?.trim()) { return; }
+    const marker = bookmarkMarker(name ?? '');
+    if (!marker) { return; }
 
     const insertPos = new vscode.Position(editor.selection.active.line, 0);
-    await editor.edit(eb => eb.insert(insertPos, `>> [bookmark:${name.trim()}]\n`));
+    await editor.edit(eb => eb.insert(insertPos, `${marker}\n`));
 }
 
 /** Command: shows a quick pick of all bookmarks in the file */
