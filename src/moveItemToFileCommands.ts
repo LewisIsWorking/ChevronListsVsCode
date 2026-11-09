@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, isHeader } from './patterns';
-import { lineAfter, sectionContentEnd, wholeLineRange } from './lineEdits';
+import { lineAfter, sectionContentEnd, wholeLineRanges } from './lineEdits';
 
 interface SectionPickItem extends vscode.QuickPickItem { headerLine: number; }
 
@@ -16,10 +16,20 @@ export async function onMoveItemToFile(): Promise<void> {
     const lineIndex  = editor.selection.active.line;
     const text       = doc.lineAt(lineIndex).text;
 
-    if (!parseBullet(text, prefix) && !parseNumbered(text)) {
+    const item = parseBullet(text, prefix) ?? parseNumbered(text);
+    if (!item) {
         vscode.window.showInformationMessage('CL: Place cursor on a chevron item to move it');
         return;
     }
+
+    // The item moves as a block; left behind, its children would read as
+    // children of whichever item sits above them.
+    const depthOf = (line: string): number =>
+        (parseBullet(line, prefix) ?? parseNumbered(line))?.chevrons.length ?? 0;
+    let lastLine = lineIndex;
+    while (lastLine + 1 < doc.lineCount && depthOf(doc.lineAt(lastLine + 1).text) > item.chevrons.length) { lastLine++; }
+    const blockLines = Array.from({ length: lastLine - lineIndex + 1 }, (_, k) => lineIndex + k);
+    const block      = blockLines.map(l => doc.lineAt(l).text).join('\n');
 
     // Pick a destination file
     const files = await vscode.workspace.findFiles('**/*.md', '**/node_modules/**');
@@ -46,8 +56,7 @@ export async function onMoveItemToFile(): Promise<void> {
     if (!sectionPick) { return; }
 
     // Insert at end of destination section, delete from source
-    const ins        = lineAfter(destDoc, sectionContentEnd(destDoc, sectionPick.headerLine), text);
-    const srcRange   = wholeLineRange(doc, lineIndex);
+    const ins        = lineAfter(destDoc, sectionContentEnd(destDoc, sectionPick.headerLine), block);
 
     const destEdit = new vscode.WorkspaceEdit();
     destEdit.insert(filePick.uri, ins.position, ins.text);
@@ -58,6 +67,6 @@ export async function onMoveItemToFile(): Promise<void> {
         return;
     }
 
-    await editor.edit(eb => eb.delete(srcRange));
+    await editor.edit(eb => { for (const range of wholeLineRanges(doc, blockLines)) { eb.delete(range); } });
     vscode.window.showInformationMessage(`CL: Moved item to "${sectionPick.label}" in ${filePick.label}`);
 }

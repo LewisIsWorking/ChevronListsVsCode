@@ -41,6 +41,9 @@ export async function onDuplicateSectionToFile(): Promise<void> {
     const insertPos = new vscode.Position(targetDoc.lineCount, 0);
     const we        = new vscode.WorkspaceEdit();
     we.insert(pick.uri, insertPos, `\n${sectionText}\n`);
-    await vscode.workspace.applyEdit(we);
+    if (!await vscode.workspace.applyEdit(we)) {
+        vscode.window.showErrorMessage(`CL: Could not copy "${sectionName}" to ${pick.label}`);
+        return;
+    }
     vscode.window.showInformationMessage(`CL: Copied "${sectionName}" to ${pick.label}`);
 }
