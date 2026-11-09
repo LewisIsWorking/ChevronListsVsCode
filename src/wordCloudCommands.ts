@@ -3,8 +3,9 @@ import { getConfig } from './config';
 import { parseBullet, parseNumbered, countWordFrequency } from './patterns';
 import { stripAllMetadata } from './metadataStripper';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
+import { escHtml } from './htmlExporter';
 
-function buildCloudHtml(freq: Map<string, number>, sectionName: string): string {
+export function buildCloudHtml(freq: Map<string, number>, sectionName: string): string {
     const sorted  = [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 40);
     const maxFreq = sorted[0]?.[1] ?? 1;
     const words   = sorted.map(([word, count]) => {
@@ -16,7 +17,7 @@ function buildCloudHtml(freq: Map<string, number>, sectionName: string): string 
 <title>Word Cloud</title>
 <style>body{font-family:var(--vscode-font-family);background:var(--vscode-editor-background);color:var(--vscode-foreground);padding:1.5rem;line-height:2}
 h1{font-size:1rem;color:var(--vscode-textLink-foreground);margin-bottom:1rem}</style>
-</head><body><h1>☁ ${sectionName}</h1><div>${words || '<p style="opacity:0.5">Not enough words to build a cloud.</p>'}</div></body></html>`;
+</head><body><h1>☁ ${escHtml(sectionName)}</h1><div>${words || '<p style="opacity:0.5">Not enough words to build a cloud.</p>'}</div></body></html>`;
 }
 
 let cloudPanel: vscode.WebviewPanel | undefined;

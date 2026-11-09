@@ -53,7 +53,7 @@ export async function onCompareTwoSectionsAsTable(): Promise<void> {
         `| ${esc(aItems[i] ?? '')} | ${esc(bItems[i] ?? '')} |`
     ).join('\n');
 
-    const content = `# ${pickA.label} vs ${pickB.label}\n\n| ${pickA.label} | ${pickB.label} |\n|---|---|\n${rows}\n`;
+    const content = `# ${pickA.label} vs ${pickB.label}\n\n| ${esc(pickA.label)} | ${esc(pickB.label)} |\n|---|---|\n${rows}\n`;
     const mdDoc   = await vscode.workspace.openTextDocument({ content, language: 'markdown' });
     await vscode.window.showTextDocument(mdDoc, vscode.ViewColumn.Beside);
 }
