@@ -5,6 +5,7 @@ import { parseCheck } from './checkParser';
 import { extractTags } from './tagParser';
 import { getSectionRange, findHeaderAbove } from './documentUtils';
 import { itemWordCount } from './metadataStripper';
+import { openDueDate } from './dueDateParser';
 
 /** Command: shows a quick one-line stats message for the cursor section */
 export async function onQuickStats(): Promise<void> {
@@ -28,8 +29,8 @@ export async function onQuickStats(): Promise<void> {
         words  += itemWordCount(content);
         tags   += extractTags(content).length;
         if (parseCheck(content)?.state === 'done') { done++; }
-        const m = content.match(/@(\d{4}-\d{2}-\d{2})/);
-        if (m && m[1] < today) { overdue++; }
+        const due = openDueDate(content);
+        if (due && due < today) { overdue++; }
     }
 
     const pct      = items > 0 ? `${Math.round((done / items) * 100)}%` : '–';

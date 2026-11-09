@@ -55,6 +55,10 @@ Sets, Move Item to Section with nested items, and a round of fixes: AI assist on
 - **Collect Items by Tag does not copy its own results.** Running it twice used to duplicate the earlier results.
 - **Show Item Complexity reads the words of an item.** Dates and labels in a comment no longer count, and a priority after a star does.
 - **A word goal of zero shows as met** instead of NaN%.
+- **A priority after a checkbox or star counts everywhere.** Sorting, section weights, decorations and exports all missed `[x] !! item`.
+- **A done item is no longer overdue.** The status bar, Today View, Quick Stats, the Progress Report, the Problems panel, escalation and the overdue decoration all counted it, and a date in a comment counted too.
+- **The Kanban board and Progress Report read every marker.** A star after a checkbox is in progress, and a flag after a checkbox counts.
+- **Pin Section to Top keeps sections apart.** Pinning the last section of a file glued it to the next one and left a stray line at the end.
 - **Bulk Set Due Date and Set Expiry refuse a date the calendar does not have.**
 - **Extract URLs leaves out the punctuation after a link.** A link ending a sentence used to open with the full stop on it.
 - **Merge Section Below no longer leaves a gap mid-list.** It deleted only the next header, so the blank lines between the two sections ended up between their items. They are removed now, and the next section's items carry straight on.

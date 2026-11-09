@@ -23,14 +23,15 @@ export async function onPinSectionToTop(): Promise<void> {
 
     const [, end]       = getSectionRange(doc, headerLine);
     const sectionLines  = Array.from({ length: end - headerLine + 1 }, (_, k) => doc.lineAt(headerLine + k).text);
-    const sectionText   = sectionLines.join('\n') + '\n';
-    const deleteRange   = new vscode.Range(headerLine, 0, end + 1, 0);
-    const insertPos     = new vscode.Position(firstHeader, 0);
-
-    await editor.edit(eb => {
-        eb.delete(deleteRange);
-        eb.insert(insertPos, sectionText);
-    });
+    // The last section of a file has no blank line of its own, so it takes the one
+    // before it. Otherwise it landed against the next section, with a stray line at the end.
+    const borrows = end === doc.lineCount - 1
+        && doc.lineAt(end).text.trim() !== '' && doc.lineAt(headerLine - 1).text.trim() === '';
+    const betweenEnd = borrows ? headerLine - 1 : headerLine;
+    const between    = Array.from({ length: betweenEnd - firstHeader }, (_, k) => doc.lineAt(firstHeader + k).text);
+    const newLines   = [...sectionLines, ...(borrows ? [''] : []), ...between];
+    const range      = new vscode.Range(firstHeader, 0, end, doc.lineAt(end).text.length);
+    await editor.edit(eb => eb.replace(range, newLines.join('\n')));
 
     const pos = new vscode.Position(firstHeader, 0);
     editor.selection = new vscode.Selection(pos, pos);

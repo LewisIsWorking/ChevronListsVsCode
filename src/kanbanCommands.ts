@@ -3,6 +3,7 @@ import { getConfig } from './config';
 import { parseBullet, parseNumbered, isHeader } from './patterns';
 import { parseCheck } from './checkParser';
 import { escHtml } from './htmlExporter';
+import { joinItem, splitItem } from './itemParts';
 
 export interface KanbanCard { content: string; section: string; line: number; }
 
@@ -19,8 +20,9 @@ function collectKanban(doc: vscode.TextDocument, prefix: string): {
         const content  = bullet?.content ?? numbered?.content ?? null;
         if (!content) { continue; }
         const check  = parseCheck(content);
-        const isStar = content.trimStart().startsWith('* ');
-        const plain  = content.replace(/^\[.\]\s*/, '').replace(/^\*\s+/, '').trim();
+        const parts  = splitItem(content);
+        const isStar = parts.marker === '*';
+        const plain  = joinItem({ ...parts, check: '', marker: isStar ? '' : parts.marker });
         const card   = { content: plain, section, line: i };
         if (check?.state === 'done') { done.push(card); }
         else if (isStar)             { inProgress.push(card); }

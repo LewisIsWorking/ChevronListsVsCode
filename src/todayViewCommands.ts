@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, isHeader, todayDate } from './patterns';
+import { extractDate, openDueDate } from './dueDateParser';
 
 interface TodayItem extends vscode.QuickPickItem {
     uri:       vscode.Uri;
@@ -30,16 +31,16 @@ export async function onTodayView(): Promise<void> {
                     const numbered = parseNumbered(text);
                     const content  = bullet?.content ?? numbered?.content ?? null;
                     if (!content) { continue; }
-                    const m = content.match(/@(\d{4}-\d{2}-\d{2})/);
-                    if (!m || m[1] > today) { continue; }
+                    const due = openDueDate(content);
+                    if (!due || due > today) { continue; }
                     const daysOverdue = Math.floor(
-                        (Date.parse(today) - Date.parse(m[1])) / 86400000
+                        (Date.parse(today) - Date.parse(due)) / 86400000
                     );
                     const label = daysOverdue === 0
                         ? `$(calendar) Today`
                         : `$(warning) ${daysOverdue}d overdue`;
                     items.push({
-                        label:       `${label}  ${content.replace(/@\d{4}-\d{2}-\d{2}/, '').trim()}`,
+                        label:       `${label}  ${extractDate(content)!.contentWithout}`,
                         description: `${fname} › ${section}`,
                         uri, lineIndex: i, daysOverdue,
                     });

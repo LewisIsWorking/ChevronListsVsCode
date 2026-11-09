@@ -8,10 +8,11 @@ import { splitItem } from './itemParts';
 import { extractMentions } from './mentionParser';
 import { parseEstimate } from './estimateParser';
 import { parseVote } from './voteParser';
+import { extractDate, openDueDate } from './dueDateParser';
 
 /** Pure: extracts due date string from content for sorting, or high sentinel for undated */
 export function extractSortDate(content: string): string {
-    return content.match(/@(\d{4}-\d{2}-\d{2})/)?.[1] ?? '9999-99-99';
+    return extractDate(content)?.dateStr ?? '9999-99-99';
 }
 
 /** Pure: escapes a value for CSV output */
@@ -24,9 +25,9 @@ export function csvEscape(value: string): string {
 
 /** Pure: returns true if content is overdue by more than 7 days */
 export function isEscalatable(content: string, today: Date = new Date()): boolean {
-    const m = content.match(/@(\d{4}-\d{2}-\d{2})/);
+    const m = openDueDate(content);
     if (!m) { return false; }
-    const [y, mo, d] = m[1].split('-').map(Number);
+    const [y, mo, d] = m.split('-').map(Number);
     const due        = new Date(y, mo - 1, d);
     const todayMid   = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     return Math.floor((todayMid.getTime() - due.getTime()) / 86400000) > 7;
