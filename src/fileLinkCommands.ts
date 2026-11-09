@@ -1,14 +1,14 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { extractFileLinks } from './fileLinkParser';
+import { extractFileLinks, type FileLink } from './fileLinkParser';
+import { findHeaderLine } from './linkParser';
 
-/** Finds the filename under the cursor from a [[file:...]] link */
-function getFileLinkAtCursor(editor: vscode.TextEditor): string | null {
+/** Finds the [[file:...]] link under the cursor */
+function getFileLinkAtCursor(editor: vscode.TextEditor): FileLink | undefined {
     const lineIndex = editor.selection.active.line;
     const col       = editor.selection.active.character;
     const links     = extractFileLinks(editor.document.lineAt(lineIndex).text, lineIndex);
-    const link      = links.find(l => col >= l.start && col <= l.end);
-    return link?.filename ?? null;
+    return links.find(l => col >= l.start && col <= l.end);
 }
 
 /** Resolves a filename relative to the current document */
@@ -17,17 +17,25 @@ function resolveFile(document: vscode.TextDocument, filename: string): vscode.Ur
     return vscode.Uri.file(path.join(dir, filename));
 }
 
-/** Command: opens the linked file under the cursor */
+/** Command: opens the linked file under the cursor, at the section if the link names one */
 export async function onGoToLinkedFile(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) { return; }
 
-    const filename = getFileLinkAtCursor(editor);
-    if (!filename) { vscode.window.showInformationMessage('CL: No [[file:...]] link found at cursor'); return; }
+    const link = getFileLinkAtCursor(editor);
+    if (!link) { vscode.window.showInformationMessage('CL: No [[file:...]] link found at cursor'); return; }
+    const { filename, section } = link;
 
     const uri = resolveFile(editor.document, filename);
     try {
-        await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri));
+        const document = await vscode.workspace.openTextDocument(uri);
+        const opened   = await vscode.window.showTextDocument(document);
+        if (!section) { return; }
+        const line = findHeaderLine(document, section);
+        if (line < 0) { vscode.window.showWarningMessage(`CL: Section "${section}" not found in ${filename}`); return; }
+        const position = new vscode.Position(line, 0);
+        opened.selection = new vscode.Selection(position, position);
+        opened.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenterIfOutsideViewport);
     } catch {
         vscode.window.showErrorMessage(`CL: Could not open file "${filename}"`);
     }
