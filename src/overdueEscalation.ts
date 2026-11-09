@@ -1,6 +1,14 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, isEscalatable } from './patterns';
+import { joinItem, splitItem } from './itemParts';
+
+/** The item raised to urgent, its other markers in place, or null when it should stay as it is */
+export function escalatedContent(content: string, today: Date): string | null {
+    const parts = splitItem(content);
+    if (parts.priority === '!!!' || !isEscalatable(content, today)) { return null; }
+    return joinItem({ ...parts, priority: '!!!' });
+}
 
 /** Applies overdue escalation across the document if the setting is enabled */
 export function applyOverdueEscalation(editor: vscode.TextEditor): void {
@@ -18,11 +26,10 @@ export function applyOverdueEscalation(editor: vscode.TextEditor): void {
         const numbered = parseNumbered(text);
         const content  = bullet?.content ?? numbered?.content ?? null;
         if (!content) { continue; }
-        if (content.startsWith('!!!')) { continue; } // already urgent
-        if (!isEscalatable(content, today)) { continue; }
+        const newContent = escalatedContent(content, today);
+        if (newContent === null) { continue; }
         const chevrons   = bullet?.chevrons ?? numbered!.chevrons;
         const num        = numbered?.num ?? null;
-        const newContent = `!!! ${content}`;
         edits.push({
             line:    i,
             newText: num !== null

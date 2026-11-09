@@ -51,6 +51,10 @@ export const onClearAllPriority  = () => batchTransform(
 
 /** Command: removes all @YYYY-MM-DD due dates from every item in the section */
 export const onClearAllDueDates  = () => batchTransform(
-    c => c.replace(/\s*@\d{4}-\d{2}-\d{2}/g, '').trim(),
+    c => {
+        const parts = splitItem(c);
+        const body  = parts.body.replace(/\s*@\d{4}-\d{2}-\d{2}/g, '').trim();
+        return body === parts.body.trim() ? c : joinItem({ ...parts, body });
+    },
     'All Due Dates'
 );
