@@ -13,6 +13,7 @@ import { parseColourLabel } from './colourLabelParser';
 import { parseFlag } from './flagParser';
 import { parseComment } from './commentParser';
 import { parseRating } from './ratingParser';
+import { parseStar } from './starParser';
 
 /** Command: exports every section in the file as a single JSON file */
 export async function onExportAllSectionsAsJson(): Promise<void> {
@@ -24,7 +25,8 @@ export async function onExportAllSectionsAsJson(): Promise<void> {
     const fileName   = path.basename(doc.fileName, '.md');
 
     const saveUri = await vscode.window.showSaveDialog({
-        defaultUri: vscode.Uri.file(path.join(path.dirname(doc.fileName), `${fileName}.json`)),
+        // An untitled document has no folder, so its default would be a bare relative path.
+        defaultUri: doc.isUntitled ? undefined : vscode.Uri.file(path.join(path.dirname(doc.fileName), `${fileName}.json`)),
         filters: { 'JSON Files': ['json'] },
     });
     if (!saveUri) { return; }
@@ -56,7 +58,7 @@ export async function onExportAllSectionsAsJson(): Promise<void> {
                 content, done: check?.state === 'done' || false,
                 priority: prio?.level ?? null, dueDate: date?.dateStr ?? null,
                 estimate: est?.display ?? null, votes: vote?.count ?? null,
-                starred: false, colour: colour ?? null, flagged: flag !== null,
+                starred: parseStar(content) !== null, colour: colour ?? null, flagged: flag !== null,
                 comment: comment?.comment ?? null, rating: rating ?? null,
                 tags: extractTags(content),
             });
