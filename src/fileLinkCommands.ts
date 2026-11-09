@@ -17,6 +17,20 @@ function resolveFile(document: vscode.TextDocument, filename: string): vscode.Ur
     return vscode.Uri.file(path.join(dir, filename));
 }
 
+/**
+ * Opens a linked file: the one beside this document, or failing that one of the
+ * same name anywhere in the workspace, which is how Find Dead Links counts it.
+ */
+async function openLinkedFile(document: vscode.TextDocument, filename: string): Promise<vscode.TextDocument> {
+    try {
+        return await vscode.workspace.openTextDocument(resolveFile(document, filename));
+    } catch (notBeside) {
+        const [found] = await vscode.workspace.findFiles(`**/${filename}`, '**/node_modules/**', 1);
+        if (!found) { throw notBeside; }
+        return vscode.workspace.openTextDocument(found);
+    }
+}
+
 /** Command: opens the linked file under the cursor, at the section if the link names one */
 export async function onGoToLinkedFile(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
@@ -26,9 +40,8 @@ export async function onGoToLinkedFile(): Promise<void> {
     if (!link) { vscode.window.showInformationMessage('CL: No [[file:...]] link found at cursor'); return; }
     const { filename, section } = link;
 
-    const uri = resolveFile(editor.document, filename);
     try {
-        const document = await vscode.workspace.openTextDocument(uri);
+        const document = await openLinkedFile(editor.document, filename);
         const opened   = await vscode.window.showTextDocument(document);
         if (!section) { return; }
         const line = findHeaderLine(document, section);
@@ -48,9 +61,8 @@ export class ChevronFileLinkHoverProvider implements vscode.HoverProvider {
         const link  = links.find(l => position.character >= l.start && position.character <= l.end);
         if (!link) { return; }
 
-        const uri = resolveFile(document, link.filename);
         try {
-            const linkedDoc  = await vscode.workspace.openTextDocument(uri);
+            const linkedDoc  = await openLinkedFile(document, link.filename);
             const firstLines = Array.from({ length: Math.min(5, linkedDoc.lineCount) }, (_, i) =>
                 linkedDoc.lineAt(i).text
             ).filter(Boolean).join('\n');
