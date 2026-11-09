@@ -62,6 +62,8 @@ Sets, Move Item to Section with nested items, and a round of fixes: AI assist on
 - **Escalating an overdue item raises its priority.** `! item` became `!!! ! item`, and a checkbox was pushed behind the marker. The Mark Done quick fix had the same fault with a priority before a checkbox.
 - **Shift All Due Dates and Clear All Due Dates leave a date in a comment alone.**
 - **Compare Section Statistics keeps a `|` in a section name inside its table cell.**
+- **Compare Two Sections as Table keeps a `|` in a section name inside its cell, and the Word Cloud shows markup in a section name as text.**
+- **Compare Section to Clipboard reads copied list lines as their items.** Every line copied from a list used to show as different.
 - **Bulk Set Due Date and Set Expiry refuse a date the calendar does not have.**
 - **Extract URLs leaves out the punctuation after a link.** A link ending a sentence used to open with the full stop on it.
 - **Merge Section Below no longer leaves a gap mid-list.** It deleted only the next header, so the blank lines between the two sections ended up between their items. They are removed now, and the next section's items carry straight on.

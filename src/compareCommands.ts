@@ -50,7 +50,9 @@ export async function onCompareSectionToClipboard(): Promise<void> {
 
     const current   = getSectionLines(editor.document, prefix, headerLine);
     const clipboard = (await vscode.env.clipboard.readText())
-        .split('\n').map(l => l.trim()).filter(Boolean);
+        .split('\n').map(l => l.trim()).filter(Boolean)
+        // Copied from a list, a line is its item, not its chevrons and bullet.
+        .map(l => parseBullet(l, prefix)?.content ?? parseNumbered(l)?.content ?? l);
 
     if (clipboard.length === 0) {
         vscode.window.showInformationMessage('CL: Clipboard is empty');
