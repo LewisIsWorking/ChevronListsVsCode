@@ -36,7 +36,8 @@ export function buildHtml(doc: LineReader, prefix: string, fileName: string): st
     let   currentHeader = '';
 
     const flushSection = () => {
-        if (!currentHeader) { return; }
+        // Items above the first section belong to none, so they are not exported.
+        if (!currentHeader) { sectionLines = []; return; }
         const id    = slugify(currentHeader);
         const items = sectionLines.join('\n');
         sections.push(`
@@ -72,9 +73,10 @@ export function buildHtml(doc: LineReader, prefix: string, fileName: string): st
     }
     flushSection();
 
-    return HTML_TEMPLATE
-        .replace('{{TITLE}}', escHtml(fileName))
-        .replace('{{BODY}}', sections.join('\n'));
+    // One pass with a function: the title appears twice, and neither "$&" in an
+    // item nor a placeholder in the file name may be read as template syntax.
+    const fill: Record<string, string> = { TITLE: escHtml(fileName), BODY: sections.join('\n') };
+    return HTML_TEMPLATE.replace(/\{\{(TITLE|BODY)\}\}/g, (_match, key: string) => fill[key]);
 }
 
 const HTML_TEMPLATE = `<!DOCTYPE html>
