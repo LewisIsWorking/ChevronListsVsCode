@@ -6,8 +6,6 @@
 import { extractTags } from './tagParser';
 import { splitItem } from './itemParts';
 import { extractMentions } from './mentionParser';
-import { CHECK_RE } from './checkParser';
-import { PRIORITY_RE } from './priorityParser';
 import { parseEstimate } from './estimateParser';
 import { parseVote } from './voteParser';
 
@@ -98,14 +96,14 @@ export function scoreItemComplexity(content: string): {
     // Each marker as its own parser reads it. These used to be loose regexes:
     // "!important" had priority, a priority after a checkbox did not,
     // "~~done~~" had an estimate, "C++11" a vote, and "[X] done" a label.
-    const body     = content.replace(CHECK_RE, '');
-    const priority = PRIORITY_RE.exec(body)?.[1].length ?? 0;
+    const parts    = splitItem(content);
+    const priority = parts.priority.length;
     const tags     = extractTags(content).length;
     const estimate = parseEstimate(content) ? 1 : 0;
-    const dueDate  = /@\d{4}-\d{2}-\d{2}/.test(content) ? 1 : 0;
-    const expiry   = /@expires:\d{4}-\d{2}-\d{2}/.test(content) ? 1 : 0;
+    const dueDate  = /@\d{4}-\d{2}-\d{2}/.test(parts.body) ? 1 : 0;
+    const expiry   = /@expires:\d{4}-\d{2}-\d{2}/.test(parts.body) ? 1 : 0;
     const vote     = parseVote(content) ? 1 : 0;
-    const label    = /\[[A-Z][^\]]*\]/.test(body) ? 1 : 0;
+    const label    = /\[[A-Z][^\]]*\]/.test(parts.body) ? 1 : 0;
     const total    = priority + tags + estimate + dueDate + expiry + vote + label;
     return { priority, tags, estimate, dueDate, expiry, vote, label, total };
 }

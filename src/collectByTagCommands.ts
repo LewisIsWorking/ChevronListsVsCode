@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { parseBullet, parseNumbered } from './patterns';
+import { isHeader, parseBullet, parseNumbered } from './patterns';
 import { extractTags } from './tagParser';
 import { uniqueTags } from './tagParser';
 
@@ -26,9 +26,13 @@ export async function onCollectItemsByTag(): Promise<void> {
     );
     if (!picked) { return; }
 
+    const resultsName = `#${picked.tag} Results`;
+    let inResults = false;
     const matchingLines: string[] = [];
     for (let i = 0; i < doc.lineCount; i++) {
         const text    = doc.lineAt(i).text;
+        if (isHeader(text)) { inResults = text.replace(/^> /, '').trim() === resultsName; continue; }
+        if (inResults) { continue; } // an earlier run's copies are not collected again
         const bullet  = parseBullet(text, prefix);
         const numbered = parseNumbered(text);
         const content  = bullet?.content ?? numbered?.content ?? null;

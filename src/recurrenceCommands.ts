@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
-import { collectRecurringItems, nextOccurrence } from './recurrenceParser';
+import { collectRecurringItems, nextOccurrence, parseRecurrence } from './recurrenceParser';
+import { joinItem, splitItem } from './itemParts';
 import { extractDate } from './dueDateParser';
 import { parseBullet, parseNumbered, todayDate } from './patterns';
 import { lineAfter } from './lineEdits';
@@ -72,13 +73,13 @@ export async function onGenerateNextOccurrence(): Promise<void> {
         return;
     }
 
-    const recMatch = content.match(/@(daily|weekly|monthly)/i);
-    if (!recMatch) {
+    const recurrence = parseRecurrence(content);
+    if (!recurrence) {
         vscode.window.showInformationMessage('CL: Item has no @daily/@weekly/@monthly marker');
         return;
     }
 
-    const type      = recMatch[1].toLowerCase() as 'daily' | 'weekly' | 'monthly';
+    const type      = recurrence.type;
     const dateMatch = extractDate(content);
     const baseDate  = dateMatch?.dateStr ?? todayDate();
     const newDate   = nextOccurrence(baseDate, type);
@@ -89,8 +90,11 @@ export async function onGenerateNextOccurrence(): Promise<void> {
     // turning `>> 3. Review` into `>> - Review`. A numbered item continues the
     // sequence the same way the Enter handler does.
     const marker    = numbered ? `${numbered.num + 1}.` : prefix;
-    const cleanText = content.replace(dateMatch ? `@${dateMatch.dateStr}` : '', '').trim();
-    const newItem   = `${source.chevrons} ${marker} ${cleanText} @${newDate}`;
+    // The date goes among the words, where it is read from, and the next one is not done yet.
+    const parts     = splitItem(content);
+    const words     = dateMatch ? parts.body.replace(`@${dateMatch.dateStr}`, '') : parts.body;
+    const copied    = joinItem({ ...parts, check: parts.check === '' ? '' : '[ ]', body: `${words} @${newDate}` });
+    const newItem   = `${source.chevrons} ${marker} ${copied}`;
 
     // lineAfter, not Position(lineIndex + 1, 0): on the last line of a file with no
     // trailing newline that position resolves to the end of the same line and

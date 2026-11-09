@@ -1,5 +1,6 @@
 import type { LineReader } from './types';
 import { parseBullet, parseNumbered } from './patterns';
+import { splitItem } from './itemParts';
 
 /** State of a checkbox item */
 export type CheckState = 'done' | 'todo' | 'none';
@@ -15,11 +16,13 @@ export const CHECK_RE = /^\[(x| ?)\] ?/i;
 
 /** Parses the checkbox state from item content. Returns null if no checkbox present. */
 export function parseCheck(content: string): CheckMatch | null {
-    const match = content.match(CHECK_RE);
-    if (!match) { return null; }
+    // Through splitItem so a box after a priority, star or colour label counts,
+    // and one among the item's words does not. The first box in the text is that one.
+    if (splitItem(content).check === '') { return null; }
+    const match = content.match(/\[(x| ?)\] ?/i)!;
     return {
         state:          match[1].toLowerCase() === 'x' ? 'done' : 'todo',
-        contentWithout: content.slice(match[0].length),
+        contentWithout: content.slice(0, match.index) + content.slice(match.index! + match[0].length),
     };
 }
 
