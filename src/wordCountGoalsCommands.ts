@@ -48,7 +48,7 @@ export async function onShowWordCountGoals(): Promise<void> {
     });
 
     const items: GoalItem[] = results.map(r => {
-        const pct      = Math.min(100, Math.round((r.words / r.goal) * 100));
+        const pct      = r.goal === 0 ? 100 : Math.min(100, Math.round((r.words / r.goal) * 100));
         const bars     = Math.round(pct / 10);
         const bar      = '▓'.repeat(bars) + '░'.repeat(10 - bars);
         const icon     = pct >= 100 ? '$(check)' : pct >= 50 ? '$(dash)' : '$(circle-outline)';

@@ -49,6 +49,12 @@ Sets, Move Item to Section with nested items, and a round of fixes: AI assist on
 - **Vote leaderboards show the right words.** The file list no longer cuts an earlier "+N" from an item, and the section list no longer shows the vote twice.
 - **Due dates, recurrence and mentions are read from an item's words.** One inside a comment no longer counts, and @dailybrief is no longer a daily item.
 - **Tag Stats and the Mentions Report count every done item.** A checkbox after a priority or star now counts.
+- **A checkbox after a priority or star counts everywhere.** Archive, Quick Stats, the Kanban board, exports and progress bars all missed `!! [x] item`, and Toggle Done added a second box to it.
+- **Generate Next Occurrence writes a usable item.** The new date goes before a vote or comment, a done item comes back open, and @dailybrief no longer counts as recurring.
+- **Group Items by Mention keeps your notes.** It used to delete every line in the section that was not an item, and refused to group when only one person was mentioned.
+- **Collect Items by Tag does not copy its own results.** Running it twice used to duplicate the earlier results.
+- **Show Item Complexity reads the words of an item.** Dates and labels in a comment no longer count, and a priority after a star does.
+- **A word goal of zero shows as met** instead of NaN%.
 - **Bulk Set Due Date and Set Expiry refuse a date the calendar does not have.**
 - **Extract URLs leaves out the punctuation after a link.** A link ending a sentence used to open with the full stop on it.
 - **Merge Section Below no longer leaves a gap mid-list.** It deleted only the next header, so the blank lines between the two sections ended up between their items. They are removed now, and the next section's items carry straight on.
