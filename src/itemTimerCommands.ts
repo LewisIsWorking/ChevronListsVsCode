@@ -1,8 +1,12 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { parseBullet, parseNumbered, formatElapsed } from './patterns';
+import { findTrackedLine, linesOf, TrackedLine } from './timerTracking';
 
-interface ActiveTimer { startMs: number; lineIndex: number; uri: string; statusBar: vscode.StatusBarItem; interval: ReturnType<typeof setInterval>; }
+interface ActiveTimer { startMs: number; line: TrackedLine; uri: string; statusBar: vscode.StatusBarItem; interval: ReturnType<typeof setInterval>; }
+
+/** An estimate or an earlier stamp: ~2h, ~30m or ~1h 5m. A word such as ~notes is neither */
+const TIME_STAMP = /\s*~\d+\w*(?: \d+m\b)?/;
 
 let activeTimer: ActiveTimer | undefined;
 
@@ -30,7 +34,8 @@ export async function onStartItemTimer(): Promise<void> {
     bar.command   = 'chevron-lists.stopItemTimer';
     bar.show();
 
-    activeTimer = { startMs: Date.now(), lineIndex, uri: editor.document.uri.toString(), statusBar: bar, interval: setInterval(() => {
+    const line = { index: lineIndex, text, lineCount: editor.document.lineCount };
+    activeTimer = { startMs: Date.now(), line, uri: editor.document.uri.toString(), statusBar: bar, interval: setInterval(() => {
         const elapsed = formatElapsed(Date.now() - activeTimer!.startMs);
         bar.text = `$(clock) ${elapsed}  "${label}"`;
     }, 1000) };
@@ -53,7 +58,9 @@ export async function onStopItemTimer(): Promise<void> {
     const { prefix } = getConfig();
     const uris        = vscode.workspace.textDocuments.filter(d => d.uri.toString() === timer.uri);
     const doc         = uris[0] ?? await vscode.workspace.openTextDocument(vscode.Uri.parse(timer.uri));
-    const text        = doc.lineAt(timer.lineIndex).text;
+    const lines       = linesOf(doc);
+    const lineIndex   = findTrackedLine(lines, timer.line);
+    const text        = lines[lineIndex] ?? '';
     const bullet      = parseBullet(text, prefix);
     const numbered    = parseNumbered(text);
     if (!bullet && !numbered) {
@@ -64,10 +71,10 @@ export async function onStopItemTimer(): Promise<void> {
     const content    = bullet?.content  ?? numbered!.content;
     const num        = numbered?.num ?? null;
     // Replace existing ~estimate or append new one
-    const newContent = content.replace(/\s*~\w+/, '').trim() + ` ~${elapsed}`;
+    const newContent = content.replace(TIME_STAMP, '').trim() + ` ~${elapsed}`;
     const newLine    = num !== null ? `${chevrons} ${num}. ${newContent}` : `${chevrons} ${prefix} ${newContent}`;
     const edit = new vscode.WorkspaceEdit();
-    edit.replace(doc.uri, doc.lineAt(timer.lineIndex).range, newLine);
+    edit.replace(doc.uri, doc.lineAt(lineIndex).range, newLine);
     if (!await vscode.workspace.applyEdit(edit)) {
         vscode.window.showErrorMessage(`CL: Timer stopped at ${elapsed}, but the item could not be stamped`);
         return;

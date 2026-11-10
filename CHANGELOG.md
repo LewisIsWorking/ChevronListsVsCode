@@ -73,6 +73,7 @@ Sets, Move Item to Section with nested items, and a round of fixes: AI assist on
 - **Lock and Freeze Section say what they do.** Lock promised that bulk operations would skip the section, and Freeze promised a warning on edit. Neither happens: Lock warns when the file is saved, and Freeze only adds its marker.
 - **A bookmark name with a `]` in it is no longer cut short.** The bracket is dropped, because it would end the marker early.
 - **Commands no longer report success for an edit VS Code refused.** Rename Tag and Rename Section across the workspace count only the files that changed and warn about the rest, and Send to Daily Note and Stop Item Timer say when the item could not be written.
+- **Timers keep track of the right line.** Stop Item Timer stamps the item even after lines are added above it, replaces a whole `~1h 5m` stamp, and keeps a word such as `~notes`. The section timer shows only in its own file, stays on its header, and keeps counting in the status bar while another kind of file is open.
 - **Bulk Set Due Date and Set Expiry refuse a date the calendar does not have.**
 - **Extract URLs leaves out the punctuation after a link.** A link ending a sentence used to open with the full stop on it.
 - **Merge Section Below no longer leaves a gap mid-list.** It deleted only the next header, so the blank lines between the two sections ended up between their items. They are removed now, and the next section's items carry straight on.
