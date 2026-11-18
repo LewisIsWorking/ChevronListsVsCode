@@ -1,7 +1,7 @@
 /**
  * Covers src/sectionFreezeCommands.ts.
  */
-import { describe, it, expect, beforeEach } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import * as vscode from 'vscode';
 import { openEditor, makeEditor, deactivate } from './helpers/editorHarness';
 import { onFreezeSection, onUnfreezeSection, isSectionFrozen } from '../sectionFreezeCommands';
@@ -12,8 +12,15 @@ const mock = vscode as unknown as {
     recorded: { info: string[]; warning: string[] };
     workspace: Record<string, unknown>;
 };
+const realWindow = { ...(vscode.window as unknown as Record<string, unknown>) };
 
 beforeEach(() => { mock.__reset(); deactivate(); });
+afterEach(() => {
+    // Tests that replace a window function must not leak it into later files.
+    Object.assign(vscode.window as unknown as Record<string, unknown>, {
+        showWarningMessage: realWindow.showWarningMessage,
+    });
+});
 
 describe('onFreezeSection', () => {
     it('does nothing without an active editor', async () => {
