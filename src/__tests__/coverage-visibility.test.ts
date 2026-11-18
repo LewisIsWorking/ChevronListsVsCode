@@ -52,7 +52,6 @@ const mods: Record<string, () => Promise<unknown>> = {
   'counterCommands': () => import('../counterCommands'),
   'csvRowCommands': () => import('../csvRowCommands'),
   'dailyNoteCommands': () => import('../dailyNoteCommands'),
-  'deadLinkCommands': () => import('../deadLinkCommands'),
   'deadLinksCommands': () => import('../deadLinksCommands'),
   'decorationProvider': () => import('../decorationProvider'),
   'decorationToggles': () => import('../decorationToggles'),
