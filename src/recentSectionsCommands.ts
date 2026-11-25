@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { isHeader } from './patterns';
-import { getJumpHistory } from './jumpHistory';
+import { getJumpHistory, resolveJumpEntry } from './jumpHistory';
 
 interface SectionPickItem extends vscode.QuickPickItem { line: number; }
 
@@ -21,7 +21,8 @@ export async function onShowRecentSections(): Promise<void> {
     const seen    = new Set<number>();
     const sections: SectionPickItem[] = [];
 
-    for (const pos of [...history].reverse()) {
+    for (const entry of [...history].reverse()) {
+        const pos = resolveJumpEntry(doc, entry);
         let headerLine = -1;
         for (let i = pos.line; i >= 0; i--) {
             if (isHeader(doc.lineAt(i).text)) { headerLine = i; break; }

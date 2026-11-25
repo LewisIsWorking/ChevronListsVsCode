@@ -25,7 +25,7 @@ const mock = vscode as unknown as {
     __reset(): void;
     recorded: { info: string[] };
     lastQuickPick(): {
-        items: { label: string; description?: string; pos: vscode.Position }[];
+        items: { label: string; description?: string; entry: { line: number; character: number } }[];
         activeItems: unknown[];
         placeholder: string;
         disposed: boolean;
@@ -153,6 +153,45 @@ describe('onJumpBack', () => {
     });
 });
 
+describe('jump history across edits', () => {
+    type Ed = { edit(cb: (eb: { insert(pos: unknown, text: string): void }) => void): Promise<boolean> };
+
+    it('follows the line down when lines are inserted above it', async () => {
+        const h = openEditor(['> A', '>> - target', '>> - b'], { cursor: 1, fileName: FILE });
+        pushJumpHistory(h.editor as never);
+        await (h.editor as Ed).edit(eb => eb.insert(new vscode.Position(0, 0), '> New\n>> - n\n'));
+        await onJumpBack();
+        expect(h.lines()[cursorLine(h)]).toBe('>> - target');
+    });
+
+    it('follows the line up when lines above it are deleted', async () => {
+        const h = openEditor(['> Gone', '>> - g', '> A', '>> - target'], { cursor: 3, fileName: FILE });
+        pushJumpHistory(h.editor as never);
+        await (h.editor as unknown as { edit(cb: (eb: { delete(range: unknown): void }) => void): Promise<boolean> })
+            .edit(eb => eb.delete(new vscode.Range(0, 0, 2, 0)));
+        await onJumpBack();
+        expect(h.lines()[cursorLine(h)]).toBe('>> - target');
+    });
+
+    it('falls back to the stored line when the text no longer exists', async () => {
+        const h = openEditor(['a', 'b', 'c'], { cursor: 1, fileName: FILE });
+        pushJumpHistory(h.editor as never);
+        await (h.editor as unknown as { edit(cb: (eb: { replace(range: unknown, text: string): void }) => void): Promise<boolean> })
+            .edit(eb => eb.replace(new vscode.Range(0, 0, 3, 0), 'x\ny\nz\n'));
+        await onJumpBack();
+        expect(cursorLine(h)).toBe(1);
+    });
+
+    it('resolves quick-pick previews against the edited document', async () => {
+        const h = openEditor(['> A', '>> - target'], { cursor: 1, fileName: FILE });
+        pushJumpHistory(h.editor as never);
+        await (h.editor as Ed).edit(eb => eb.insert(new vscode.Position(0, 0), '> New\n'));
+        await onShowJumpHistory();
+        mock.lastQuickPick().fireActive([mock.lastQuickPick().items[0]]);
+        expect(h.lines()[cursorLine(h)]).toBe('>> - target');
+    });
+});
+
 describe('onShowJumpHistory', () => {
     /** Pushes `lines` worth of history onto the fixture file. */
     function withHistory(lines: number[]): Harness {
@@ -179,7 +218,7 @@ describe('onShowJumpHistory', () => {
     it('lists the history newest first', async () => {
         withHistory([1, 2, 3]);
         await onShowJumpHistory();
-        expect(mock.lastQuickPick().items.map((i) => i.pos.line)).toEqual([3, 2, 1]);
+        expect(mock.lastQuickPick().items.map((i) => i.entry.line)).toEqual([3, 2, 1]);
     });
 
     it('labels each entry with a one-based line and column', async () => {
